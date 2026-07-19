@@ -1,4 +1,4 @@
-# Employee Management System (EMS)
+# StaffDesk — Employee Management System
 
 A web application for managing employee records, attendance, leave, payroll, and performance.
 
