@@ -25,7 +25,12 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/api-docs/**",
-            "/actuator/health"
+            "/actuator/health",
+
+            // TODO: REMOVE once the auth/JWT module is built and the JWT filter is
+            // wired in below. Left open temporarily so the Employee module is
+            // testable in isolation. Do not ship this to anything but local dev.
+            "/api/v1/employees/**"
     };
 
     @Bean
