@@ -36,10 +36,11 @@ public class EmployeeController {
     }
 
     @GetMapping
-    @Operation(summary = "List employees (paginated)")
+    @Operation(summary = "List employees (paginated), optionally filtered by a search term")
     public ResponseEntity<Page<EmployeeResponseDto>> getAll(
+            @RequestParam(required = false) String search,
             @PageableDefault(size = 20, sort = "lastName") Pageable pageable) {
-        return ResponseEntity.ok(employeeService.getAll(pageable));
+        return ResponseEntity.ok(employeeService.search(search, pageable));
     }
 
     @PutMapping("/{id}")

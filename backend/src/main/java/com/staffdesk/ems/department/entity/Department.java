@@ -1,24 +1,10 @@
 package com.staffdesk.ems.department.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.time.Instant;
 
-/**
- * Minimal entity for now — just enough for Employee's department_id FK to map.
- * Will be expanded (head_employee_id, service/controller/repository) when the
- * department module itself is built.
- */
 @Entity
 @Table(name = "departments")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class Department {
 
     @Id
@@ -27,6 +13,9 @@ public class Department {
 
     @Column(nullable = false, unique = true, length = 100)
     private String name;
+
+    @Column(name = "head_employee_id")
+    private Long headEmployeeId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -44,5 +33,37 @@ public class Department {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = Instant.now();
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Long getHeadEmployeeId() {
+        return headEmployeeId;
+    }
+
+    public void setHeadEmployeeId(Long headEmployeeId) {
+        this.headEmployeeId = headEmployeeId;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
     }
 }

@@ -13,6 +13,8 @@ public interface EmployeeService {
 
     Page<EmployeeResponseDto> getAll(Pageable pageable);
 
+    Page<EmployeeResponseDto> search(String search, Pageable pageable);
+
     EmployeeResponseDto update(Long id, EmployeeRequestDto request);
 
     void delete(Long id);

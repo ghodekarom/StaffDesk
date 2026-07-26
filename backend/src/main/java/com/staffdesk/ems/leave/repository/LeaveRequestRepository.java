@@ -1,0 +1,34 @@
+package com.staffdesk.ems.leave.repository;
+
+import com.staffdesk.ems.leave.entity.LeaveRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDate;
+import java.util.List;
+
+public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long> {
+
+    Page<LeaveRequest> findByEmployeeId(Long employeeId, Pageable pageable);
+
+    Page<LeaveRequest> findByStatus(LeaveRequest.LeaveStatus status, Pageable pageable);
+
+    Page<LeaveRequest> findByEmployeeIdAndStatus(Long employeeId, LeaveRequest.LeaveStatus status, Pageable pageable);
+
+    // Overlap check: any existing request for this employee whose [start, end] range
+    // intersects the requested range. Used to reject double-booked leave on create.
+    @Query("""
+            SELECT lr FROM LeaveRequest lr
+            WHERE lr.employee.id = :employeeId
+              AND lr.status <> com.staffdesk.ems.leave.entity.LeaveRequest.LeaveStatus.REJECTED
+              AND lr.startDate <= :endDate
+              AND lr.endDate >= :startDate
+            """)
+    List<LeaveRequest> findOverlapping(
+            @Param("employeeId") Long employeeId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+}

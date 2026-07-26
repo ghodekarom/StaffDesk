@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +53,18 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<EmployeeResponseDto> search(String search, Pageable pageable) {
+        if (!StringUtils.hasText(search)) {
+            return getAll(pageable);
+        }
+        return employeeRepository
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmployeeCodeContainingIgnoreCase(
+                        search, search, search, pageable)
+                .map(EmployeeResponseDto::fromEntity);
+    }
+
+    @Override
     public EmployeeResponseDto update(Long id, EmployeeRequestDto request) {
         Employee employee = findEmployeeOrThrow(id);
 
@@ -69,8 +82,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = findEmployeeOrThrow(id);
         employeeRepository.delete(employee);
     }
-
-    // ---------- helpers ----------
 
     private Employee findEmployeeOrThrow(Long id) {
         return employeeRepository.findById(id)

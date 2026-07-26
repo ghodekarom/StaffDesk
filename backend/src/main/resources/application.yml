@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/staffdesk_db
-    username: ${DB_USER:staffdesk_user}
-    password: ${DB_PASSWORD:changeme}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:1234}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -25,10 +25,15 @@ spring:
 server:
   port: 8080
 
+#jwt:
+#  secret: ${JWT_SECRET:change-this-to-a-long-random-secret-in-real-env}
+#  expiration-ms: 3600000        # 1 hour access token
+#  refresh-expiration-ms: 604800000   # 7 days refresh token
+
 jwt:
-  secret: ${JWT_SECRET:change-this-to-a-long-random-secret-in-real-env}
-  expiration-ms: 3600000        # 1 hour access token
-  refresh-expiration-ms: 604800000   # 7 days refresh token
+  secret: aET576F6XZtMyLu1a6uprCeyvuuceAQgU8MVONY9iQg=
+  expiration: 3600000
+  refresh-expiration: 604800000
 
 springdoc:
   api-docs:

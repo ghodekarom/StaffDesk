@@ -1,6 +1,5 @@
 # ===== Backend (Java / Maven / Spring Boot) =====
 backend/target/
-backend/.mvn/
 backend/*.jar
 backend/*.war
 backend/HELP.md
@@ -13,6 +12,7 @@ frontend/out/
 frontend/build/
 frontend/.env.local
 frontend/.env*.local
+frontend/*.tsbuildinfo
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -34,3 +34,5 @@ logs/
 
 # ===== OS =====
 Thumbs.db
+
+*.zip
