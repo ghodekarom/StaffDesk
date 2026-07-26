@@ -1,61 +1,147 @@
 # StaffDesk — Employee Management System
 
-A web application for managing employee records, attendance, leave, payroll, and performance.
+A full-stack Employee Management System built with **Spring Boot** (backend) and **Next.js** (frontend). StaffDesk handles employee records, departments, attendance tracking, and leave management, with JWT-based authentication and role-based access control.
+
+> **Status: Phase 1 Complete** ✅
+> Core modules (auth, employees, departments, attendance, leave) are implemented end-to-end across both backend and frontend, with a responsive, mobile-friendly UI.
+
+---
 
 ## Tech Stack
-- **Frontend:** Next.js + Tailwind CSS
-- **Backend:** Java Spring Boot (Spring Web, Spring Data JPA, Spring Security)
-- **Database:** PostgreSQL
-- **Auth:** JWT (role-based: Admin, HR, Manager, Employee)
 
-Full architecture and conventions: see [`docs/EMS-Project-Documentation.md`](./docs/EMS-Project-Documentation.md)
+**Backend**
+- Java 21
+- Spring Boot 4.1.0
+- Spring Security + JWT (access + refresh token flow)
+- Spring Data JPA
+- PostgreSQL
+- Flyway (schema migrations)
+- Maven
 
-## Repo Structure
+**Frontend**
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- Client-side data fetching with a lightweight caching layer
+
+---
+
+## Features Completed in Phase 1
+
+### 🔐 Authentication
+- Login with JWT access + refresh tokens
+- Refresh tokens stored as httpOnly cookies, rotated and single-use
+- Silent session restore on page load
+- Role-based route protection (`ADMIN`, `HR`, `MANAGER`, `EMPLOYEE`)
+
+### 👥 Employees
+- Full CRUD (create, view, edit, delete)
+- Paginated, sortable employee listing
+- Department and manager assignment
+
+### 🏢 Departments
+- Full CRUD with department head assignment
+- Validation against duplicate names and invalid head-employee references
+
+### 🕒 Attendance
+- Clock in / clock out
+- Personal attendance history (paginated, 30-day window)
+- Team attendance view for `ADMIN` / `HR` roles
+- Manual override support for corrections
+
+### 📅 Leave
+- Leave request submission with date-range validation
+- Overlap and leave-balance checks
+- Approve / reject workflow for managers
+- Leave balance tracking per employee
+- Team leave view with status filtering
+
+### 📱 UI / UX
+- Fully responsive layout — collapsible mobile navigation drawer, responsive tables, and stacked headers on small screens
+- Light/dark theme toggle
+- Consistent design system (badges, buttons, modals, forms) shared across all modules
+
+---
+
+## Project Structure
+
 ```
 ems/
-├── backend/    Spring Boot API
-├── frontend/   Next.js app
-├── db/
-│   └── migrations/   Flyway-style SQL migrations (source of truth for schema)
-└── docs/       Project documentation
+├── db/migrations/          # Flyway SQL migrations
+├── docs/                   # Project documentation
+├── backend/                # Spring Boot REST API
+│   └── src/main/java/com/staffdesk/ems/
+│       ├── auth/            # Login, JWT issuance/refresh, users
+│       ├── employee/        # Employee CRUD
+│       ├── department/      # Department CRUD
+│       ├── attendance/      # Clock in/out, history, team view
+│       ├── leave/           # Leave requests, balances, approvals
+│       ├── common/          # Shared exception handling, base DTOs
+│       └── config/          # Security configuration
+└── frontend/                # Next.js app
+    ├── app/
+    │   ├── (auth)/login/     # Public login page
+    │   └── (dashboard)/      # Authenticated pages (sidebar layout)
+    │       ├── employees/
+    │       ├── departments/
+    │       ├── attendance/
+    │       └── leave/
+    ├── components/           # Feature + shared UI components
+    ├── lib/                  # API client, auth context, config
+    └── types/                # Shared TypeScript types
 ```
+
+---
 
 ## Getting Started
 
 ### Prerequisites
-- Java 17+
-- Node.js 20+
-- PostgreSQL 15+ (or Docker)
-- Maven
+- Java 21
+- Node.js 18+
+- PostgreSQL 14+
+- Maven (or use the included `mvnw` wrapper)
 
-### Database
-```bash
-# Using Docker
-docker run --name ems-postgres -e POSTGRES_DB=ems_db \
-  -e POSTGRES_USER=ems_user -e POSTGRES_PASSWORD=changeme \
-  -p 5432:5432 -d postgres:16
+### Backend Setup
 
-# Apply schema
-psql -h localhost -U ems_user -d ems_db -f db/migrations/V1__phase1_schema.sql
-```
-
-### Backend
 ```bash
 cd backend
+cp .env.example .env    # fill in DB credentials, JWT secret, etc.
 ./mvnw spring-boot:run
 ```
 
-### Frontend
+The API runs on `http://localhost:8080` by default. Flyway will run migrations automatically on startup.
+
+### Frontend Setup
+
 ```bash
 cd frontend
+cp .env.local.example .env.local   # set NEXT_PUBLIC_API_BASE_URL
 npm install
 npm run dev
 ```
 
-## Development Status
-See [Project Board / Issues] for current progress. Phase 1 (core: employees, departments, attendance, leave) is in progress.
+The app runs on `http://localhost:3000` by default.
 
-## Contributing
-- Branch naming: `feature/<short-description>`, `fix/<short-description>`
-- Commit convention: [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, `docs:`)
-- All changes go through PR into `develop`, never direct to `main`
+---
+
+## Architecture Notes
+
+- The frontend never talks to the database directly — every data operation goes through the Spring Boot REST API.
+- Only token issuance/refresh (`/api/auth/*`) is routed through Next.js's own backend-for-frontend (BFF) API routes; all other requests hit the Spring Boot backend directly from the browser.
+- `GlobalExceptionHandler` in the backend acts as the catch-all `@RestControllerAdvice`, with module-specific exception handlers (e.g. `AttendanceExceptionHandler`, `LeaveExceptionHandler`) layered on top for domain-specific error responses.
+
+---
+
+## Roadmap (Phase 2+)
+
+- [ ] Payroll module
+- [ ] Performance review module
+- [ ] Notifications (email/in-app)
+- [ ] Reporting & analytics dashboards
+- [ ] Bulk employee import/export
+
+---
+
+## License
+
+Internal project — license to be determined.
