@@ -1,25 +1,21 @@
 "use client";
-
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
-export default function LoginPage() {
+function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
-
     try {
       await login({ email, password });
       const redirectTo = searchParams.get("from") ?? "/employees";
@@ -30,13 +26,11 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   }
-
   return (
     <div className="relative flex min-h-[100dvh] items-center justify-center bg-canvas px-4">
       <div className="absolute right-5 top-5">
         <ThemeToggle />
       </div>
-
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm space-y-5 rounded-lg border border-line bg-surface p-8 shadow-sm"
@@ -53,13 +47,11 @@ export default function LoginPage() {
             <p className="text-xs text-muted">Employee management, all in one place.</p>
           </div>
         </div>
-
         {error && (
           <p className="rounded-md bg-status-terminatedBg px-3 py-2 text-sm text-status-terminated">
             {error}
           </p>
         )}
-
         <div className="space-y-1">
           <label htmlFor="email" className="text-sm font-medium text-ink">
             Email
@@ -74,7 +66,6 @@ export default function LoginPage() {
             className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none"
           />
         </div>
-
         <div className="space-y-1">
           <label htmlFor="password" className="text-sm font-medium text-ink">
             Password
@@ -88,7 +79,6 @@ export default function LoginPage() {
             className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
           />
         </div>
-
         <button
           type="submit"
           disabled={isSubmitting}
@@ -98,5 +88,13 @@ export default function LoginPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
