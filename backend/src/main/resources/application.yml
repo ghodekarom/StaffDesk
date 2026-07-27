@@ -1,12 +1,15 @@
+debug: true
 spring:
   application:
     name: staffdesk-backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/staffdesk_db
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/staffdesk_db}
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:1234}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:5}
 
   jpa:
     hibernate:
@@ -21,19 +24,18 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+    url: ${DB_DIRECT_URL}
+    user: ${DB_USER}
+    password: ${DB_PASSWORD}
 
 server:
-  port: 8080
-
-#jwt:
-#  secret: ${JWT_SECRET:change-this-to-a-long-random-secret-in-real-env}
-#  expiration-ms: 3600000        # 1 hour access token
-#  refresh-expiration-ms: 604800000   # 7 days refresh token
+  port: ${PORT:8080}
+#  port:8080
 
 jwt:
-  secret: aET576F6XZtMyLu1a6uprCeyvuuceAQgU8MVONY9iQg=
-  expiration: 3600000
-  refresh-expiration: 604800000
+  secret: ${JWT_SECRET:change-this-to-a-long-random-secret-in-real-env}
+  expiration: ${JWT_EXPIRATION_MS:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS:604800000}
 
 springdoc:
   api-docs:
