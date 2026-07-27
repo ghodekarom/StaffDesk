@@ -56,8 +56,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Next.js dev server origin. Add your deployed Vercel URL here too once you have it.
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        // Local dev + deployed Vercel frontend (production domain, plus a wildcard
+        // pattern for Vercel preview deployments like staffdesk-ashy-git-*.vercel.app).
+        // Use setAllowedOriginPatterns (not setAllowedOrigins) since we need wildcard
+        // support while allowCredentials is true.
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:3000",
+                "https://staffdesk-ashy.vercel.app",
+                "https://staffdesk-ashy-*.vercel.app"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         // Authorization is required for the Bearer token; Content-Type for JSON bodies.
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
