@@ -114,8 +114,9 @@ export default function TeamAttendancePage() {
 
       <div className="flex items-end gap-3 rounded-lg border border-line bg-surface p-4">
         <div className="w-72 space-y-1">
-          <label className="text-sm font-medium text-ink">Employee</label>
+          <label htmlFor="team-attendance-employee" className="text-sm font-medium text-ink">Employee</label>
           <Combobox
+            id="team-attendance-employee"
             placeholder="Search employees…"
             value={employeeId}
             searchPath="/employees"
