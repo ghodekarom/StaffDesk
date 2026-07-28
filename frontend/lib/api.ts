@@ -88,7 +88,21 @@ export async function apiJson<T>(path: string, options?: ApiFetchOptions): Promi
       errorBody
     );
   }
-  return response.json();
+
+  // 204 No Content (and any other empty body) has nothing to parse.
+  // Calling response.json() on an empty body throws a SyntaxError, which
+  // was previously bubbling up as a false "failure" for calls like DELETE
+  // even though the server had already applied the change successfully.
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const text = await response.text();
+  if (!text) {
+    return undefined as T;
+  }
+
+  return JSON.parse(text) as T;
 }
 
 // ---------------------------------------------------------------------------
