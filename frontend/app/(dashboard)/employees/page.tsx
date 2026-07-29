@@ -16,11 +16,21 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDept, setSelectedDept] = useState("ALL");
+  const [departments, setDepartments] = useState<any[]>([]);
+
   const [modal, setModal] = useState<null | { mode: "create" } | { mode: "edit"; employee: Employee }>(
     null
   );
 
-  const load = useCallback(async (targetPage: number) => {
+  useEffect(() => {
+    api.get<{ content: any[] }>("/departments", { size: 100 })
+      .then((res) => setDepartments(res.content))
+      .catch((err) => console.error("Failed to load departments", err));
+  }, []);
+
+  const load = useCallback(async (targetPage: number, query: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -28,6 +38,7 @@ export default function EmployeesPage() {
         page: targetPage,
         size: PAGE_SIZE,
         sort: "lastName,asc",
+        ...(query ? { search: query } : {}),
       });
       setPage(result);
     } catch (err) {
@@ -42,19 +53,36 @@ export default function EmployeesPage() {
   }, []);
 
   useEffect(() => {
-    load(pageIndex);
-  }, [load, pageIndex]);
+    load(pageIndex, searchQuery);
+  }, [load, pageIndex, searchQuery]);
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setPageIndex(0);
+  };
+
+  const handleInspect = (emp: Employee) => {
+    const detail = {
+      name: `${emp.firstName} ${emp.lastName}`,
+      code: emp.employeeCode,
+      role: emp.designation || "Staff",
+      department: emp.departmentName || "General",
+      status: emp.status === "ACTIVE" ? "Active" : emp.status === "INACTIVE" ? "Inactive" : "Terminated",
+      email: emp.email,
+    };
+    window.dispatchEvent(new CustomEvent("inspect-employee", { detail }));
+  };
 
   async function handleCreate(data: EmployeeRequest) {
     await api.post<Employee>("/employees", data);
     setModal(null);
-    load(pageIndex);
+    load(pageIndex, searchQuery);
   }
 
   async function handleEdit(id: number, data: EmployeeRequest) {
     await api.put<Employee>(`/employees/${id}`, data);
     setModal(null);
-    load(pageIndex);
+    load(pageIndex, searchQuery);
   }
 
   async function handleDelete(employee: Employee) {
@@ -63,11 +91,18 @@ export default function EmployeesPage() {
     }
     try {
       await api.delete(`/employees/${employee.id}`);
-      load(pageIndex);
+      load(pageIndex, searchQuery);
     } catch (err) {
       alert(err instanceof ApiError ? err.message : "Failed to delete employee.");
     }
   }
+
+  const filteredEmployees = page?.content.filter((emp) => {
+    if (selectedDept !== "ALL" && emp.departmentName !== selectedDept) {
+      return false;
+    }
+    return true;
+  }) || [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -84,6 +119,38 @@ export default function EmployeesPage() {
         </Button>
       </div>
 
+      {/* Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 relative">
+          <input
+            type="text"
+            placeholder="Search by name or code..."
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="w-full h-10 pl-9 pr-3 rounded-lg border border-line bg-surface text-ink text-sm outline-none focus:border-accent"
+          />
+          <div className="absolute left-3 top-3 text-muted">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          </div>
+        </div>
+
+        <select
+          value={selectedDept}
+          onChange={(e) => setSelectedDept(e.target.value)}
+          className="h-10 px-3 rounded-lg border border-line bg-surface text-ink text-sm outline-none focus:border-accent min-w-[160px]"
+        >
+          <option value="ALL">All Departments</option>
+          {departments.map((d) => (
+            <option key={d.id} value={d.name}>
+              {d.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {error && (
         <div className="rounded-lg border border-status-terminated/30 bg-status-terminatedBg px-4 py-3 text-sm text-status-terminated">
           {error}
@@ -97,9 +164,10 @@ export default function EmployeesPage() {
       ) : page ? (
         <>
           <EmployeeTable
-            employees={page.content}
+            employees={filteredEmployees}
             onEdit={(emp) => setModal({ mode: "edit", employee: emp })}
             onDelete={handleDelete}
+            onInspect={handleInspect}
           />
 
           {page.totalPages > 1 && (

@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>StaffDesk — Mobile Card Layout Enterprise Suite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ==========================================
+     THEME SYSTEM & VARIABLES
+  ========================================== */
+  :root {
+    --bg-canvas: #F8FAFC;
+    --bg-surface: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --bg-input: #F1F5F9;
+    --text-primary: #0F172A;
+    --text-secondary: #334155;
+    --text-muted: #64748B;
+    --border-color: #E2E8F0;
+    --border-hover: #CBD5E1;
+    
+    --brand-primary: #0284C7;
+    --brand-hover: #0369A1;
+    --brand-light: #F0F9FF;
+    
+    --emerald-primary: #059669;
+    --emerald-bg: #ECFDF5;
+    --emerald-text: #047857;
+    
+    --amber-primary: #D97706;
+    --amber-bg: #FFFBEB;
+    --amber-text: #B45309;
+
+    --rose-primary: #E11D48;
+    --rose-bg: #FFF1F2;
+    --rose-text: #BE123C;
+
+    --sidebar-bg: #0F172A;
+    --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+  }
+
+  [data-theme="dark"] {
+    --bg-canvas: #090D16;
+    --bg-surface: #131B2E;
+    --bg-card: #182238;
+    --bg-input: #1E293B;
+    --text-primary: #F8FAFC;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    --border-color: #26334D;
+    --border-hover: #3B4D71;
+    --sidebar-bg: #070A10;
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-canvas);
+    color: var(--text-primary);
+    transition: background 0.25s ease, color 0.25s ease;
+    font-size: 13.5px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+  }
+
+  .font-heading { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Keyframes */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseRing {
+    0% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(5, 150, 105, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
+  }
+  @keyframes slideDrawer {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  .fade-up { opacity: 0; animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+  /* LOGIN VIEW */
+  #view-login { display: flex; min-height: 100vh; }
+  .login-brand {
+    flex: 1.1; background: linear-gradient(135deg, #090D16 0%, #1E1B4B 50%, #0F172A 100%);
+    color: #FFF; padding: 56px; display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden;
+  }
+  .login-brand::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 24px 24px; opacity: 0.4;
+  }
+  .login-card-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 24px; }
+  .login-box { width: 100%; max-width: 380px; }
+  
+  /* APP SHELL & NAVIGATION */
+  #view-app { display: none; min-height: 100vh; }
+  #view-app.active { display: flex; }
+
+  /* Mobile Backdrop Overlay */
+  .sidebar-backdrop {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(3px);
+    z-index: 39; display: none;
+  }
+  .sidebar-backdrop.active { display: block; }
+
+  .sidebar {
+    width: 240px; background: var(--sidebar-bg); color: #F8FAFC;
+    padding: 20px 14px; flex-shrink: 0; display: flex; flex-direction: column;
+    border-right: 1px solid rgba(255, 255, 255, 0.08); transition: transform 0.25s ease, background 0.25s ease;
+  }
+  .sidebar-brand {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'Space Grotesk'; font-size: 17px; font-weight: 700; color: #FFF; padding: 4px 10px 24px;
+  }
+  .status-dot-online {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--emerald-primary);
+    animation: pulseRing 2s infinite; display: inline-block; margin-right: 6px;
+  }
+  
+  .nav-group-title {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted); margin: 16px 10px 8px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px; padding: 9.5px 12px; border-radius: 8px;
+    color: #94A3B8; font-size: 13.5px; font-weight: 500; cursor: pointer;
+    transition: all 0.15s ease; margin-bottom: 2px; position: relative;
+  }
+  .nav-item:hover { background: rgba(255, 255, 255, 0.06); color: #FFF; }
+  .nav-item.active { background: rgba(2, 132, 199, 0.18); color: #38BDF8; font-weight: 600; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: -14px; top: 8px; bottom: 8px;
+    width: 3px; border-radius: 3px; background: #0284C7;
+  }
+  .nav-badge {
+    margin-left: auto; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 99px;
+    background: rgba(255, 255, 255, 0.12); color: #FFF;
+  }
+
+  .sidebar-foot {
+    margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .user-avatar-sm {
+    width: 34px; height: 34px; border-radius: 8px; background: var(--brand-primary);
+    color: #FFF; font-weight: 600; display: flex; align-items: center; justify-content: center; font-size: 12.5px; flex-shrink: 0;
+  }
+  .theme-btn {
+    width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06); color: #FFF; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+
+  /* WORKSPACE MAIN */
+  .workspace { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .topbar {
+    height: 60px; padding: 0 24px; background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color); display: flex; align-items: center;
+    justify-content: space-between; position: sticky; top: 0; z-index: 10; gap: 12px;
+  }
+
+  .mobile-hamburger {
+    display: none; background: none; border: none; color: var(--text-primary);
+    padding: 6px; cursor: pointer; border-radius: 6px;
+  }
+  .mobile-hamburger:hover { background: var(--bg-canvas); }
+
+  .cmd-trigger {
+    display: flex; align-items: center; gap: 10px; background: var(--bg-input);
+    border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 8px;
+    color: var(--text-muted); font-size: 12.5px; cursor: pointer; width: 240px;
+    transition: border-color 0.15s;
+  }
+  .cmd-trigger:hover { border-color: var(--border-hover); }
+  .cmd-trigger kbd {
+    background: var(--bg-surface); border: 1px solid var(--border-color);
+    padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 600; margin-left: auto;
+  }
+
+  .content-area { padding: 24px 24px 60px; flex: 1; }
+  .subview { display: none; }
+  .subview.active { display: block; }
+
+  /* CARDS & METRICS */
+  .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .metric-card {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 12px; padding: 18px; box-shadow: var(--shadow-sm);
+    display: flex; align-items: center; justify-content: space-between;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .metric-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .metric-val { font-size: 26px; font-weight: 700; margin: 4px 0 0; }
+  .metric-lbl { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+
+  /* Ring Progress */
+  .progress-ring-box { width: 48px; height: 48px; position: relative; }
+  .progress-ring-box svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+  .progress-ring-box circle { fill: none; stroke-width: 4.5; stroke-linecap: round; }
+  .ring-bg-track { stroke: var(--border-color); }
+  .ring-fill-track { stroke: var(--emerald-primary); stroke-dasharray: 126; stroke-dashoffset: 30; }
+  .ring-center-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+
+  /* PANEL CARD */
+  .panel-card {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 12px; box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 24px;
+  }
+  .panel-head {
+    padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+    display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface); gap: 12px;
+  }
+  .panel-head h3 { margin: 0; font-size: 14.5px; font-weight: 600; }
+
+  /* DESKTOP TABLE VS MOBILE CARD LIST */
+  .desktop-table-wrapper { display: block; }
+  .mobile-card-list { display: none; }
+
+  table.data-table { width: 100%; border-collapse: collapse; text-align: left; }
+  table.data-table th {
+    padding: 11px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted); background: var(--bg-canvas);
+    border-bottom: 1px solid var(--border-color); white-space: nowrap;
+  }
+  table.data-table td { padding: 13px 20px; font-size: 13.5px; border-bottom: 1px solid var(--border-color); }
+  table.data-table tr.row-clickable:hover { background: var(--bg-canvas); cursor: pointer; }
+  table.data-table tr:last-child td { border-bottom: none; }
+
+  /* MOBILE DATA CARD DESIGN */
+  .mobile-data-card {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 12px; padding: 16px; margin: 12px; box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 10px; cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .mobile-data-card:active { background: var(--bg-canvas); border-color: var(--border-hover); }
+  .mobile-card-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .mobile-card-body { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 8px; }
+
+  /* BADGES */
+  .badge-chip {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
+    border-radius: 6px; font-size: 11.5px; font-weight: 600;
+  }
+  .badge-chip.green { background: var(--emerald-bg); color: var(--emerald-text); border: 1px solid rgba(5,150,105,0.2); }
+  .badge-chip.amber { background: var(--amber-bg); color: var(--amber-text); border: 1px solid rgba(217,119,6,0.2); }
+  .badge-chip.rose { background: var(--rose-bg); color: var(--rose-text); border: 1px solid rgba(225,29,72,0.2); }
+  .badge-chip.gray { background: var(--bg-canvas); color: var(--text-muted); border: 1px solid var(--border-color); }
+
+  /* BUTTONS */
+  .btn-primary {
+    background: var(--brand-primary); color: #FFF; border: none; padding: 8px 16px;
+    border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary:hover { background: var(--brand-hover); }
+  .btn-secondary {
+    background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-color);
+    padding: 7px 14px; border-radius: 8px; font-weight: 500; font-size: 12.5px; cursor: pointer; transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-secondary:hover { background: var(--bg-canvas); border-color: var(--border-hover); }
+
+  /* HERO CLOCK WIDGET */
+  .hero-clock-card {
+    background: linear-gradient(135deg, #090D16 0%, #1E293B 100%);
+    color: #FFF; border-radius: 16px; padding: 24px 28px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: var(--shadow-md); position: relative; overflow: hidden; flex-wrap: wrap; gap: 16px;
+  }
+
+  /* DEPARTMENTS GRID */
+  .dept-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .dept-card {
+    background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px;
+    padding: 20px; box-shadow: var(--shadow-sm); transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .dept-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+  /* DRAWER MODAL */
+  .drawer-backdrop {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(2px);
+    display: none; justify-content: flex-end; z-index: 50;
+  }
+  .drawer-backdrop.active { display: flex; }
+  .drawer-content {
+    width: 420px; max-width: 100%; background: var(--bg-surface); height: 100%; padding: 28px;
+    box-shadow: var(--shadow-lg); animation: slideDrawer 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex; flex-direction: column;
+  }
+
+  /* COMMAND PALETTE */
+  .cmd-backdrop {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(2px);
+    display: none; align-items: flex-start; justify-content: center; padding-top: 80px; z-index: 60;
+  }
+  .cmd-backdrop.active { display: flex; }
+  .cmd-modal {
+    width: 500px; max-width: 90vw; background: var(--bg-surface); border: 1px solid var(--border-color);
+    border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden;
+  }
+
+  /* TOAST BANNER */
+  .toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 8px; max-width: 90vw; }
+  .toast-item {
+    background: var(--sidebar-bg); color: #FFF; border-left: 4px solid var(--brand-primary);
+    padding: 12px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg);
+    display: flex; align-items: center; gap: 10px; animation: fadeUp 0.25s ease;
+  }
+
+  /* ==========================================
+     MEDIA QUERIES (MOBILE CARD LAYOUT SWITCH)
+  ========================================== */
+  @media (max-width: 900px) {
+    .login-brand { display: none; }
+    
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; z-index: 40;
+      transform: translateX(-100%);
+    }
+    .sidebar.mobile-open { transform: translateX(0); }
+
+    .mobile-hamburger { display: flex; align-items: center; justify-content: center; }
+
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .dept-grid { grid-template-columns: repeat(2, 1fr); }
+
+    .cmd-trigger { width: 170px; }
+  }
+
+  @media (max-width: 768px) {
+    /* SWITCH FROM DESKTOP TABLE TO MOBILE CARDS */
+    .desktop-table-wrapper { display: none !important; }
+    .mobile-card-list { display: flex !important; flex-direction: column; }
+  }
+
+  @media (max-width: 600px) {
+    .content-area { padding: 16px 16px 40px; }
+    .topbar { padding: 0 16px; }
+    .cmd-trigger { width: 130px; font-size: 11.5px; }
+    .cmd-trigger kbd { display: none; }
+
+    .metrics-grid { grid-template-columns: 1fr; }
+    .dept-grid { grid-template-columns: 1fr; }
+    
+    .drawer-content { width: 100%; }
+    .hero-clock-card { flex-direction: column; align-items: flex-start; }
+    
+    .time-badge-topbar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN VIEW ============ -->
+<div id="view-login">
+  <div class="login-brand">
+    <div style="font-family: 'Space Grotesk'; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+      <span class="status-dot-online"></span> StaffDesk
+    </div>
+    <div>
+      <h1 class="font-heading" style="font-size: 38px; line-height: 1.15; margin: 0 0 16px;">Workforce operations, managed in one system.</h1>
+      <p style="color: rgba(255,255,255,0.7); font-size: 15px; max-width: 440px; margin: 0;">Authenticated attendance logging, departmental rosters, and leave approvals — shift after shift.</p>
+      <div style="display: flex; gap: 32px; margin-top: 36px;">
+        <div><div class="font-heading" style="font-size: 26px; font-weight: 700;">128</div><div style="font-size: 12.5px; color: rgba(255,255,255,0.5);">Employees Active</div></div>
+        <div><div class="font-heading" style="font-size: 26px; font-weight: 700;">99.9%</div><div style="font-size: 12.5px; color: rgba(255,255,255,0.5);">Roster Uptime</div></div>
+        <div><div class="font-heading" style="font-size: 26px; font-weight: 700;">6</div><div style="font-size: 12.5px; color: rgba(255,255,255,0.5);">Departments</div></div>
+      </div>
+    </div>
+    <div style="font-size: 12px; color: rgba(255,255,255,0.4);">© 2026 StaffDesk Operations Inc.</div>
+  </div>
+
+  <div class="login-card-wrap">
+    <div class="login-box">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">Sign In</div>
+      <h2 class="font-heading" style="font-size: 24px; margin: 0 0 6px;">Welcome Back</h2>
+      <p style="color: var(--text-muted); font-size: 13.5px; margin: 0 0 28px;">Enter your credentials to access your organization workspace.</p>
+      
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px;">Work Email</label>
+        <input type="email" value="aisha.rahman@staffdesk.io" style="width: 100%; height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface); font-size: 13.5px; outline: none; color: var(--text-primary);">
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <label style="display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px;">Password</label>
+        <input type="password" value="••••••••••••" style="width: 100%; height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface); font-size: 13.5px; outline: none; color: var(--text-primary);">
+      </div>
+
+      <button class="btn-primary" style="width: 100%; height: 42px; font-size: 14px;" onclick="enterApp()">Sign In to Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="view-app">
+  
+  <!-- MOBILE SIDEBAR BACKDROP -->
+  <div class="sidebar-backdrop" id="mobile-backdrop" onclick="toggleMobileSidebar(false)"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="app-sidebar">
+    <div class="sidebar-brand">
+      <div><span class="status-dot-online"></span> StaffDesk</div>
+      <button style="background:none; border:none; color:#FFF; font-size:18px; cursor:pointer;" onclick="toggleMobileSidebar(false)">✕</button>
+    </div>
+
+    <div class="nav-group-title">Operations</div>
+    <div class="nav-item active" id="nav-dashboard" onclick="switchNavView('dashboard', this)">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      Overview
+    </div>
+    <div class="nav-item" id="nav-employees" onclick="switchNavView('employees', this)">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Employees
+      <span class="nav-badge">128</span>
+    </div>
+    <div class="nav-item" id="nav-departments" onclick="switchNavView('departments', this)">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/></svg>
+      Departments
+    </div>
+    <div class="nav-item" id="nav-attendance" onclick="switchNavView('attendance', this)">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+      Attendance
+      <span class="nav-badge" style="background: rgba(5,150,105,0.2); color: #10B981;">97 Live</span>
+    </div>
+    <div class="nav-item" id="nav-leave" onclick="switchNavView('leave', this)">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      Leave Requests
+      <span class="nav-badge" id="sidebar-pending-badge" style="background: rgba(217,119,6,0.2); color: #F59E0B;">2</span>
+    </div>
+
+    <div class="sidebar-foot">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="user-avatar-sm">AR</div>
+        <div>
+          <div style="font-size: 13px; font-weight: 600;">Aisha Rahman</div>
+          <div style="font-size: 11px; color: var(--text-muted);">HR Administrator</div>
+        </div>
+      </div>
+      <button class="theme-btn" onclick="toggleTheme()" title="Toggle Theme Mode">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="workspace">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="mobile-hamburger" onclick="toggleMobileSidebar(true)" aria-label="Open Navigation Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div style="font-weight: 600; font-size: 14.5px;" id="topbar-title">Overview Dashboard</div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="cmd-trigger" onclick="toggleCmdPalette()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Search...
+          <kbd>Ctrl K</kbd>
+        </div>
+
+        <div class="font-mono time-badge-topbar" style="font-size: 12.5px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; background: var(--bg-canvas); padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: var(--emerald-primary);"></span>
+          <span id="live-time">09:41:02</span>
+        </div>
+
+        <button class="btn-secondary" style="padding: 6px 12px;" onclick="triggerToast('Notifications checked — 0 unread alerts')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENT AREA -->
+    <div class="content-area">
+
+      <!-- SUBVIEW 1: OVERVIEW -->
+      <section class="subview active fade-up" id="subview-dashboard">
+        <div style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h1 class="font-heading" style="font-size: 24px; margin: 0 0 4px;">Good morning, Aisha</h1>
+            <p style="color: var(--text-muted); margin: 0; font-size: 13.5px;">Operations summary for today, July 29, 2026.</p>
+          </div>
+          <button class="btn-secondary" onclick="triggerToast('Exporting Daily Summary PDF...')">Export Report</button>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div>
+              <div class="metric-lbl">Total Employees</div>
+              <div class="metric-val font-heading">128</div>
+              <div style="font-size: 12px; color: var(--emerald-text); margin-top: 4px; font-weight: 500;">↑ +4 this month</div>
+            </div>
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--emerald-bg); color: var(--emerald-text); display: flex; align-items: center; justify-content: center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div>
+              <div class="metric-lbl">Clocked In Now</div>
+              <div class="metric-val font-heading">97</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">75.8% of total staff</div>
+            </div>
+            <div class="progress-ring-box">
+              <svg viewBox="0 0 50 50">
+                <circle class="ring-bg-track" cx="25" cy="25" r="20"></circle>
+                <circle class="ring-fill-track" cx="25" cy="25" r="20"></circle>
+              </svg>
+              <span class="ring-center-text">76%</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div>
+              <div class="metric-lbl">Departments</div>
+              <div class="metric-val font-heading">6</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">All 6 operational</div>
+            </div>
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--brand-light); color: var(--brand-primary); display: flex; align-items: center; justify-content: center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l9-6 9 6v12"/></svg>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div>
+              <div class="metric-lbl">Pending Leave</div>
+              <div class="metric-val font-heading" id="metric-pending-val">2</div>
+              <div style="font-size: 12px; color: var(--amber-text); margin-top: 4px; font-weight: 500;">Requires approval</div>
+            </div>
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--amber-bg); color: var(--amber-text); display: flex; align-items: center; justify-content: center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT ATTENDANCE (DESKTOP TABLE & MOBILE CARD LIST) -->
+        <div class="panel-card">
+          <div class="panel-head">
+            <h3>Recent Attendance Activity</h3>
+            <button class="btn-secondary" onclick="switchNavView('attendance', document.getElementById('nav-attendance'))">View Log</button>
+          </div>
+          
+          <!-- DESKTOP VIEW -->
+          <div class="desktop-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr><th>Employee</th><th>Department</th><th>Clock In</th><th>Status</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                <tr class="row-clickable" onclick="inspectEmployee('Aisha Rahman', 'EMP-0104', 'HR Administrator', 'People Ops', 'Present', '09:02 AM', 'aisha.rahman@staffdesk.io')">
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <div class="user-avatar-sm" style="width: 30px; height: 30px; font-size: 11px;">AR</div>
+                      <div><div style="font-weight: 600;">Aisha Rahman</div><div style="font-size: 11.5px; color: var(--text-muted);">HR Administrator</div></div>
+                    </div>
+                  </td>
+                  <td>People Ops</td>
+                  <td class="font-mono">09:02 AM</td>
+                  <td><span class="badge-chip green">● Present</span></td>
+                  <td><button class="btn-secondary" style="padding: 3px 10px; font-size: 11.5px;" onclick="event.stopPropagation(); inspectEmployee('Aisha Rahman', 'EMP-0104', 'HR Administrator', 'People Ops', 'Present', '09:02 AM', 'aisha.rahman@staffdesk.io')">Inspect</button></td>
+                </tr>
+                <tr class="row-clickable" onclick="inspectEmployee('Daniel Kim', 'EMP-0089', 'Backend Engineer', 'Engineering', 'Present', '08:47 AM', 'daniel.kim@staffdesk.io')">
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <div class="user-avatar-sm" style="width: 30px; height: 30px; font-size: 11px; background: #6366F1;">DK</div>
+                      <div><div style="font-weight: 600;">Daniel Kim</div><div style="font-size: 11.5px; color: var(--text-muted);">Backend Engineer</div></div>
+                    </div>
+                  </td>
+                  <td>Engineering</td>
+                  <td class="font-mono">08:47 AM</td>
+                  <td><span class="badge-chip green">● Present</span></td>
+                  <td><button class="btn-secondary" style="padding: 3px 10px; font-size: 11.5px;" onclick="event.stopPropagation(); inspectEmployee('Daniel Kim', 'EMP-0089', 'Backend Engineer', 'Engineering', 'Present', '08:47 AM', 'daniel.kim@staffdesk.io')">Inspect</button></td>
+                </tr>
+                <tr class="row-clickable" onclick="inspectEmployee('Priya Sharma', 'EMP-0033', 'Financial Analyst', 'Finance', 'Late', '09:22 AM', 'priya.sharma@staffdesk.io')">
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <div class="user-avatar-sm" style="width: 30px; height: 30px; font-size: 11px; background: #D97706;">PS</div>
+                      <div><div style="font-weight: 600;">Priya Sharma</div><div style="font-size: 11.5px; color: var(--text-muted);">Financial Analyst</div></div>
+                    </div>
+                  </td>
+                  <td>Finance</td>
+                  <td class="font-mono">09:22 AM</td>
+                  <td><span class="badge-chip amber">⚠️ Late</span></td>
+                  <td><button class="btn-secondary" style="padding: 3px 10px; font-size: 11.5px;" onclick="event.stopPropagation(); inspectEmployee('Priya Sharma', 'EMP-0033', 'Financial Analyst', 'Finance', 'Late', '09:22 AM', 'priya.sharma@staffdesk.io')">Inspect</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- MOBILE CARD VIEW -->
+          <div class="mobile-card-list">
+            <div class="mobile-data-card" onclick="inspectEmployee('Aisha Rahman', 'EMP-0104', 'HR Administrator', 'People Ops', 'Present', '09:02 AM', 'aisha.rahman@staffdesk.io')">
+              <div class="mobile-card-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div class="user-avatar-sm" style="width: 34px; height: 34px; font-size: 12px;">AR</div>
+                  <div><div style="font-weight: 600;">Aisha Rahman</div><div style="font-size: 11.5px; color: var(--text-muted);">HR Administrator</div></div>
+                </div>
+                <span class="badge-chip green">● Present</span>
+              </div>
+              <div class="mobile-card-body">
+                <span>Dept: <strong>People Ops</strong></span>
+                <span>Clock In: <strong class="font-mono">09:02 AM</strong></span>
+              </div>
+            </div>
+
+            <div class="mobile-data-card" onclick="inspectEmployee('Daniel Kim', 'EMP-0089', 'Backend Engineer', 'Engineering', 'Present', '08:47 AM', 'daniel.kim@staffdesk.io')">
+              <div class="mobile-card-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div class="user-avatar-sm" style="width: 34px; height: 34px; font-size: 12px; background: #6366F1;">DK</div>
+                  <div><div style="font-weight: 600;">Daniel Kim</div><div style="font-size: 11.5px; color: var(--text-muted);">Backend Engineer</div></div>
+                </div>
+                <span class="badge-chip green">● Present</span>
+              </div>
+              <div class="mobile-card-body">
+                <span>Dept: <strong>Engineering</strong></span>
+                <span>Clock In: <strong class="font-mono">08:47 AM</strong></span>
+              </div>
+            </div>
+
+            <div class="mobile-data-card" onclick="inspectEmployee('Priya Sharma', 'EMP-0033', 'Financial Analyst', 'Finance', 'Late', '09:22 AM', 'priya.sharma@staffdesk.io')">
+              <div class="mobile-card-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div class="user-avatar-sm" style="width: 34px; height: 34px; font-size: 12px; background: #D97706;">PS</div>
+                  <div><div style="font-weight: 600;">Priya Sharma</div><div style="font-size: 11.5px; color: var(--text-muted);">Financial Analyst</div></div>
+                </div>
+                <span class="badge-chip amber">⚠️ Late</span>
+              </div>
+              <div class="mobile-card-body">
+                <span>Dept: <strong>Finance</strong></span>
+                <span>Clock In: <strong class="font-mono">09:22 AM</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUBVIEW 2: EMPLOYEES -->
+      <section class="subview fade-up" id="subview-employees">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h1 class="font-heading" style="font-size: 24px; margin: 0 0 4px;">Employee Directory</h1>
+            <p style="color: var(--text-muted); margin: 0; font-size: 13.5px;">Searchable index of all 128 registered team members.</p>
+          </div>
+          <button class="btn-primary" onclick="triggerToast('+ Add Employee Modal Opened')">+ Add Employee</button>
+        </div>
+
+        <div class="panel-card">
+          <!-- DESKTOP TABLE -->
+          <div class="desktop-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr><th>Employee</th><th>Code</th><th>Department</th><th>Role</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr class="row-clickable" onclick="inspectEmployee('Aisha Rahman', 'EMP-0104', 'HR Administrator', 'People Ops', 'Active', '09:02 AM', 'aisha.rahman@staffdesk.io')">
+                  <td><div style="font-weight: 600;">Aisha Rahman</div></td>
+                  <td class="font-mono" style="color: var(--brand-primary); font-weight: 600;">EMP-0104</td>
+                  <td>People Ops</td>
+                  <td>HR Administrator</td>
+                  <td><span class="badge-chip green">Active</span></td>
+                </tr>
+                <tr class="row-clickable" onclick="inspectEmployee('Daniel Kim', 'EMP-0089', 'Backend Engineer', 'Engineering', 'Active', '08:47 AM', 'daniel.kim@staffdesk.io')">
+                  <td><div style="font-weight: 600;">Daniel Kim</div></td>
+                  <td class="font-mono" style="color: var(--brand-primary); font-weight: 600;">EMP-0089</td>
+                  <td>Engineering</td>
+                  <td>Backend Engineer</td>
+                  <td><span class="badge-chip green">Active</span></td>
+                </tr>
+                <tr class="row-clickable" onclick="inspectEmployee('Priya Sharma', 'EMP-0033', 'Financial Analyst', 'Finance', 'Active', '09:22 AM', 'priya.sharma@staffdesk.io')">
+                  <td><div style="font-weight: 600;">Priya Sharma</div></td>
+                  <td class="font-mono" style="color: var(--brand-primary); font-weight: 600;">EMP-0033</td>
+                  <td>Finance</td>
+                  <td>Financial Analyst</td>
+                  <td><span class="badge-chip green">Active</span></td>
+                </tr>
+                <tr class="row-clickable" onclick="inspectEmployee('Lena Cho', 'EMP-0056', 'Product Designer', 'Design', 'On Leave', '—', 'lena.cho@staffdesk.io')">
+                  <td><div style="font-weight: 600;">Lena Cho</div></td>
+                  <td class="font-mono" style="color: var(--brand-primary); font-weight: 600;">EMP-0056</td>
+                  <td>Design</td>
+                  <td>Product Designer</td>
+                  <td><span class="badge-chip gray">On Leave</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- MOBILE CARD LIST -->
+          <div class="mobile-card-list">
+            <div class="mobile-data-card" onclick="inspectEmployee('Aisha Rahman', 'EMP-0104', 'HR Administrator', 'People Ops', 'Active', '09:02 AM', 'aisha.rahman@staffdesk.io')">
+              <div class="mobile-card-header">
+                <div><div style="font-weight: 600; font-size: 14.5px;">Aisha Rahman</div><div style="font-size: 12px; color: var(--text-muted);">HR Administrator · People Ops</div></div>
+                <span class="badge-chip green">Active</span>
+              </div>
+              <div class="mobile-card-body">
+                <span>Code: <strong class="font-mono" style="color:var(--brand-primary);">EMP-0104</strong></span>
+                <span style="color:var(--brand-primary); font-weight:600;">Tap to inspect →</span>
+              </div>
+            </div>
+
+            <div class="mobile-data-card" onclick="inspectEmployee('Daniel Kim', 'EMP-0089', 'Backend Engineer', 'Engineering', 'Active', '08:47 AM', 'daniel.kim@staffdesk.io')">
+              <div class="mobile-card-header">
+                <div><div style="font-weight: 600; font-size: 14.5px;">Daniel Kim</div><div style="font-size: 12px; color: var(--text-muted);">Backend Engineer · Engineering</div></div>
+                <span class="badge-chip green">Active</span>
+              </div>
+              <div class="mobile-card-body">
+                <span>Code: <strong class="font-mono" style="color:var(--brand-primary);">EMP-0089</strong></span>
+                <span style="color:var(--brand-primary); font-weight:600;">Tap to inspect →</span>
+              </div>
+            </div>
+
+            <div class="mobile-data-card" onclick="inspectEmployee('Priya Sharma', 'EMP-0033', 'Financial Analyst', 'Finance', 'Active', '09:22 AM', 'priya.sharma@staffdesk.io')">
+              <div class="mobile-card-header">
+                <div><div style="font-weight: 600; font-size: 14.5px;">Priya Sharma</div><div style="font-size: 12px; color: var(--text-muted);">Financial Analyst · Finance</div></div>
+                <span class="badge-chip green">Active</span>
+              </div>
+              <div class="mobile-card-body">
+                <span>Code: <strong class="font-mono" style="color:var(--brand-primary);">EMP-0033</strong></span>
+                <span style="color:var(--brand-primary); font-weight:600;">Tap to inspect →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUBVIEW 3: DEPARTMENTS -->
+      <section class="subview fade-up" id="subview-departments">
+        <div style="margin-bottom: 20px;">
+          <h1 class="font-heading" style="font-size: 24px; margin: 0 0 4px;">Departments</h1>
+          <p style="color: var(--text-muted); margin: 0; font-size: 13.5px;">Departmental hierarchy, headcounts, and assigned heads.</p>
+        </div>
+
+        <div class="dept-grid">
+          <div class="dept-card">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: var(--emerald-bg); color: var(--emerald-text); display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l9-6 9 6v12"/></svg>
+            </div>
+            <h3 style="margin: 0 0 4px; font-size: 15px;">Engineering</h3>
+            <p style="color: var(--text-muted); font-size: 12.5px; margin: 0 0 16px;">Core platform engineering & architecture</p>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 12px;">
+              <span style="color: var(--text-muted);">Department Head</span>
+              <strong style="color: var(--text-primary);">Daniel Kim</strong>
+            </div>
+          </div>
+
+          <div class="dept-card">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: var(--brand-light); color: var(--brand-primary); display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+            </div>
+            <h3 style="margin: 0 0 4px; font-size: 15px;">People Ops</h3>
+            <p style="color: var(--text-muted); font-size: 12.5px; margin: 0 0 16px;">Talent acquisition & HR administration</p>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 12px;">
+              <span style="color: var(--text-muted);">Department Head</span>
+              <strong style="color: var(--text-primary);">Aisha Rahman</strong>
+            </div>
+          </div>
+
+          <div class="dept-card">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: var(--amber-bg); color: var(--amber-text); display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+            </div>
+            <h3 style="margin: 0 0 4px; font-size: 15px;">Finance</h3>
+            <p style="color: var(--text-muted); font-size: 12.5px; margin: 0 0 16px;">Financial planning, payroll & reporting</p>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 12px;">
+              <span style="color: var(--text-muted);">Department Head</span>
+              <strong style="color: var(--text-primary);">Priya Sharma</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUBVIEW 4: ATTENDANCE -->
+      <section class="subview fade-up" id="subview-attendance">
+        <div class="hero-clock-card">
+          <div>
+            <div class="font-mono font-heading" id="hero-clock-text" style="font-size: 32px; font-weight: 700;">09:41:02</div>
+            <div style="font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 4px;">Wednesday, July 29 · Clocked in at 09:02 AM</div>
+          </div>
+          <button class="btn-primary" style="background: rgba(255,255,255,0.15); color: #FFF; border: 1px solid rgba(255,255,255,0.2); height: 40px; padding: 0 20px;" onclick="toggleClockStatus(this)">Clock Out</button>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-head"><h3>30-Day Shift History</h3></div>
+          
+          <div class="desktop-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Total Hours</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Jul 29, 2026</td><td class="font-mono">09:02 AM</td><td class="font-mono">—</td><td>—</td><td><span class="badge-chip green">In Progress</span></td></tr>
+                <tr><td>Jul 28, 2026</td><td class="font-mono">08:58 AM</td><td class="font-mono">06:04 PM</td><td>9h 06m</td><td><span class="badge-chip green">Complete</span></td></tr>
+                <tr><td>Jul 27, 2026</td><td class="font-mono">09:11 AM</td><td class="font-mono">05:52 PM</td><td>8h 41m</td><td><span class="badge-chip green">Complete</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mobile-card-list">
+            <div class="mobile-data-card">
+              <div class="mobile-card-header">
+                <div><div style="font-weight: 600;">Jul 29, 2026</div><div style="font-size: 12px; color: var(--text-muted);">Clock In: <strong class="font-mono">09:02 AM</strong></div></div>
+                <span class="badge-chip green">In Progress</span>
+              </div>
+            </div>
+            <div class="mobile-data-card">
+              <div class="mobile-card-header">
+                <div><div style="font-weight: 600;">Jul 28, 2026</div><div style="font-size: 12px; color: var(--text-muted);">08:58 AM → 06:04 PM (9h 06m)</div></div>
+                <span class="badge-chip green">Complete</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUBVIEW 5: LEAVE -->
+      <section class="subview fade-up" id="subview-leave">
+        <div style="margin-bottom: 20px;">
+          <h1 class="font-heading" style="font-size: 24px; margin: 0 0 4px;">Leave Requests</h1>
+          <p style="color: var(--text-muted); margin: 0; font-size: 13.5px;">Balances, requests, and approval workflow queue.</p>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-head">
+            <h3>Pending Team Leave Requests</h3>
+          </div>
+          
+          <div class="desktop-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr><th>Employee</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="leave-table-body">
+                <tr id="leave-row-1">
+                  <td><div style="font-weight: 600;">Grace Lee</div><div style="font-size: 11.5px; color: var(--text-muted);">EMP-0071</div></td>
+                  <td>Casual Leave</td>
+                  <td class="font-mono">2026-08-03</td>
+                  <td>1 day</td>
+                  <td><span class="badge-chip amber">Pending</span></td>
+                  <td>
+                    <button class="btn-primary" style="padding: 4px 10px; font-size: 11.5px;" onclick="approveLeave('leave-row-1', 'm-leave-1', 'Grace Lee')">Approve</button>
+                    <button class="btn-secondary" style="padding: 4px 10px; font-size: 11.5px; margin-left: 4px;" onclick="rejectLeave('leave-row-1', 'm-leave-1', 'Grace Lee')">Reject</button>
+                  </td>
+                </tr>
+                <tr id="leave-row-2">
+                  <td><div style="font-weight: 600;">Carol Davis</div><div style="font-size: 11.5px; color: var(--text-muted);">EMP-0034</div></td>
+                  <td>Earned Leave</td>
+                  <td class="font-mono">2026-08-18 → 2026-08-22</td>
+                  <td>5 days</td>
+                  <td><span class="badge-chip amber">Pending</span></td>
+                  <td>
+                    <button class="btn-primary" style="padding: 4px 10px; font-size: 11.5px;" onclick="approveLeave('leave-row-2', 'm-leave-2', 'Carol Davis')">Approve</button>
+                    <button class="btn-secondary" style="padding: 4px 10px; font-size: 11.5px; margin-left: 4px;" onclick="rejectLeave('leave-row-2', 'm-leave-2', 'Carol Davis')">Reject</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- MOBILE CARD LIST -->
+          <div class="mobile-card-list">
+            <div class="mobile-data-card" id="m-leave-1">
+              <div class="mobile-card-header">
+                <div><div style="font-weight: 600; font-size: 14.5px;">Grace Lee</div><div style="font-size: 12px; color: var(--text-muted);">Casual Leave · EMP-0071</div></div>
+                <span class="badge-chip amber">Pending</span>
+              </div>
+              <div class="mobile-card-body" style="flex-direction: column; gap: 8px;">
+                <div>Date: <strong class="font-mono">2026-08-03 (1 day)</strong></div>
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                  <button class="btn-primary" style="flex: 1; padding: 6px;" onclick="approveLeave('leave-row-1', 'm-leave-1', 'Grace Lee')">Approve</button>
+                  <button class="btn-secondary" style="flex: 1; padding: 6px;" onclick="rejectLeave('leave-row-1', 'm-leave-1', 'Grace Lee')">Reject</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mobile-data-card" id="m-leave-2">
+              <div class="mobile-card-header">
+                <div><div style="font-weight: 600; font-size: 14.5px;">Carol Davis</div><div style="font-size: 12px; color: var(--text-muted);">Earned Leave · EMP-0034</div></div>
+                <span class="badge-chip amber">Pending</span>
+              </div>
+              <div class="mobile-card-body" style="flex-direction: column; gap: 8px;">
+                <div>Dates: <strong class="font-mono">2026-08-18 → 08-22 (5 days)</strong></div>
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                  <button class="btn-primary" style="flex: 1; padding: 6px;" onclick="approveLeave('leave-row-2', 'm-leave-2', 'Carol Davis')">Approve</button>
+                  <button class="btn-secondary" style="flex: 1; padding: 6px;" onclick="rejectLeave('leave-row-2', 'm-leave-2', 'Carol Davis')">Reject</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- INSPECTOR DRAWER -->
+<div class="drawer-backdrop" id="drawer" onclick="closeDrawer()">
+  <div class="drawer-content" onclick="event.stopPropagation()">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+      <div style="font-weight: 700; font-size: 15px;" class="font-heading">Employee Profile Inspector</div>
+      <button style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted);" onclick="closeDrawer()">✕</button>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+      <div class="user-avatar-sm" style="width: 48px; height: 48px; font-size: 16px;" id="drw-avatar">AR</div>
+      <div>
+        <h2 style="margin: 0; font-size: 17px;" id="drw-name">Aisha Rahman</h2>
+        <div style="font-size: 13px; color: var(--text-muted);" id="drw-role">HR Administrator</div>
+        <div class="font-mono" style="font-size: 12px; color: var(--brand-primary); font-weight: 600; margin-top: 2px;" id="drw-code">EMP-0104</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; flex: 1;">
+      <div>
+        <label style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Department</label>
+        <div style="font-weight: 600; font-size: 14px; margin-top: 2px;" id="drw-dept">People Ops</div>
+      </div>
+
+      <div>
+        <label style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Work Email</label>
+        <div class="font-mono" style="font-size: 13px; margin-top: 2px;" id="drw-email">aisha.rahman@staffdesk.io</div>
+      </div>
+
+      <div>
+        <label style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Shift Status</label>
+        <div style="font-weight: 600; font-size: 13.5px; margin-top: 2px;" id="drw-status">Present (Clocked in 09:02 AM)</div>
+      </div>
+    </div>
+
+    <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-color);">
+      <button class="btn-primary" style="width: 100%; height: 38px;" onclick="triggerToast('Direct message channel opened'); closeDrawer();">Send Message</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMMAND PALETTE -->
+<div class="cmd-backdrop" id="cmd" onclick="toggleCmdPalette()">
+  <div class="cmd-modal" onclick="event.stopPropagation()">
+    <input type="text" placeholder="Type a command or search view..." style="width: 100%; height: 48px; padding: 0 18px; border: none; border-bottom: 1px solid var(--border-color); background: transparent; font-size: 14px; outline: none; color: var(--text-primary);" autofocus>
+    <div style="padding: 10px; max-height: 260px; overflow-y: auto;">
+      <div style="padding: 9px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between;" onclick="switchNavView('dashboard', document.getElementById('nav-dashboard')); toggleCmdPalette();">
+        <span>Go to Overview Dashboard</span> <kbd style="font-size: 10px; border: 1px solid var(--border-color); padding: 1px 4px; border-radius: 3px;">Nav</kbd>
+      </div>
+      <div style="padding: 9px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between;" onclick="switchNavView('employees', document.getElementById('nav-employees')); toggleCmdPalette();">
+        <span>Open Employee Directory</span> <kbd style="font-size: 10px; border: 1px solid var(--border-color); padding: 1px 4px; border-radius: 3px;">Nav</kbd>
+      </div>
+      <div style="padding: 9px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between;" onclick="toggleTheme(); toggleCmdPalette();">
+        <span>Toggle Dark / Light Theme</span> <kbd style="font-size: 10px; border: 1px solid var(--border-color); padding: 1px 4px; border-radius: 3px;">Theme</kbd>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toast-container"></div>
+
+<script>
+function enterApp() {
+  document.getElementById('view-login').style.display = 'none';
+  document.getElementById('view-app').classList.add('active');
+  triggerToast('Welcome Aisha! Workspace Restored.');
+}
+
+function switchNavView(viewId, navEl) {
+  document.querySelectorAll('.subview').forEach(v => v.classList.remove('active'));
+  document.getElementById('subview-' + viewId).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  const titles = { dashboard: 'Overview Dashboard', employees: 'Employee Directory', departments: 'Department Hierarchy', attendance: 'Attendance & Clock Log', leave: 'Leave Requests & Approvals' };
+  document.getElementById('topbar-title').textContent = titles[viewId];
+  toggleMobileSidebar(false);
+}
+
+function toggleMobileSidebar(show) {
+  const sidebar = document.getElementById('app-sidebar');
+  const backdrop = document.getElementById('mobile-backdrop');
+  if (show) {
+    sidebar.classList.add('mobile-open');
+    backdrop.classList.add('active');
+  } else {
+    sidebar.classList.remove('mobile-open');
+    backdrop.classList.remove('active');
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  triggerToast('Theme switched to ' + next.toUpperCase() + ' mode');
+}
+
+function inspectEmployee(name, code, role, dept, status, time, email) {
+  document.getElementById('drw-name').textContent = name;
+  document.getElementById('drw-code').textContent = code;
+  document.getElementById('drw-role').textContent = role;
+  document.getElementById('drw-dept').textContent = dept;
+  document.getElementById('drw-status').textContent = status + ' (' + time + ')';
+  document.getElementById('drw-email').textContent = email;
+  document.getElementById('drw-avatar').textContent = name.split(' ').map(n=>n[0]).join('');
+  document.getElementById('drawer').classList.add('active');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('active');
+}
+
+function toggleCmdPalette() {
+  const cmd = document.getElementById('cmd');
+  cmd.classList.toggle('active');
+}
+
+function triggerToast(msg) {
+  const wrap = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast-item';
+  toast.innerHTML = `<span style="color:#0284C7;">✓</span> <span>${msg}</span>`;
+  wrap.appendChild(toast);
+  setTimeout(() => toast.remove(), 2800);
+}
+
+function toggleClockStatus(btn) {
+  if (btn.textContent === 'Clock Out') {
+    btn.textContent = 'Clock In';
+    triggerToast('Clocked Out Successfully at ' + new Date().toLocaleTimeString('en-GB'));
+  } else {
+    btn.textContent = 'Clock Out';
+    triggerToast('Clocked In Successfully at ' + new Date().toLocaleTimeString('en-GB'));
+  }
+}
+
+let pendingCount = 2;
+function approveLeave(dtRowId, mRowId, name) {
+  [dtRowId, mRowId].forEach(id => {
+    const row = document.getElementById(id);
+    if (!row) return;
+    const badge = row.querySelector('.badge-chip');
+    if (badge) { badge.className = 'badge-chip green'; badge.textContent = 'Approved'; }
+    row.querySelectorAll('button').forEach(b => b.disabled = true);
+  });
+  pendingCount = Math.max(0, pendingCount - 1);
+  updatePendingBadge();
+  triggerToast('Leave Approved for ' + name);
+}
+
+function rejectLeave(dtRowId, mRowId, name) {
+  [dtRowId, mRowId].forEach(id => {
+    const row = document.getElementById(id);
+    if (!row) return;
+    const badge = row.querySelector('.badge-chip');
+    if (badge) { badge.className = 'badge-chip rose'; badge.textContent = 'Rejected'; }
+    row.querySelectorAll('button').forEach(b => b.disabled = true);
+  });
+  pendingCount = Math.max(0, pendingCount - 1);
+  updatePendingBadge();
+  triggerToast('Leave Rejected for ' + name);
+}
+
+function updatePendingBadge() {
+  document.getElementById('sidebar-pending-badge').textContent = pendingCount;
+  document.getElementById('metric-pending-val').textContent = pendingCount;
+}
+
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    toggleCmdPalette();
+  }
+  if (e.key === 'Escape') {
+    document.getElementById('cmd').classList.remove('active');
+    closeDrawer();
+  }
+});
+
+function tick() {
+  const t = new Date().toLocaleTimeString('en-GB');
+  const elA = document.getElementById('live-time');
+  const elB = document.getElementById('hero-clock-text');
+  if (elA) elA.textContent = t;
+  if (elB) elB.textContent = t;
+}
+setInterval(tick, 1000);
+tick();
+</script>
+
+</body>
+</html>

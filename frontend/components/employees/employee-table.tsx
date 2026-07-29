@@ -7,109 +7,119 @@ export function EmployeeTable({
   employees,
   onEdit,
   onDelete,
+  onInspect,
 }: {
   employees: Employee[];
   onEdit: (employee: Employee) => void;
   onDelete: (employee: Employee) => void;
+  onInspect?: (employee: Employee) => void;
 }) {
   if (employees.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-line bg-surface py-16 text-center">
-        <p className="font-display text-base font-semibold text-ink">No employees yet</p>
-        <p className="text-sm text-muted">Add your first employee to get started.</p>
+      <div className="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-line bg-card py-16 text-center shadow-sm">
+        <p className="font-display text-base font-semibold text-ink">No employees found</p>
+        <p className="text-xs sm:text-sm text-muted">Add your first employee to get started.</p>
       </div>
     );
   }
 
   return (
     <>
-      {/* Card layout below sm: every field gets its own labeled row, no
-          horizontal scroll and nothing hidden. */}
-      <div className="space-y-3 sm:hidden">
+      {/* Mobile Card List View (< 768px) */}
+      <div className="mobile-card-list space-y-3">
         {employees.map((emp) => (
-          <div key={emp.id} className="rounded-lg border border-line bg-surface p-4">
-            <div className="flex items-start justify-between gap-3">
+          <div
+            key={emp.id}
+            onClick={() => onInspect?.(emp)}
+            className="mobile-data-card bg-card border border-line rounded-xl p-4 shadow-sm flex flex-col gap-2.5 cursor-pointer hover:border-lineHover active:bg-canvas"
+          >
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <Avatar firstName={emp.firstName} lastName={emp.lastName} />
                 <div>
-                  <div className="font-medium text-ink">
+                  <div className="font-semibold text-ink text-sm">
                     {emp.firstName} {emp.lastName}
                   </div>
-                  <div className="text-xs text-muted">{emp.email}</div>
-                  <div className="font-mono text-[11px] text-muted">{emp.employeeCode}</div>
+                  <div className="text-xs text-muted">
+                    {emp.departmentName || "General"}
+                  </div>
                 </div>
               </div>
               <StatusBadge status={emp.status} />
             </div>
-            <dl className="mt-3 space-y-1.5 text-sm">
-              <div className="flex items-center justify-between gap-3">
-                <dt className="text-xs uppercase tracking-wide text-muted">Department</dt>
-                <dd className="text-right text-ink">{emp.departmentName ?? "—"}</dd>
+
+            <div className="flex items-center justify-between text-xs text-muted border-t border-line pt-2.5">
+              <span>Code: <strong className="font-mono text-accent">{emp.employeeCode}</strong></span>
+              <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => onEdit(emp)}>
+                  Edit
+                </Button>
+                <Button variant="ghost" className="px-2 py-1 text-xs text-roseTxt" onClick={() => onDelete(emp)}>
+                  Delete
+                </Button>
               </div>
-              <div className="flex items-center justify-between gap-3">
-                <dt className="text-xs uppercase tracking-wide text-muted">Manager</dt>
-                <dd className="text-right text-ink">{emp.managerName ?? "—"}</dd>
-              </div>
-            </dl>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="ghost" className="px-2 py-1" onClick={() => onEdit(emp)}>
-                Edit
-              </Button>
-              <Button
-                variant="ghost"
-                className="px-2 py-1 text-status-terminated hover:bg-status-terminatedBg"
-                onClick={() => onDelete(emp)}
-              >
-                Delete
-              </Button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Table layout at sm and up */}
-      <div className="hidden overflow-x-auto rounded-lg border border-line bg-surface sm:block">
-        <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="border-b border-line bg-canvas text-xs uppercase tracking-wide text-muted">
+      {/* Desktop Table View (>= 768px) */}
+      <div className="desktop-table-wrapper bg-card border border-line rounded-xl shadow-sm overflow-hidden">
+        <table className="data-table w-full text-left border-collapse">
+          <thead>
             <tr>
-              <th className="px-4 py-3 font-medium">Employee</th>
-              <th className="px-4 py-3 font-medium">Code</th>
-              <th className="px-4 py-3 font-medium">Department</th>
-              <th className="hidden px-4 py-3 font-medium md:table-cell">Manager</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium text-right">Actions</th>
+              <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line">
+                Employee
+              </th>
+              <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line">
+                Code
+              </th>
+              <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line">
+                Department
+              </th>
+              <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line">
+                Manager
+              </th>
+              <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line">
+                Status
+              </th>
+              <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line text-right">
+                Actions
+              </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-line">
+          <tbody className="divide-y divide-line text-sm">
             {employees.map((emp) => (
-              <tr key={emp.id} className="hover:bg-canvas/60">
-                <td className="px-4 py-3">
+              <tr
+                key={emp.id}
+                onClick={() => onInspect?.(emp)}
+                className="row-clickable hover:bg-canvas cursor-pointer transition-colors"
+              >
+                <td className="px-5 py-3.5">
                   <div className="flex items-center gap-3">
                     <Avatar firstName={emp.firstName} lastName={emp.lastName} />
                     <div>
-                      <div className="font-medium text-ink">
+                      <div className="font-semibold text-ink">
                         {emp.firstName} {emp.lastName}
                       </div>
                       <div className="text-xs text-muted">{emp.email}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 font-mono text-xs text-muted">{emp.employeeCode}</td>
-                <td className="px-4 py-3 text-muted">{emp.departmentName ?? "—"}</td>
-                <td className="hidden px-4 py-3 text-muted md:table-cell">{emp.managerName ?? "—"}</td>
-                <td className="px-4 py-3">
+                <td className="px-5 py-3.5 font-mono text-xs font-semibold text-accent">
+                  {emp.employeeCode}
+                </td>
+                <td className="px-5 py-3.5 text-muted">{emp.departmentName ?? "—"}</td>
+                <td className="px-5 py-3.5 text-muted">{emp.managerName ?? "—"}</td>
+                <td className="px-5 py-3.5">
                   <StatusBadge status={emp.status} />
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" className="px-2 py-1" onClick={() => onEdit(emp)}>
+                    <Button variant="ghost" className="px-2.5 py-1 text-xs" onClick={() => onEdit(emp)}>
                       Edit
                     </Button>
-                    <Button
-                      variant="ghost"
-                      className="px-2 py-1 text-status-terminated hover:bg-status-terminatedBg"
-                      onClick={() => onDelete(emp)}
-                    >
+                    <Button variant="ghost" className="px-2.5 py-1 text-xs text-roseTxt hover:bg-roseBg" onClick={() => onDelete(emp)}>
                       Delete
                     </Button>
                   </div>

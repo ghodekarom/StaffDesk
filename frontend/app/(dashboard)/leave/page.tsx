@@ -15,11 +15,13 @@ import { LeaveRequestForm } from "@/components/leave/leave-request-form";
 import { LeaveBalanceCards } from "@/components/leave/leave-balance-cards";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast-notifications";
 
 const PAGE_SIZE = 20;
 
 export default function LeavePage() {
   const { role } = useAuth();
+  const { showToast } = useToast();
   const canReviewTeam = role === "ADMIN" || role === "HR" || role === "MANAGER";
 
   const [page, setPage] = useState<LeaveRequestPage | null>(null);
@@ -58,9 +60,14 @@ export default function LeavePage() {
   }, [load, pageIndex]);
 
   async function handleCreate(data: LeaveRequestCreateRequest) {
-    await api.post<LeaveRequestRecord>("/leave/requests", data);
-    setShowForm(false);
-    load(pageIndex);
+    try {
+      await api.post<LeaveRequestRecord>("/leave/requests", data);
+      setShowForm(false);
+      load(pageIndex);
+      showToast("Leave request submitted successfully", "success");
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : "Failed to request leave.", "error");
+    }
   }
 
   async function handleCancel(request: LeaveRequestRecord) {
@@ -70,8 +77,9 @@ export default function LeavePage() {
     try {
       await api.post(`/leave/requests/${request.id}/cancel`);
       load(pageIndex);
+      showToast("Leave request cancelled", "success");
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : "Failed to cancel leave request.");
+      showToast(err instanceof ApiError ? err.message : "Failed to cancel leave request.", "error");
     }
   }
 

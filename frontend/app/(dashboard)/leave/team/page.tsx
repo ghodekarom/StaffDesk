@@ -5,11 +5,13 @@ import { api, ApiError } from "@/lib/api";
 import { LeaveRequestRecord, LeaveRequestPage, LeaveStatus, LEAVE_STATUS_LABEL } from "@/types/leave";
 import { LeaveRequestTable } from "@/components/leave/leave-request-table";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast-notifications";
 
 const PAGE_SIZE = 20;
 const STATUS_FILTERS: (LeaveStatus | "ALL")[] = ["PENDING", "APPROVED", "REJECTED", "ALL"];
 
 export default function TeamLeavePage() {
+  const { showToast } = useToast();
   const [page, setPage] = useState<LeaveRequestPage | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [statusFilter, setStatusFilter] = useState<LeaveStatus | "ALL">("PENDING");
@@ -53,8 +55,9 @@ export default function TeamLeavePage() {
     try {
       await api.post(`/leave/requests/${request.id}/approve`, {});
       load(pageIndex, statusFilter);
+      showToast(`Leave approved for ${request.employeeName}`, "success");
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : "Failed to approve leave request.");
+      showToast(err instanceof ApiError ? err.message : "Failed to approve leave request.", "error");
     }
   }
 
@@ -63,8 +66,9 @@ export default function TeamLeavePage() {
     try {
       await api.post(`/leave/requests/${request.id}/reject`, { note });
       load(pageIndex, statusFilter);
+      showToast(`Leave rejected for ${request.employeeName}`, "success");
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : "Failed to reject leave request.");
+      showToast(err instanceof ApiError ? err.message : "Failed to reject leave request.", "error");
     }
   }
 

@@ -19,17 +19,24 @@ export function ClockWidget({ onChange }: { onChange?: () => void }) {
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [liveTime, setLiveTime] = useState("");
+
+  useEffect(() => {
+    const updateTime = () => {
+      setLiveTime(new Date().toLocaleTimeString("en-GB"));
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const loadToday = useCallback(async () => {
     setLoading(true);
     try {
       const date = todayIso();
-      // /attendance/me is a general history endpoint -- narrowing from/to to
-      // today is the simplest way to get "is there a record for today yet".
       const page = await api.get<AttendancePage>("/attendance/me", { from: date, to: date, size: 1 });
       setToday(page.content[0] ?? null);
     } catch {
-      // Non-fatal: widget just falls back to the "not clocked in" state.
       setToday(null);
     } finally {
       setLoading(false);
@@ -71,34 +78,66 @@ export function ClockWidget({ onChange }: { onChange?: () => void }) {
   const clockedIn = today?.clockIn != null;
   const clockedOut = today?.clockOut != null;
 
+  const formatDateString = () => {
+    return new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const statusDetail = clockedOut
+    ? `Shift completed (Out: ${formatTime(today?.clockOut ?? null)})`
+    : clockedIn
+    ? `Clocked in at ${formatTime(today?.clockIn ?? null)}`
+    : "Not clocked in yet today";
+
   return (
-    <div className="flex items-center justify-between rounded-lg border border-line bg-surface p-5">
-      <div>
-        <p className="text-sm font-medium text-ink">Today</p>
-        {loading ? (
-          <p className="text-sm text-muted">Loading…</p>
-        ) : (
-          <p className="text-sm text-muted">
-            In: <span className="text-ink">{formatTime(today?.clockIn ?? null)}</span>
-            {"   ·   "}
-            Out: <span className="text-ink">{formatTime(today?.clockOut ?? null)}</span>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 md:p-8 text-white shadow-lg border border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+      {/* Background radial highlight */}
+      <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
+      <div className="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 flex flex-col gap-1.5">
+        <div className="font-mono text-3xl md:text-4xl font-bold tracking-tight text-white flex items-center gap-2">
+          {liveTime || "00:00:00"}
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        </div>
+        <div className="text-xs sm:text-sm text-slate-300 font-medium">
+          {formatDateString()} &middot; <span className={clockedIn && !clockedOut ? "text-emerald-400 font-semibold" : "text-slate-300"}>{statusDetail}</span>
+        </div>
+        {actionError && (
+          <p className="mt-1 text-xs text-rose-400 font-semibold bg-rose-500/15 border border-rose-500/30 px-2.5 py-1 rounded-md self-start">
+            {actionError}
           </p>
         )}
-        {actionError && <p className="mt-1 text-sm text-status-terminated">{actionError}</p>}
       </div>
 
-      {!loading &&
-        (clockedOut ? (
-          <span className="text-sm text-muted">Done for today</span>
+      <div className="relative z-10 flex items-center">
+        {loading ? (
+          <span className="text-xs text-slate-400 font-medium animate-pulse">Loading status…</span>
+        ) : clockedOut ? (
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-400">
+            Done for today
+          </span>
         ) : clockedIn ? (
-          <Button onClick={handleClockOut} disabled={submitting}>
-            {submitting ? "Clocking out…" : "Clock out"}
+          <Button
+            onClick={handleClockOut}
+            disabled={submitting}
+            className="bg-white/15 hover:bg-white/25 text-white border border-white/20 px-5 py-2 font-semibold text-xs sm:text-sm rounded-lg transition-all active:scale-95 duration-150"
+          >
+            {submitting ? "Clocking out…" : "Clock Out"}
           </Button>
         ) : (
-          <Button onClick={handleClockIn} disabled={submitting}>
-            {submitting ? "Clocking in…" : "Clock in"}
+          <Button
+            onClick={handleClockIn}
+            disabled={submitting}
+            className="bg-white/15 hover:bg-white/25 text-white border border-white/20 px-5 py-2 font-semibold text-xs sm:text-sm rounded-lg transition-all active:scale-95 duration-150"
+          >
+            {submitting ? "Clocking in…" : "Clock In"}
           </Button>
-        ))}
+        )}
+      </div>
     </div>
   );
 }

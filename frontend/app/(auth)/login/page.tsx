@@ -1,99 +1,136 @@
 "use client";
-import { useState, FormEvent, Suspense } from "react";
+
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 function LoginForm() {
-  const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { login } = useAuth();
+
+  const [username, setUsername] = useState("aisha.rahman@staffdesk.io");
+  const [password, setPassword] = useState("••••••••••••");
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  async function handleSubmit(e: FormEvent) {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsSubmitting(true);
+    setSubmitting(true);
     try {
-      await login({ email, password });
-      const redirectTo = searchParams.get("from") ?? "/employees";
-      router.push(redirectTo);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      await login({ email: username, password });
+      const next = searchParams.get("next") ?? "/";
+      router.replace(next);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Authentication failed";
+      setError(msg);
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
-  }
+  };
+
   return (
-    <div className="relative flex min-h-[100dvh] items-center justify-center bg-canvas px-4">
-      <div className="absolute right-5 top-5">
-        <ThemeToggle />
-      </div>
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-5 rounded-lg border border-line bg-surface p-8 shadow-sm"
-      >
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-              <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18" />
-              <path d="M6 12h12M9 6h.01M9 9h.01M15 6h.01M15 9h.01M9 16h.01M15 16h.01" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="font-display text-lg font-semibold text-ink">Sign in to StaffDesk</h1>
-            <p className="text-xs text-muted">Employee management, all in one place.</p>
-          </div>
+    <div className="flex min-h-screen">
+      {/* Brand Hero Panel */}
+      <div className="hidden lg:flex flex-[1.1] bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white p-14 flex-col justify-between relative overflow-hidden">
+        <div className="font-display text-xl font-bold flex items-center gap-2 relative z-10">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse-ring"></span>
+          StaffDesk
         </div>
-        {error && (
-          <p className="rounded-md bg-status-terminatedBg px-3 py-2 text-sm text-status-terminated">
-            {error}
+
+        <div className="relative z-10">
+          <h1 className="font-display text-4xl leading-tight font-bold mb-4 max-w-lg">
+            Workforce operations, managed in one system.
+          </h1>
+          <p className="text-slate-300 text-base max-w-md">
+            Authenticated attendance logging, departmental rosters, and leave approvals — shift after shift.
           </p>
-        )}
-        <div className="space-y-1">
-          <label htmlFor="email" className="text-sm font-medium text-ink">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@company.com"
-            className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none"
-          />
+
+          <div className="flex gap-8 mt-10">
+            <div>
+              <div className="font-display text-2xl font-bold">128</div>
+              <div className="text-xs text-slate-400">Employees Active</div>
+            </div>
+            <div>
+              <div className="font-display text-2xl font-bold">99.9%</div>
+              <div className="text-xs text-slate-400">Roster Uptime</div>
+            </div>
+            <div>
+              <div className="font-display text-2xl font-bold">6</div>
+              <div className="text-xs text-slate-400">Departments</div>
+            </div>
+          </div>
         </div>
-        <div className="space-y-1">
-          <label htmlFor="password" className="text-sm font-medium text-ink">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
-          />
+
+        <div className="text-xs text-slate-500 relative z-10">
+          © 2026 StaffDesk Operations Inc.
         </div>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-md bg-accent px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-accentHover disabled:opacity-50"
-        >
-          {isSubmitting ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
+      </div>
+
+      {/* Login Form Box */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-canvas">
+        <div className="w-full max-w-sm bg-surface border border-line p-8 rounded-xl shadow-sm">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-1">
+            Sign In
+          </div>
+          <h2 className="font-display text-2xl font-bold text-ink mb-1">
+            Welcome Back
+          </h2>
+          <p className="text-muted text-xs sm:text-sm mb-6">
+            Enter your credentials to access your organization workspace.
+          </p>
+
+          {error && (
+            <div className="mb-4 p-3 text-xs rounded-md bg-roseBg text-roseTxt border border-rosePri/20">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1.5">
+                Work Email / Username
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="w-full h-10 px-3 rounded-lg border border-line bg-input text-ink text-sm outline-none focus:border-accent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1.5">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full h-10 px-3 rounded-lg border border-line bg-input text-ink text-sm outline-none focus:border-accent"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full h-10 bg-accent hover:bg-accentHover text-white font-semibold rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50"
+            >
+              {submitting ? "Signing in..." : "Sign In to Dashboard"}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense>
       <LoginForm />
     </Suspense>
   );
