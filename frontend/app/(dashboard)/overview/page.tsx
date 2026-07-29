@@ -1,0 +1,259 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { api, ApiError } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+interface Employee { id: number; firstName: string; lastName: string; status: string; departmentName?: string; designation?: string; email?: string; employeeCode?: string; }
+interface Department { id: number; name: string; headName?: string; employeeCount?: number; }
+interface LeaveRequestRecord { id: number; employeeName?: string; leaveType: string; startDate: string; endDate: string; status: string; }
+interface PageShape<T> { content: T[]; totalElements: number; }
+interface AttendanceRecord { id?: number; employeeName?: string; employeeCode?: string; clockIn: string; status?: string; }
+interface AttendancePage { content: AttendanceRecord[]; totalElements: number; }
+
+function StatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: string }) {
+  return (
+    <div className="bg-surface border border-line rounded-xl p-5 shadow-sm flex flex-col gap-1 hover:border-lineHover transition-colors">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">{label}</div>
+      <div className={`font-display text-3xl font-bold ${accent ?? "text-ink"}`}>{value}</div>
+      {sub && <div className="text-xs text-muted mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 border-b border-line last:border-0 animate-pulse">
+      <div className="w-8 h-8 rounded-lg bg-line shrink-0" />
+      <div className="flex-1 space-y-1.5">
+        <div className="h-3 bg-line rounded w-1/3" />
+        <div className="h-2.5 bg-line rounded w-1/4" />
+      </div>
+      <div className="h-5 w-14 bg-line rounded-full" />
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const s = status?.toUpperCase();
+  if (s === "PENDING")
+    return <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amberBg text-amberTxt border border-amberPri/20">Pending</span>;
+  if (s === "APPROVED")
+    return <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emeraldBg text-emeraldTxt border border-emeraldPri/20">Approved</span>;
+  if (s === "PRESENT")
+    return <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emeraldBg text-emeraldTxt border border-emeraldPri/20">Present</span>;
+  if (s === "LATE")
+    return <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amberBg text-amberTxt border border-amberPri/20">Late</span>;
+  if (s === "ABSENT")
+    return <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-roseBg text-roseTxt border border-rosePri/20">Absent</span>;
+  return <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-line text-muted">{status}</span>;
+}
+
+function initials(name: string) {
+  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+}
+
+const AVATAR_COLORS = ["bg-sky-600","bg-indigo-600","bg-violet-600","bg-emerald-600","bg-amber-600","bg-rose-600"];
+function avatarColor(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+
+// ── Main Component ─────────────────────────────────────────────────────────────
+export default function OverviewPage() {
+  const { role } = useAuth();
+  const today = new Date().toLocaleDateString("en-IN", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
+
+  const [empCount, setEmpCount] = useState<number | null>(null);
+  const [deptCount, setDeptCount] = useState<number | null>(null);
+  const [pendingLeave, setPendingLeave] = useState<number | null>(null);
+  const [todayAttendance, setTodayAttendance] = useState<AttendanceRecord[]>([]);
+  const [recentLeave, setRecentLeave] = useState<LeaveRequestRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const canReview = role === "ADMIN" || role === "HR" || role === "MANAGER";
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const results = await Promise.allSettled([
+          api.get<PageShape<Employee>>("/employees", { size: 1 }),
+          api.get<PageShape<Department>>("/departments", { size: 1 }),
+          canReview
+            ? api.get<PageShape<LeaveRequestRecord>>("/leave/requests", { status: "PENDING", size: 1 })
+            : api.get<PageShape<LeaveRequestRecord>>("/leave/requests/me", { status: "PENDING", size: 1 }),
+          api.get<AttendancePage>("/attendance", { size: 5, sort: "clockIn,desc" }),
+          canReview
+            ? api.get<PageShape<LeaveRequestRecord>>("/leave/requests", { size: 5, sort: "createdAt,desc" })
+            : api.get<PageShape<LeaveRequestRecord>>("/leave/requests/me", { size: 5, sort: "createdAt,desc" }),
+        ]);
+
+        if (cancelled) return;
+
+        if (results[0].status === "fulfilled") setEmpCount(results[0].value?.totalElements ?? null);
+        if (results[1].status === "fulfilled") setDeptCount(results[1].value?.totalElements ?? null);
+        if (results[2].status === "fulfilled") setPendingLeave(results[2].value?.totalElements ?? null);
+        if (results[3].status === "fulfilled") setTodayAttendance(results[3].value?.content ?? []);
+        if (results[4].status === "fulfilled") setRecentLeave(results[4].value?.content ?? []);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof ApiError ? err.message : "Couldn't reach the server.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [canReview]);
+
+  return (
+    <div className="space-y-6 animate-fade-up">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-ink">Overview</h1>
+          <p className="text-xs text-muted mt-0.5">{today}</p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-rosePri/30 bg-roseBg px-4 py-3 text-sm text-roseTxt">
+          {error} — make sure the backend is running.
+        </div>
+      )}
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total Employees"
+          value={empCount ?? "—"}
+          sub="Across all departments"
+          accent="text-sky-600"
+        />
+        <StatCard
+          label="Departments"
+          value={deptCount ?? "—"}
+          sub="Active units"
+          accent="text-indigo-600"
+        />
+        <StatCard
+          label="Pending Leave"
+          value={pendingLeave ?? "—"}
+          sub={canReview ? "Awaiting your review" : "Your pending requests"}
+          accent={pendingLeave ? "text-amberTxt" : "text-ink"}
+        />
+        <StatCard
+          label="Live Clock"
+          value={new Date().toLocaleTimeString("en-IN", {
+            hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata",
+          })}
+          sub="India Standard Time"
+          accent="text-emeraldTxt"
+        />
+      </div>
+
+      {/* Two-col grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Recent Attendance */}
+        <div className="bg-surface border border-line rounded-xl shadow-sm overflow-hidden">
+          <div className="px-4 py-3.5 border-b border-line flex items-center justify-between">
+            <h2 className="font-semibold text-sm text-ink">Recent Attendance</h2>
+            <Link href="/attendance" className="text-xs text-accent hover:underline">View all →</Link>
+          </div>
+          {loading ? (
+            <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
+          ) : todayAttendance.length === 0 ? (
+            <div className="px-4 py-10 text-center text-sm text-muted">No attendance records yet today.</div>
+          ) : (
+            <ul>
+              {todayAttendance.map((rec, i) => {
+                const name = rec.employeeName ?? rec.employeeCode ?? "Employee";
+                const time = rec.clockIn
+                  ? new Date(rec.clockIn).toLocaleTimeString("en-IN", {
+                      hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata",
+                    })
+                  : "—";
+                return (
+                  <li key={rec.id ?? i} className="flex items-center gap-3 px-4 py-3 border-b border-line last:border-0 hover:bg-canvas transition-colors">
+                    <div className={`w-8 h-8 rounded-lg ${avatarColor(name)} text-white text-xs font-semibold flex items-center justify-center shrink-0`}>
+                      {initials(name)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-ink truncate">{name}</div>
+                      <div className="text-xs text-muted font-mono">{time}</div>
+                    </div>
+                    <StatusBadge status={rec.status ?? "PRESENT"} />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {/* Recent Leave */}
+        <div className="bg-surface border border-line rounded-xl shadow-sm overflow-hidden">
+          <div className="px-4 py-3.5 border-b border-line flex items-center justify-between">
+            <h2 className="font-semibold text-sm text-ink">
+              {canReview ? "Team Leave Requests" : "My Leave Requests"}
+            </h2>
+            <Link href={canReview ? "/leave/team" : "/leave"} className="text-xs text-accent hover:underline">
+              View all →
+            </Link>
+          </div>
+          {loading ? (
+            <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
+          ) : recentLeave.length === 0 ? (
+            <div className="px-4 py-10 text-center text-sm text-muted">No leave requests found.</div>
+          ) : (
+            <ul>
+              {recentLeave.map((req, i) => {
+                const name = req.employeeName ?? "Me";
+                const range = `${new Date(req.startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${new Date(req.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+                return (
+                  <li key={req.id ?? i} className="flex items-center gap-3 px-4 py-3 border-b border-line last:border-0 hover:bg-canvas transition-colors">
+                    <div className={`w-8 h-8 rounded-lg ${avatarColor(name)} text-white text-xs font-semibold flex items-center justify-center shrink-0`}>
+                      {initials(name)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-ink truncate">{name}</div>
+                      <div className="text-xs text-muted capitalize">{req.leaveType?.toLowerCase().replace("_", " ")} · {range}</div>
+                    </div>
+                    <StatusBadge status={req.status} />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {/* Quick Links */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Employees", href: "/employees", color: "bg-sky-500/10 text-sky-600 border-sky-500/20", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg> },
+          { label: "Departments", href: "/departments", color: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/></svg> },
+          { label: "Attendance", href: "/attendance", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg> },
+          { label: "Leave", href: "/leave", color: "bg-amber-500/10 text-amber-600 border-amber-500/20", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> },
+        ].map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border ${item.color} font-medium text-sm hover:opacity-80 transition-opacity`}
+          >
+            {item.icon}
+            {item.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
