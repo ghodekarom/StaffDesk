@@ -83,7 +83,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { theme, toggle: toggleTheme } = useTheme();
 
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [inspectData, setInspectData] = useState<EmployeeDrawerData | null>(null);
   const [liveTime, setLiveTime] = useState("");
@@ -130,10 +129,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       router.replace(`/login?from=${encodeURIComponent(pathname)}`);
     }
   }, [isInitializing, isAuthenticated, pathname, router]);
-
-  useEffect(() => {
-    setMobileNavOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -200,32 +195,13 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <ToastProvider>
       <div className="flex min-h-screen">
-        {/* Mobile Backdrop */}
-        {mobileNavOpen && (
-          <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden"
-            onClick={() => setMobileNavOpen(false)}
-          />
-        )}
 
-        {/* Sidebar Nav */}
-        <aside
-          className={`fixed md:sticky top-0 left-0 bottom-0 z-40 w-60 bg-sidebarBg text-white flex flex-col border-r border-white/10 transition-transform duration-200 ease-in-out md:translate-x-0 ${
-            mobileNavOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
+        {/* ── Desktop Sidebar (hidden on mobile) ───────────────────────── */}
+        <aside className="hidden md:flex sticky top-0 h-screen w-60 bg-sidebarBg text-white flex-col border-r border-white/10 shrink-0">
           {/* Logo */}
-          <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/10">
-            <div className="flex items-center gap-2 font-display text-lg font-bold text-white">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse-ring" />
-              StaffDesk
-            </div>
-            <button
-              onClick={() => setMobileNavOpen(false)}
-              className="md:hidden text-white/70 hover:text-white text-lg leading-none"
-            >
-              ✕
-            </button>
+          <div className="flex items-center gap-2 px-5 pt-5 pb-4 border-b border-white/10 font-display text-lg font-bold text-white">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse-ring" />
+            StaffDesk
           </div>
 
           {/* Nav links */}
@@ -243,7 +219,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors relative ${
+                      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                         active
                           ? "bg-sky-500/20 text-sky-400 font-semibold"
                           : "text-slate-400 hover:bg-white/5 hover:text-white"
@@ -293,29 +269,25 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        {/* Main Content */}
+        {/* ── Main Content ───────────────────────────────────────────────── */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Topbar */}
           <header className="h-14 px-4 sm:px-6 bg-surface border-b border-line flex items-center justify-between sticky top-0 z-30 gap-3">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setMobileNavOpen(true)}
-                className="md:hidden p-1.5 text-ink hover:bg-canvas rounded-md"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
-              </button>
-              <h1 className="font-semibold text-sm text-ink">{getTitle(pathname)}</h1>
+            <div className="flex items-center gap-2">
+              {/* Mobile: StaffDesk wordmark (no hamburger) */}
+              <span className="md:hidden flex items-center gap-1.5 font-display text-base font-bold text-ink">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-ring" />
+                StaffDesk
+              </span>
+              {/* Desktop: page title */}
+              <h1 className="hidden md:block font-semibold text-sm text-ink">{getTitle(pathname)}</h1>
             </div>
 
             <div className="flex items-center gap-2.5">
               {/* Search trigger */}
               <div
                 onClick={() => setCmdOpen(true)}
-                className="flex items-center gap-2 bg-input border border-line px-3 py-1.5 rounded-lg text-xs text-muted cursor-pointer hover:border-lineHover w-36 sm:w-52"
+                className="flex items-center gap-2 bg-input border border-line px-3 py-1.5 rounded-lg text-xs text-muted cursor-pointer hover:border-lineHover w-32 sm:w-52"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8" />
@@ -327,19 +299,77 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 </kbd>
               </div>
 
-              {/* IST Clock */}
+              {/* IST Clock — desktop only */}
               <div className="hidden sm:flex font-mono text-xs text-muted items-center gap-1.5 bg-canvas px-2.5 py-1.5 rounded-md border border-line whitespace-nowrap">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 <span>{liveTime}</span>
               </div>
+
+              {/* Mobile: theme toggle in topbar */}
+              <button
+                onClick={toggleTheme}
+                className="md:hidden w-8 h-8 rounded-md border border-line bg-input text-ink flex items-center justify-center hover:bg-canvas transition-colors"
+                title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+              </button>
             </div>
           </header>
 
-          {/* Page content */}
-          <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
+          {/* Page content — extra bottom padding on mobile for the tab bar */}
+          <main className="flex-1 p-4 sm:p-6 pb-24 md:pb-6 overflow-y-auto">
             {children}
           </main>
         </div>
+
+        {/* ── Mobile Bottom Tab Bar (hidden on desktop) ─────────────────── */}
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-sidebarBg border-t border-white/10">
+          <div className="flex items-stretch">
+            {items.map((item) => {
+              const active =
+                item.href === "/overview"
+                  ? pathname === "/overview"
+                  : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-semibold transition-colors ${
+                    active ? "text-sky-400" : "text-slate-500 hover:text-slate-300"
+                  }`}
+                >
+                  {/* Active indicator bar at top */}
+                  {active && (
+                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-sky-400" />
+                  )}
+
+                  {/* Icon with badge for leave */}
+                  <span className="relative">
+                    <span className={active ? "text-sky-400" : "text-slate-500"}>
+                      {NAV_ICONS[item.href]}
+                    </span>
+                    {item.href === "/leave" && pendingLeaveCount !== null && pendingLeaveCount > 0 && (
+                      <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-0.5 text-[9px] font-bold rounded-full bg-amber-400 text-slate-900 flex items-center justify-center leading-none">
+                        {pendingLeaveCount > 9 ? "9+" : pendingLeaveCount}
+                      </span>
+                    )}
+                  </span>
+
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+
+            {/* Sign out tab */}
+            <button
+              onClick={handleLogout}
+              className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-semibold text-slate-500 hover:text-rose-400 transition-colors"
+            >
+              <LogoutIcon />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </nav>
 
         <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
         <EmployeeDrawer data={inspectData} onClose={() => setInspectData(null)} />
