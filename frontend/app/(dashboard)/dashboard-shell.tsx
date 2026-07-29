@@ -305,14 +305,23 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <span>{liveTime}</span>
               </div>
 
-              {/* Mobile: theme toggle in topbar */}
-              <button
-                onClick={toggleTheme}
-                className="md:hidden w-8 h-8 rounded-md border border-line bg-input text-ink flex items-center justify-center hover:bg-canvas transition-colors"
-                title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              >
-                {theme === "dark" ? <SunIcon /> : <MoonIcon />}
-              </button>
+              {/* Mobile: theme & logout in topbar */}
+              <div className="md:hidden flex items-center gap-1.5">
+                <button
+                  onClick={toggleTheme}
+                  className="w-8 h-8 rounded-md border border-line bg-input text-ink flex items-center justify-center hover:bg-canvas transition-colors"
+                  title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                >
+                  {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-8 h-8 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 flex items-center justify-center hover:bg-rose-500/20 transition-colors"
+                  title="Sign Out"
+                >
+                  <LogoutIcon />
+                </button>
+              </div>
             </div>
           </header>
 
@@ -323,8 +332,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </div>
 
         {/* ── Mobile Bottom Tab Bar (hidden on desktop) ─────────────────── */}
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-sidebarBg border-t border-white/10">
-          <div className="flex items-stretch">
+        <nav className="md:hidden fixed bottom-4 inset-x-4 z-50 bg-surface border border-line rounded-2xl shadow-xl">
+          <div className="flex items-stretch justify-around px-2 py-1">
             {items.map((item) => {
               const active =
                 item.href === "/overview"
@@ -334,40 +343,27 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-semibold transition-colors ${
-                    active ? "text-sky-400" : "text-slate-500 hover:text-slate-300"
+                  className={`relative flex flex-col items-center justify-center gap-1 p-2 min-w-[3.5rem] rounded-xl transition-all ${
+                    active ? "bg-accent/10 text-accent" : "text-muted hover:bg-canvas hover:text-ink"
                   }`}
                 >
-                  {/* Active indicator bar at top */}
-                  {active && (
-                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-sky-400" />
-                  )}
-
                   {/* Icon with badge for leave */}
                   <span className="relative">
-                    <span className={active ? "text-sky-400" : "text-slate-500"}>
-                      {NAV_ICONS[item.href]}
-                    </span>
+                    {NAV_ICONS[item.href]}
                     {item.href === "/leave" && pendingLeaveCount !== null && pendingLeaveCount > 0 && (
-                      <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-0.5 text-[9px] font-bold rounded-full bg-amber-400 text-slate-900 flex items-center justify-center leading-none">
+                      <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] px-0.5 text-[9px] font-bold rounded-full bg-amber-500 text-white flex items-center justify-center leading-none shadow-sm">
                         {pendingLeaveCount > 9 ? "9+" : pendingLeaveCount}
                       </span>
                     )}
                   </span>
-
-                  <span>{item.label}</span>
+                  
+                  {/* Active label only for a cleaner modern look, or keep all labels */}
+                  <span className={`text-[9px] font-semibold tracking-wide ${active ? "opacity-100" : "opacity-70"}`}>
+                    {item.label}
+                  </span>
                 </Link>
               );
             })}
-
-            {/* Sign out tab */}
-            <button
-              onClick={handleLogout}
-              className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-semibold text-slate-500 hover:text-rose-400 transition-colors"
-            >
-              <LogoutIcon />
-              <span>Sign Out</span>
-            </button>
           </div>
         </nav>
 

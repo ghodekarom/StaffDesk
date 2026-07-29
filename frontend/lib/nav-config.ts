@@ -7,9 +7,9 @@ interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/overview", label: "Overview", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/employees", label: "Employees", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/departments", label: "Departments", roles: ["ADMIN", "HR", "MANAGER"] },
+  { href: "/overview", label: "Overview", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/attendance", label: "Attendance", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/leave", label: "Leave", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
 ];

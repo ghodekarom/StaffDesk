@@ -236,24 +236,6 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* Quick Links */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: "Employees", href: "/employees", color: "bg-sky-500/10 text-sky-600 border-sky-500/20", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg> },
-          { label: "Departments", href: "/departments", color: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-6h6v6"/></svg> },
-          { label: "Attendance", href: "/attendance", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg> },
-          { label: "Leave", href: "/leave", color: "bg-amber-500/10 text-amber-600 border-amber-500/20", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> },
-        ].map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border ${item.color} font-medium text-sm hover:opacity-80 transition-opacity`}
-          >
-            {item.icon}
-            {item.label}
-          </Link>
-        ))}
-      </div>
     </div>
   );
 }
