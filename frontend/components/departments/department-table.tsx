@@ -41,7 +41,7 @@ export function DepartmentTable({ departments, onEdit, onDelete }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {departments.map((dept) => {
         const style = getBadgeStyles(dept.id);
         const employeeCountLabel = dept.employeeCount === 1 ? "1 employee" : `${dept.employeeCount} employees`;
@@ -49,60 +49,45 @@ export function DepartmentTable({ departments, onEdit, onDelete }: Props) {
         return (
           <div
             key={dept.id}
-            className="group relative bg-card border border-line rounded-xl p-5 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+            className="group relative bg-card border border-line rounded-2xl p-4 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 flex items-center gap-4"
           >
-            <div>
-              {/* Badge Icon */}
-              <div className={`w-9 h-9 rounded-lg ${style.bg} flex items-center justify-center mb-4 transition-transform group-hover:scale-105`}>
-                {renderIcon(dept.id)}
-              </div>
-
-              {/* Title */}
-              <h3 className="text-base font-semibold text-ink mb-1 group-hover:text-accent transition-colors">
-                {dept.name}
-              </h3>
-              
-              {/* Headcount */}
-              <p className="text-xs text-muted font-medium mb-4">
-                {employeeCountLabel}
-              </p>
+            {/* Badge Icon */}
+            <div className={`w-12 h-12 shrink-0 rounded-xl ${style.bg} flex items-center justify-center transition-transform group-hover:scale-105`}>
+              {renderIcon(dept.id)}
             </div>
 
-            {/* Department Head and Action Buttons */}
-            <div className="mt-4 pt-3 border-t border-line">
-              <div className="flex justify-between items-center text-xs mb-4">
-                <span className="text-muted font-medium">Head</span>
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-bold text-ink mb-0.5 truncate group-hover:text-accent transition-colors">
+                {dept.name}
+              </h3>
+              <p className="text-xs text-muted font-medium mb-1 truncate">
+                {employeeCountLabel}
+              </p>
+              <div className="text-[11px] text-muted truncate flex items-center gap-1">
+                <span>Head:</span>
                 <span className="font-semibold text-ink">
-                  {dept.headEmployeeName ? (
-                    <span className="inline-flex items-center gap-1">
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent shrink-0">
-                        <path d="M12 2l2.9 6.3 6.9.7-5.2 4.7 1.6 6.8L12 17l-6.2 3.5 1.6-6.8L2.2 9l6.9-.7L12 2z" />
-                      </svg>
-                      {dept.headEmployeeName}
-                    </span>
-                  ) : (
-                    <span className="italic text-muted font-normal">Unassigned</span>
-                  )}
+                  {dept.headEmployeeName ? dept.headEmployeeName : <span className="italic font-normal">Unassigned</span>}
                 </span>
               </div>
+            </div>
 
-              {/* Actions */}
-              <div className="flex justify-end gap-1">
-                <Button
-                  variant="ghost"
-                  className="px-2.5 py-1 text-xs hover:bg-canvas"
-                  onClick={() => onEdit(dept)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="px-2.5 py-1 text-xs text-roseTxt hover:bg-roseBg"
-                  onClick={() => onDelete(dept)}
-                >
-                  Delete
-                </Button>
-              </div>
+            {/* Actions */}
+            <div className="flex flex-col gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                className="px-2 py-1 h-7 text-[10px] bg-canvas hover:bg-line/50 font-semibold"
+                onClick={() => onEdit(dept)}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="ghost"
+                className="px-2 py-1 h-7 text-[10px] bg-roseBg text-roseTxt hover:bg-roseBg/80 font-semibold"
+                onClick={() => onDelete(dept)}
+              >
+                Delete
+              </Button>
             </div>
           </div>
         );

@@ -272,7 +272,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {/* ── Main Content ───────────────────────────────────────────────── */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Topbar */}
-          <header className="h-14 px-4 sm:px-6 bg-surface border-b border-line flex items-center justify-between sticky top-0 z-30 gap-3">
+          <header className="h-14 px-4 sm:px-6 bg-surface flex items-center justify-between sticky top-0 z-30 gap-3">
             <div className="flex items-center gap-2">
               {/* Mobile: StaffDesk wordmark (no hamburger) */}
               <span className="md:hidden flex items-center gap-1.5 font-display text-base font-bold text-ink">
@@ -326,13 +326,13 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </header>
 
           {/* Page content — extra bottom padding on mobile for the tab bar */}
-          <main className="flex-1 p-4 sm:p-6 pb-24 md:pb-6 overflow-y-auto">
+          <main className="flex-1 p-4 sm:p-6 pb-32 md:pb-6 overflow-y-auto">
             {children}
           </main>
         </div>
 
         {/* ── Mobile Bottom Tab Bar (hidden on desktop) ─────────────────── */}
-        <nav className="md:hidden fixed bottom-4 inset-x-4 z-50 bg-surface border border-line rounded-2xl shadow-xl">
+        <nav className="md:hidden fixed bottom-4 inset-x-4 z-50 bg-surface rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-white/5">
           <div className="flex items-stretch justify-around px-2 py-1">
             {items.map((item) => {
               const active =

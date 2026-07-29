@@ -33,17 +33,17 @@
 }
 
 [data-theme="dark"] {
-  --color-canvas: 9 13 22;
-  --color-surface: 19 27 46;
-  --color-card: 24 34 56;
-  --color-input: 30 41 59;
+  --color-canvas: 11 15 25;
+  --color-surface: 11 15 25;
+  --color-card: 16 22 35;
+  --color-input: 20 27 43;
   --color-ink: 248 250 252;
   --color-secondary: 203 213 225;
   --color-muted: 148 163 184;
-  --color-line: 38 51 77;
-  --color-line-hover: 59 77 113;
+  --color-line: 30 40 60;
+  --color-line-hover: 45 60 90;
 
-  --color-sidebar: 7 10 16;
+  --color-sidebar: 11 15 25;
 }
 
 @layer base {
