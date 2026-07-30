@@ -450,41 +450,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </main>
         </div>
 
-        {/* ── Mobile Bottom Tab Bar (hidden on desktop) ─────────────────── */}
-        <nav className="md:hidden fixed bottom-4 inset-x-4 z-50 bg-surface rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-white/5">
-          <div className="flex items-stretch justify-around px-2 py-1">
-            {items.map((item) => {
-              const active =
-                item.href === "/overview"
-                  ? pathname === "/overview"
-                  : pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative flex flex-col items-center justify-center gap-1 p-2 min-w-[3.5rem] rounded-xl transition-all ${
-                    active ? "bg-accent/10 text-accent" : "text-muted hover:bg-canvas hover:text-ink"
-                  }`}
-                >
-                  {/* Icon with badge for leave */}
-                  <span className="relative">
-                    {NAV_ICONS[item.href]}
-                    {item.href === "/leave" && pendingLeaveCount !== null && pendingLeaveCount > 0 && (
-                      <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] px-0.5 text-[9px] font-bold rounded-full bg-amber-500 text-white flex items-center justify-center leading-none shadow-sm">
-                        {pendingLeaveCount > 9 ? "9+" : pendingLeaveCount}
-                      </span>
-                    )}
-                  </span>
-                  
-                  {/* Active label only for a cleaner modern look, or keep all labels */}
-                  <span className={`text-[9px] font-semibold tracking-wide ${active ? "opacity-100" : "opacity-70"}`}>
-                    {item.label}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
 
         <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
         <EmployeeDrawer data={inspectData} onClose={() => setInspectData(null)} />
