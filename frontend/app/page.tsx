@@ -162,211 +162,373 @@ export default function LandingPage() {
             {/* Glow halo behind window */}
             <div className="absolute -inset-4 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-cyan-500/10 rounded-3xl blur-2xl pointer-events-none" />
             {/* The Dashboard UI Window */}
-            <div className="bg-[#0B1120] border border-white/10 rounded-2xl shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_30px_80px_rgba(0,0,0,0.7),0_0_60px_rgba(99,102,241,0.12)] relative z-10 overflow-hidden flex flex-col group">
-              
-              {/* Window Header */}
-              <div className="h-14 bg-[#111827] border-b border-white/5 flex items-center justify-between px-5 relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-cyan-500/5" />
-                <div className="flex items-center gap-3 relative z-10">
-                  <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22 10.5C22 14.0899 19.0899 17 15.5 17H10V10.5C10 6.91015 12.9101 4 16.5 4H22V10.5Z" fill="#2DD4BF"/>
-                    <path d="M10 21.5C10 17.9101 12.9101 15 16.5 15H22V21.5C22 25.0899 19.0899 28 15.5 28H10V21.5Z" fill="#A855F7"/>
-                  </svg>
-                  <span className="text-[13px] font-bold text-white tracking-wide">StaffDesk</span>
-                  <div className="w-px h-4 bg-white/10 mx-2" />
-                  <span className="text-[12px] font-medium text-slate-300">Dashboard</span>
-                </div>
-                <div className="flex items-center gap-3 relative z-10">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1F2937] rounded-md border border-white/5">
-                    <Search className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="text-[11px] text-slate-500 w-16">Search...</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 ml-2">
-                    <div className="w-6 h-6 rounded-full bg-[#EAB308] border-2 border-[#111827] flex items-center justify-center text-[9px] font-bold text-white shadow-sm -mr-2 relative z-20">A</div>
-                    <div className="w-6 h-6 rounded-full bg-[#EC4899] border-2 border-[#111827] flex items-center justify-center text-[9px] font-bold text-white shadow-sm relative z-10">J</div>
-                  </div>
-                </div>
-              </div>
+            <div className="bg-[#0B0F19] border border-cyan-500/20 rounded-[24px] shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_30px_80px_rgba(0,0,0,0.8),0_0_50px_rgba(6,182,212,0.15)] relative z-10 overflow-hidden flex flex-col group">
               
               {/* Window Body */}
-              <div className="flex-1 flex bg-[#0B1120]">
+              <div className="flex bg-[#0B0F19] p-2 sm:p-4 gap-4">
+                
                 {/* Sidebar */}
-                <div className="w-48 border-r border-white/5 p-4 flex flex-col gap-1.5 bg-[#0D1324]">
-                  <div className="flex items-center gap-3 text-[12px] text-white bg-gradient-to-r from-indigo-500/20 to-transparent border-l-2 border-indigo-500 px-3 py-2 rounded-r-md">
-                    <LayoutDashboard className="w-4 h-4 text-indigo-400" /> Dashboard
+                <div className="w-48 flex flex-col gap-6 bg-[#0E1322] rounded-2xl p-4 border border-white/5 shrink-0">
+                  {/* Brand Logo */}
+                  <div className="flex items-center gap-2.5 px-2 pt-1">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#38BDF8] via-[#818CF8] to-[#C084FC] p-0.5 flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.3)]">
+                      <div className="w-full h-full bg-[#0E1322] rounded-[10px] flex items-center justify-center">
+                        <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+                          <path d="M22 10.5C22 14.0899 19.0899 17 15.5 17H10V10.5C10 6.91015 12.9101 4 16.5 4H22V10.5Z" fill="#38BDF8"/>
+                          <path d="M10 21.5C10 17.9101 12.9101 15 16.5 15H22V21.5C22 25.0899 19.0899 28 15.5 28H10V21.5Z" fill="#C084FC"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <span className="font-display text-lg font-bold text-white tracking-tight">StaffDesk</span>
                   </div>
-                  <div className="flex items-center justify-between text-[12px] text-slate-400 px-3 py-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors">
-                    <div className="flex items-center gap-3"><Users className="w-4 h-4" /> Team</div>
+
+                  {/* Navigation Links */}
+                  <div className="flex flex-col gap-1.5 mt-2">
+                    {/* Active: Dashboard */}
+                    <div className="flex items-center gap-3 text-[13px] font-semibold text-white bg-[#1E2738] px-3.5 py-2.5 rounded-xl border border-white/10 shadow-sm">
+                      <LayoutDashboard className="w-4 h-4 text-cyan-400" />
+                      Dashboard
+                    </div>
+                    <div className="flex items-center gap-3 text-[13px] font-medium text-slate-400 px-3.5 py-2.5 hover:bg-white/5 hover:text-slate-200 rounded-xl transition-colors cursor-pointer">
+                      <Users className="w-4 h-4" />
+                      Team
+                    </div>
+                    <div className="flex items-center gap-3 text-[13px] font-medium text-slate-400 px-3.5 py-2.5 hover:bg-white/5 hover:text-slate-200 rounded-xl transition-colors cursor-pointer">
+                      <Calendar className="w-4 h-4" />
+                      Schedule
+                    </div>
+                    <div className="flex items-center gap-3 text-[13px] font-medium text-slate-400 px-3.5 py-2.5 hover:bg-white/5 hover:text-slate-200 rounded-xl transition-colors cursor-pointer">
+                      <Clock className="w-4 h-4" />
+                      Time
+                    </div>
+                    <div className="flex items-center gap-3 text-[13px] font-medium text-slate-400 px-3.5 py-2.5 hover:bg-white/5 hover:text-slate-200 rounded-xl transition-colors cursor-pointer">
+                      <DollarSign className="w-4 h-4" />
+                      Payroll
+                    </div>
+                    <div className="flex items-center gap-3 text-[13px] font-medium text-slate-400 px-3.5 py-2.5 hover:bg-white/5 hover:text-slate-200 rounded-xl transition-colors cursor-pointer">
+                      <FileText className="w-4 h-4" />
+                      Reports
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-[12px] text-slate-400 px-3 py-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors">
-                    <div className="flex items-center gap-3"><Calendar className="w-4 h-4" /> Schedule</div>
-                  </div>
-                  <div className="flex items-center gap-3 text-[12px] text-slate-400 px-3 py-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors">
-                    <Clock className="w-4 h-4" /> Time
-                  </div>
-                  <div className="flex items-center gap-3 text-[12px] text-slate-400 px-3 py-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors">
-                    <DollarSign className="w-4 h-4" /> Payroll
-                  </div>
-                  <div className="flex items-center gap-3 text-[12px] text-slate-400 px-3 py-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors">
-                    <FileText className="w-4 h-4" /> Reports
-                  </div>
-                  <div className="mt-auto flex items-center gap-3 text-[12px] text-slate-400 px-3 py-2 hover:bg-white/5 rounded-md cursor-pointer transition-colors">
-                    <Settings className="w-4 h-4" /> Settings
+
+                  {/* Bottom Settings */}
+                  <div className="mt-auto pt-4 border-t border-white/5">
+                    <div className="flex items-center gap-3 text-[13px] font-medium text-slate-400 px-3.5 py-2.5 hover:bg-white/5 hover:text-slate-200 rounded-xl transition-colors cursor-pointer">
+                      <Settings className="w-4 h-4" />
+                      Settings
+                    </div>
                   </div>
                 </div>
-                
-                {/* Main Content Area */}
-                <div className="flex-1 p-6 flex flex-col gap-6">
-                  {/* Top Row: Big Chart + Stats */}
-                  <div className="flex gap-6 h-56">
-                    {/* Main Chart */}
-                    <div className="flex-[2] bg-[#141A29] rounded-xl border border-white/5 p-5 relative overflow-hidden flex flex-col group/chart">
-                      <div className="flex justify-between items-center mb-6">
-                        <span className="text-[14px] font-semibold text-white">Team Activity</span>
-                        <div className="flex items-center gap-2 bg-[#1E293B] px-3 py-1.5 rounded-lg border border-white/5 cursor-pointer">
-                          <span className="text-[11px] text-slate-300">Jan 24</span>
-                          <ChevronDown className="w-3 h-3 text-slate-500" />
-                        </div>
-                      </div>
-                      
-                      {/* Grid Lines */}
-                      <div className="absolute inset-0 top-16 bottom-6 left-5 right-5 flex flex-col justify-between pointer-events-none">
-                        {[1,2,3,4,5].map(i => <div key={i} className="w-full border-t border-white/5" />)}
-                      </div>
-                      <div className="absolute left-1 top-14 bottom-6 flex flex-col justify-between text-[9px] text-slate-500 h-full">
-                        <span>250</span><span>200</span><span>150</span><span>100</span><span>50</span>
-                      </div>
-                      <div className="absolute bottom-1 left-8 right-5 flex justify-between text-[9px] text-slate-500">
-                        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-                      </div>
 
-                      {/* Fake SVG Chart Lines matching the prompt precisely */}
-                      <div className="absolute inset-0 top-14 bottom-8 left-8 right-5">
-                        <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-                          {/* Purple Wave */}
-                          <path d="M0,80 C15,60 25,40 40,60 C55,80 65,20 80,40 C90,55 100,30 100,30" fill="none" stroke="#A855F7" strokeWidth="2.5" vectorEffect="non-scaling-stroke" className="group-hover/chart:stroke-[3px] transition-all" />
-                          <path d="M0,80 C15,60 25,40 40,60 C55,80 65,20 80,40 C90,55 100,30 100,30 L100,100 L0,100 Z" fill="url(#purple-fade)" opacity="0.15" />
-                          
-                          {/* Cyan Wave */}
-                          <path d="M0,90 C20,95 30,70 50,85 C65,95 80,50 100,60" fill="none" stroke="#2DD4BF" strokeWidth="2.5" vectorEffect="non-scaling-stroke" className="group-hover/chart:stroke-[3px] transition-all" />
-                          
-                          <defs>
-                            <linearGradient id="purple-fade" x1="0" y1="0" x2="0" y2="1">
-                              <stop stopColor="#A855F7" />
-                              <stop offset="1" stopColor="transparent" />
-                            </linearGradient>
-                          </defs>
-
-                          {/* Data point tooltip mockup */}
-                          <circle cx="65" cy="20" r="3" fill="#A855F7" className="animate-pulse" />
-                          <circle cx="65" cy="20" r="6" fill="transparent" stroke="#A855F7" opacity="0.5" />
-                        </svg>
-                        
-                        {/* Tooltip */}
-                        <div className="absolute top-[5%] left-[55%] bg-[#1E293B] border border-indigo-500/30 rounded px-2 py-1 flex items-center gap-1.5 shadow-lg">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#A855F7]" />
-                          <span className="text-[10px] text-white font-mono">130</span>
-                          <span className="text-[9px] text-emerald-400">+12%</span>
-                        </div>
-                      </div>
-                    </div>
+                {/* Right / Main Dashboard Body */}
+                <div className="flex-1 flex flex-col gap-4 min-w-0">
+                  
+                  {/* Top Bar Header */}
+                  <div className="flex items-center justify-between px-2 pt-1 pb-1">
+                    <h2 className="text-xl font-bold text-white tracking-tight">Dashboard</h2>
                     
-                    {/* Stats Column */}
-                    <div className="flex-[1] flex flex-col gap-4">
-                      <div className="flex-1 bg-[#141A29] rounded-xl border border-white/5 p-5 flex flex-col justify-between relative overflow-hidden group/stat1">
-                        <div className="absolute -right-4 -top-4 w-16 h-16 bg-purple-500/10 rounded-full blur-xl group-hover/stat1:bg-purple-500/20 transition-colors" />
-                        <div className="text-[12px] font-medium text-slate-400">Active Employees</div>
-                        <div className="text-[28px] font-bold text-white leading-none">184</div>
-                        <div className="flex items-center justify-between mt-2">
-                           <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mr-3">
-                             <div className="w-[85%] h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full" />
-                           </div>
-                           <span className="text-[10px] text-emerald-400 whitespace-nowrap">+4 this week</span>
+                    <div className="flex items-center gap-3">
+                      {/* Bookmark Icon */}
+                      <button className="w-8 h-8 rounded-full bg-[#151C2C] border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                        <FileText className="w-4 h-4" />
+                      </button>
+                      
+                      {/* Bell with indicator dot */}
+                      <button className="w-8 h-8 rounded-full bg-[#151C2C] border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors relative">
+                        <Activity className="w-4 h-4" />
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0B0F19]" />
+                      </button>
+
+                      {/* User Profile Avatar */}
+                      <div className="flex items-center gap-1.5 cursor-pointer">
+                        <div className="w-8 h-8 rounded-full border border-cyan-400/40 p-0.5 bg-gradient-to-tr from-cyan-500 to-purple-500">
+                          <div className="w-full h-full rounded-full bg-indigo-600 flex items-center justify-center text-[11px] font-bold text-white">
+                            JS
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex-1 bg-[#141A29] rounded-xl border border-white/5 p-5 flex flex-col justify-between relative overflow-hidden group/stat2">
-                        <div className="absolute -right-4 -top-4 w-16 h-16 bg-cyan-500/10 rounded-full blur-xl group-hover/stat2:bg-cyan-500/20 transition-colors" />
-                        <div className="text-[12px] font-medium text-slate-400">Total Hours</div>
-                        <div className="text-[28px] font-bold text-white leading-none">3,210</div>
-                        <div className="flex items-center justify-between mt-2">
-                           <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mr-3">
-                             <div className="w-[65%] h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" />
-                           </div>
-                           <span className="text-[10px] text-rose-400 whitespace-nowrap">-2% vs last</span>
-                        </div>
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Bottom Row: Lists & Progress */}
-                  <div className="flex gap-6 flex-1">
-                    <div className="flex-[2] bg-[#141A29] rounded-xl border border-white/5 p-5">
-                       <div className="flex justify-between items-center mb-5">
-                        <span className="text-[14px] font-semibold text-white">Team Activity</span>
-                        <span className="text-[11px] font-medium text-[#38BDF8] cursor-pointer hover:underline">View all &gt;</span>
-                      </div>
-                      <div className="space-y-4">
-                        {[
-                          { name: 'Axer Montana', role: '32 Hrs/wk', progress: 89, color: 'from-[#6366F1] to-[#A855F7]', avatar: 'AM' },
-                          { name: 'Jamon Retine', role: '12 Hrs/wk', progress: 73, color: 'from-[#06B6D4] to-[#3B82F6]', avatar: 'JR' },
-                          { name: 'Sioa Desmar', role: '15 Hrs/wk', progress: 50, color: 'from-[#8B5CF6] to-[#D946EF]', avatar: 'SD' },
-                        ].map((row, i) => (
-                          <div key={i} className="flex items-center justify-between group/row">
-                            <div className="flex items-center gap-3">
-                              <div className="w-7 h-7 rounded-full bg-[#1E293B] border border-white/10 flex items-center justify-center text-[10px] font-bold text-slate-300">
-                                {row.avatar}
-                              </div>
-                              <div>
-                                <div className="text-[12px] font-semibold text-slate-200 group-hover/row:text-white transition-colors">{row.name}</div>
-                                <div className="text-[10px] text-slate-500">{row.role}</div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3 w-40">
-                              <div className="flex-1 h-1.5 bg-[#0B1120] rounded-full overflow-hidden border border-white/5">
-                                <div className={`h-full bg-gradient-to-r ${row.color} rounded-full`} style={{ width: `${row.progress}%` }}></div>
-                              </div>
-                              <span className="text-[10px] font-mono text-slate-400 w-8 text-right">{row.progress}%</span>
+
+                  {/* Dashboard Grid - 2 Rows */}
+                  <div className="flex flex-col gap-4">
+                    
+                    {/* TOP ROW: Left Main Chart (2 cols) + Right 2 Cards (1 col) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      
+                      {/* Top Left: Main Wave Chart (2 cols width) */}
+                      <div className="lg:col-span-2 bg-[#121826] border border-white/5 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between group/chart">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-4 relative z-10">
+                          <span className="text-[15px] font-bold text-white">Team Activity</span>
+                          <div className="flex items-center gap-1.5 bg-[#1B2334] px-3 py-1.5 rounded-xl border border-white/10 text-[11px] font-medium text-slate-300 cursor-pointer">
+                            <span>Monthly</span>
+                            <ChevronDown className="w-3 h-3 text-slate-400" />
+                          </div>
+                        </div>
+
+                        {/* Interactive Wave Chart SVG */}
+                        <div className="relative h-44 w-full">
+                          {/* Y-Axis Grid Lines */}
+                          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none text-[10px] text-slate-500 font-mono">
+                            <div className="flex items-center gap-3"><span className="w-6 text-right">200</span><div className="flex-1 border-b border-white/[0.06]" /></div>
+                            <div className="flex items-center gap-3"><span className="w-6 text-right">150</span><div className="flex-1 border-b border-white/[0.06]" /></div>
+                            <div className="flex items-center gap-3"><span className="w-6 text-right">100</span><div className="flex-1 border-b border-white/[0.06]" /></div>
+                            <div className="flex items-center gap-3"><span className="w-6 text-right">50</span><div className="flex-1 border-b border-white/[0.06]" /></div>
+                            <div className="flex items-center gap-3"><span className="w-6 text-right">0</span><div className="flex-1 border-b border-white/[0.06]" /></div>
+                          </div>
+
+                          {/* SVG Waves */}
+                          <div className="absolute inset-0 left-9 top-1 bottom-4">
+                            <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 500 160">
+                              <defs>
+                                <linearGradient id="purple-glow" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#C084FC" stopOpacity="0.4" />
+                                  <stop offset="100%" stopColor="#C084FC" stopOpacity="0.0" />
+                                </linearGradient>
+                                <linearGradient id="cyan-glow" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.35" />
+                                  <stop offset="100%" stopColor="#22D3EE" stopOpacity="0.0" />
+                                </linearGradient>
+                              </defs>
+
+                              {/* Purple Upper Wave */}
+                              <path 
+                                d="M 0 130 C 50 110 80 80 130 90 C 180 100 220 50 280 60 C 340 70 390 10 440 20 C 470 28 490 10 500 5 L 500 160 L 0 160 Z" 
+                                fill="url(#purple-glow)" 
+                              />
+                              <path 
+                                d="M 0 130 C 50 110 80 80 130 90 C 180 100 220 50 280 60 C 340 70 390 10 440 20 C 470 28 490 10 500 5" 
+                                fill="none" 
+                                stroke="#C084FC" 
+                                strokeWidth="3" 
+                                strokeLinecap="round" 
+                              />
+
+                              {/* Cyan Lower Wave */}
+                              <path 
+                                d="M 0 100 C 40 70 90 60 140 90 C 190 120 240 70 290 80 C 350 90 400 60 450 70 C 480 76 495 50 500 45 L 500 160 L 0 160 Z" 
+                                fill="url(#cyan-glow)" 
+                              />
+                              <path 
+                                d="M 0 100 C 40 70 90 60 140 90 C 190 120 240 70 290 80 C 350 90 400 60 450 70 C 480 76 495 50 500 45" 
+                                fill="none" 
+                                stroke="#22D3EE" 
+                                strokeWidth="3" 
+                                strokeLinecap="round" 
+                              />
+
+                              {/* Vertical Guide Line on Thu (around x=280) */}
+                              <line x1="280" y1="0" x2="280" y2="160" stroke="#FFFFFF" strokeOpacity="0.15" strokeDasharray="4 4" strokeWidth="1.5" />
+                              
+                              {/* Dots on vertical line */}
+                              <circle cx="280" cy="60" r="4.5" fill="#C084FC" stroke="#FFFFFF" strokeWidth="2" />
+                              <circle cx="280" cy="80" r="4.5" fill="#22D3EE" stroke="#FFFFFF" strokeWidth="2" />
+                            </svg>
+
+                            {/* Floating Tooltip Box */}
+                            <div className="absolute top-[18%] left-[50%] -translate-x-1/2 bg-[#1C2537] border border-white/10 rounded-xl px-3 py-1.5 shadow-2xl flex items-center gap-2 pointer-events-none z-20">
+                              <div className="w-2 h-2 rounded-full bg-[#C084FC]" />
+                              <span className="text-[11px] font-bold text-white font-mono">530</span>
+                              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">20%</span>
                             </div>
                           </div>
-                        ))}
+
+                          {/* X-Axis Labels */}
+                          <div className="absolute bottom-0 left-9 right-0 flex justify-between text-[10px] text-slate-500 font-medium pt-1">
+                            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Top Right Column: 2 Cards Stacked */}
+                      <div className="flex flex-col gap-4">
+                        
+                        {/* Card 1: Team Activity + Avatars */}
+                        <div className="bg-[#121826] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+                          <span className="text-[14px] font-bold text-white">Team Activity</span>
+                          <div className="flex items-center gap-3">
+                            {/* Stack of overlapping avatars */}
+                            <div className="flex items-center -space-x-2">
+                              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 p-0.5 border border-[#121826]">
+                                <div className="w-full h-full rounded-full bg-indigo-600 flex items-center justify-center text-[9px] font-bold text-white">A</div>
+                              </div>
+                              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-400 to-[#C084FC] p-0.5 border border-[#121826]">
+                                <div className="w-full h-full rounded-full bg-purple-600 flex items-center justify-center text-[9px] font-bold text-white">M</div>
+                              </div>
+                              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-500 p-0.5 border border-[#121826]">
+                                <div className="w-full h-full rounded-full bg-teal-600 flex items-center justify-center text-[9px] font-bold text-white">S</div>
+                              </div>
+                              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-pink-400 to-rose-500 p-0.5 border border-[#121826]">
+                                <div className="w-full h-full rounded-full bg-pink-600 flex items-center justify-center text-[9px] font-bold text-white">R</div>
+                              </div>
+                            </div>
+                            <span className="text-[12px] font-semibold text-cyan-400 flex items-center cursor-pointer hover:underline">
+                              Team &gt;
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Card 2: Active Employees & Total Hours (Rings) */}
+                        <div className="bg-[#121826] border border-white/5 rounded-2xl p-4 flex flex-col gap-4">
+                          {/* Top Item */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-[11px] font-medium text-slate-400">Active Employees</div>
+                              <div className="text-2xl font-bold text-white mt-0.5">184</div>
+                            </div>
+                            {/* Purple Donut Ring Icon */}
+                            <div className="w-10 h-10 relative flex items-center justify-center">
+                              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#1E293B" strokeWidth="4" />
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#C084FC" strokeWidth="4" strokeDasharray="75, 100" strokeLinecap="round" />
+                              </svg>
+                              <Users className="w-4 h-4 text-purple-400 absolute" />
+                            </div>
+                          </div>
+
+                          <div className="w-full h-px bg-white/5" />
+
+                          {/* Bottom Item */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-[11px] font-medium text-slate-400">Total Hours</div>
+                              <div className="text-2xl font-bold text-white mt-0.5">3,210</div>
+                            </div>
+                            {/* Cyan Donut Ring Icon */}
+                            <div className="w-10 h-10 relative flex items-center justify-center">
+                              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#1E293B" strokeWidth="4" />
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22D3EE" strokeWidth="4" strokeDasharray="85, 100" strokeLinecap="round" />
+                              </svg>
+                              <Clock className="w-4 h-4 text-cyan-400 absolute" />
+                            </div>
+                          </div>
+                        </div>
+
                       </div>
                     </div>
-                    
-                    <div className="flex-1 bg-[#141A29] rounded-xl border border-white/5 p-5">
-                       <div className="text-[14px] font-semibold text-white mb-5">Analytics</div>
-                       <div className="space-y-5">
-                         <div>
-                           <div className="flex justify-between items-end mb-1.5">
-                             <span className="text-[11px] text-slate-400">Performance</span>
-                             <span className="text-[13px] text-white font-bold">184</span>
-                           </div>
-                           <div className="w-full h-1.5 bg-[#0B1120] rounded-full overflow-hidden border border-white/5">
-                             <div className="w-[85%] h-full bg-[#3B82F6] rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                           </div>
-                         </div>
-                         <div>
-                           <div className="flex justify-between items-end mb-1.5">
-                             <span className="text-[11px] text-slate-400">Total Hours</span>
-                             <span className="text-[13px] text-white font-bold">52K</span>
-                           </div>
-                           <div className="w-full h-1.5 bg-[#0B1120] rounded-full overflow-hidden border border-white/5">
-                             <div className="w-[65%] h-full bg-[#2DD4BF] rounded-full shadow-[0_0_10px_rgba(45,212,191,0.5)]"></div>
-                           </div>
-                         </div>
-                         <div>
-                           <div className="flex justify-between items-end mb-1.5">
-                             <span className="text-[11px] text-slate-400">Efficiency</span>
-                             <span className="text-[13px] text-white font-bold">82%</span>
-                           </div>
-                           <div className="w-full h-1.5 bg-[#0B1120] rounded-full overflow-hidden border border-white/5">
-                             <div className="w-[82%] h-full bg-[#A855F7] rounded-full shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
-                           </div>
-                         </div>
-                       </div>
+
+                    {/* BOTTOM ROW: Left Progress List (2 cols) + Right Analytics (1 col) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      
+                      {/* Bottom Left: Team Activity Employee List */}
+                      <div className="lg:col-span-2 bg-[#121826] border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-[14px] font-bold text-white">Team Activity</span>
+                          <span className="text-[12px] font-semibold text-cyan-400 cursor-pointer hover:underline">View all &gt;</span>
+                        </div>
+
+                        <div className="space-y-3.5">
+                          {/* Row 1 */}
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 w-36 shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white border border-white/10 shrink-0">
+                                AM
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-[12px] font-bold text-white truncate">Axel Montana</div>
+                                <div className="text-[10px] text-slate-500 truncate">32 Employees</div>
+                              </div>
+                            </div>
+                            <div className="flex-1 flex items-center gap-3">
+                              <div className="flex-1 h-2 bg-[#1A2234] rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full" style={{ width: '86%' }} />
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-300 font-mono w-8 text-right">86%</span>
+                            </div>
+                          </div>
+
+                          {/* Row 2 */}
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 w-36 shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-xs font-bold text-white border border-white/10 shrink-0">
+                                JR
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-[12px] font-bold text-white truncate">Jaron Retie</div>
+                                <div className="text-[10px] text-slate-500 truncate">15 Employees</div>
+                              </div>
+                            </div>
+                            <div className="flex-1 flex items-center gap-3">
+                              <div className="flex-1 h-2 bg-[#1A2234] rounded-full overflow-hidden">
+                                <div className="h-full bg-[#22D3EE] rounded-full" style={{ width: '73%' }} />
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-300 font-mono w-8 text-right">73%</span>
+                            </div>
+                          </div>
+
+                          {/* Row 3 */}
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 w-36 shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white border border-white/10 shrink-0">
+                                SD
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-[12px] font-bold text-white truncate">Soea Desmar</div>
+                                <div className="text-[10px] text-slate-500 truncate">10 Employees</div>
+                              </div>
+                            </div>
+                            <div className="flex-1 flex items-center gap-3">
+                              <div className="flex-1 h-2 bg-[#1A2234] rounded-full overflow-hidden">
+                                <div className="h-full bg-[#C084FC] rounded-full" style={{ width: '70%' }} />
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-300 font-mono w-8 text-right">70%</span>
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+
+                      {/* Bottom Right: Analytics */}
+                      <div className="bg-[#121826] border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
+                        <div className="text-[14px] font-bold text-white mb-3">Analytics</div>
+                        
+                        <div className="space-y-3">
+                          {/* Item 1 */}
+                          <div>
+                            <div className="flex justify-between text-[11px] font-medium text-slate-400 mb-1">
+                              <span>Performance</span>
+                              <span className="text-white font-bold">184</span>
+                            </div>
+                            <div className="h-2 bg-[#1A2234] rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full" style={{ width: '85%' }} />
+                            </div>
+                          </div>
+
+                          {/* Item 2: Gauge Ring with 92% */}
+                          <div className="flex items-center justify-between bg-[#182030] p-2.5 rounded-xl border border-white/5">
+                            <div className="text-[11px] font-medium text-slate-400">Total Hours</div>
+                            <div className="w-12 h-12 relative flex items-center justify-center">
+                              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#0D1322" strokeWidth="4" />
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#22D3EE" strokeWidth="4" strokeDasharray="92, 100" strokeLinecap="round" />
+                              </svg>
+                              <span className="text-[10px] font-bold text-white font-mono absolute">92%</span>
+                            </div>
+                          </div>
+
+                          {/* Item 3 */}
+                          <div>
+                            <div className="flex justify-between text-[11px] font-medium text-slate-400 mb-1">
+                              <span>Performance</span>
+                              <span className="text-white font-bold">92%</span>
+                            </div>
+                            <div className="h-2 bg-[#1A2234] rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full" style={{ width: '92%' }} />
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+
                     </div>
+
                   </div>
-                  
+
                 </div>
+
               </div>
             </div>
           </motion.div>
