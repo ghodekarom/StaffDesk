@@ -223,6 +223,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     return "StaffDesk";
   };
   return (
+    <ToastProvider>
       <div className="flex min-h-screen bg-[#070A11] text-slate-300">
 
         {/* Desktop Sidebar */}
@@ -310,7 +311,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 bg-[#070A11]">
-          {/* Topbar */}
+          {/* Desktop Topbar */}
           <header className="hidden md:flex items-center justify-between px-8 h-16 bg-[#0E1322]/80 backdrop-blur-md border-b border-white/5 shrink-0 sticky top-0 z-[40]">
             <div className="flex items-center gap-3">
               <h1 className="text-lg font-bold text-white tracking-tight">{getTitle(pathname)}</h1>
@@ -351,20 +352,39 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </div>
           </header>
 
-              {/* Mobile: theme toggle + hamburger menu */}
-              <div className="md:hidden flex items-center gap-1.5 relative">
+          {/* Mobile Topbar */}
+          <header className="md:hidden flex items-center justify-between px-5 h-16 bg-[#0E1322]/90 backdrop-blur-md border-b border-white/10 shrink-0 sticky top-0 z-[40]">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-2 font-display text-base font-bold text-white tracking-tight">
+                <LogoIcon className="w-6 h-6" idPrefix="mobile" />
+                StaffDesk
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <div
+                onClick={() => setCmdOpen(true)}
+                className="flex items-center gap-2 bg-[#151C2C] border border-white/10 px-3 py-1.5 rounded-lg text-xs text-slate-400 cursor-pointer hover:border-white/20 w-32 sm:w-52"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+                <span className="truncate">Search...</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 relative">
                 <button
                   onClick={toggleTheme}
-                  className="w-8 h-8 rounded-md border border-line bg-input text-ink flex items-center justify-center hover:bg-canvas transition-colors"
+                  className="w-8 h-8 rounded-md border border-white/10 bg-[#151C2C] text-white flex items-center justify-center hover:bg-white/10 transition-colors"
                   title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
                 >
                   {theme === "dark" ? <SunIcon /> : <MoonIcon />}
                 </button>
 
-                {/* Hamburger button */}
                 <button
                   onClick={() => setMobileMenuOpen((o) => !o)}
-                  className="w-8 h-8 rounded-md border border-line bg-input text-ink flex items-center justify-center hover:bg-canvas transition-colors"
+                  className="w-8 h-8 rounded-md border border-white/10 bg-[#151C2C] text-white flex items-center justify-center hover:bg-white/10 transition-colors"
                   aria-label="Open navigation menu"
                 >
                   {mobileMenuOpen ? (
@@ -378,11 +398,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   )}
                 </button>
 
-                {/* Dropdown panel */}
                 <AnimatePresence>
                   {mobileMenuOpen && (
                     <>
-                      {/* Backdrop */}
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -390,26 +408,23 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                         className="fixed inset-0 z-[45]"
                         onClick={() => setMobileMenuOpen(false)}
                       />
-                      {/* Menu panel */}
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: -8 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -8 }}
                         transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="absolute top-10 right-0 z-[46] w-52 bg-surface/95 backdrop-blur-xl border border-line rounded-xl shadow-2xl overflow-hidden"
+                        className="absolute top-10 right-0 z-[46] w-52 bg-[#0E1322]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden"
                       >
-                        {/* User info header */}
-                        <div className="px-4 py-3.5 border-b border-line flex items-center gap-2.5">
+                        <div className="px-4 py-3.5 border-b border-white/10 flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-lg bg-sky-600 text-white font-semibold text-xs flex items-center justify-center uppercase shrink-0">
                             {employeeName.charAt(0)}
                           </div>
                           <div className="min-w-0">
-                            <div className="text-xs font-semibold text-ink truncate">{employeeName}</div>
-                            <div className="text-[11px] text-muted capitalize">{role ? role.toLowerCase() : ""}</div>
+                            <div className="text-xs font-semibold text-white truncate">{employeeName}</div>
+                            <div className="text-[11px] text-slate-400 capitalize">{role ? role.toLowerCase() : ""}</div>
                           </div>
                         </div>
 
-                        {/* Nav links */}
                         <div className="py-1.5">
                           {items.map((item) => {
                             const active = item.href === "/overview"
@@ -422,22 +437,21 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                                 onClick={() => setMobileMenuOpen(false)}
                                 className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
                                   active
-                                    ? "text-accent bg-accentTint"
-                                    : "text-ink hover:bg-canvas"
+                                    ? "text-cyan-400 bg-white/5"
+                                    : "text-slate-300 hover:bg-white/5"
                                 }`}
                               >
-                                <span className="text-muted">{NAV_ICONS[item.href as keyof typeof NAV_ICONS]}</span>
+                                <span className="text-slate-400">{NAV_ICONS[item.href as keyof typeof NAV_ICONS]}</span>
                                 {item.label}
                               </Link>
                             );
                           })}
                         </div>
 
-                        {/* Logout */}
-                        <div className="border-t border-line py-1.5">
+                        <div className="border-t border-white/10 py-1.5">
                           <button
                             onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-roseTxt hover:bg-roseBg transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
                           >
                             <LogoutIcon />
                             Sign Out
