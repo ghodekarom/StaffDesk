@@ -38,6 +38,25 @@ function LogoutIcon() {
   );
 }
 
+function LogoIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22 10.5C22 14.0899 19.0899 17 15.5 17H10V10.5C10 6.91015 12.9101 4 16.5 4H22V10.5Z" fill="url(#logo-grad-1)"/>
+      <path d="M10 21.5C10 17.9101 12.9101 15 16.5 15H22V21.5C22 25.0899 19.0899 28 15.5 28H10V21.5Z" fill="url(#logo-grad-2)"/>
+      <defs>
+        <linearGradient id="logo-grad-1" x1="10" y1="4" x2="22" y2="17" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#38bdf8" />
+          <stop offset="1" stopColor="#818cf8" />
+        </linearGradient>
+        <linearGradient id="logo-grad-2" x1="10" y1="15" x2="22" y2="28" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#818cf8" />
+          <stop offset="1" stopColor="#c084fc" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 const NAV_ICONS: Record<string, ReactNode> = {
   "/overview": (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -199,8 +218,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {/* ── Desktop Sidebar (hidden on mobile) ───────────────────────── */}
         <aside className="hidden md:flex sticky top-0 h-screen w-60 bg-sidebarBg text-white flex-col border-r border-white/10 shrink-0">
           {/* Logo */}
-          <div className="flex items-center gap-2 px-5 pt-5 pb-4 border-b border-white/10 font-display text-lg font-bold text-white">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse-ring" />
+          <div className="flex items-center gap-2.5 px-5 pt-5 pb-4 border-b border-white/10 font-display text-lg font-bold text-white tracking-tight">
+            <LogoIcon className="w-7 h-7" />
             StaffDesk
           </div>
 
@@ -275,8 +294,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <header className="h-14 px-4 sm:px-6 bg-surface flex items-center justify-between sticky top-0 z-30 gap-3">
             <div className="flex items-center gap-2">
               {/* Mobile: StaffDesk wordmark (no hamburger) */}
-              <span className="md:hidden flex items-center gap-1.5 font-display text-base font-bold text-ink">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-ring" />
+              <span className="md:hidden flex items-center gap-2 font-display text-base font-bold text-ink tracking-tight">
+                <LogoIcon className="w-6 h-6" />
                 StaffDesk
               </span>
               {/* Desktop: page title */}
