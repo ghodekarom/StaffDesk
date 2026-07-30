@@ -103,3 +103,43 @@
 .animate-pulse-ring {
   animation: pulseRing 2s infinite;
 }
+
+/* Shimmer skeleton animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--color-line)) 25%,
+    rgb(var(--color-line-hover)) 50%,
+    rgb(var(--color-line)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Status ring utilities */
+.ring-active {
+  box-shadow: 0 0 0 2.5px rgb(var(--color-emerald-primary));
+}
+.ring-leave {
+  box-shadow: 0 0 0 2.5px rgb(var(--color-amber-primary));
+}
+.ring-inactive {
+  box-shadow: 0 0 0 2.5px rgb(var(--color-muted));
+}
+.ring-terminated {
+  box-shadow: 0 0 0 2.5px rgb(var(--color-rose-primary));
+}
+
+/* Table row hover action bar reveal */
+.row-actions {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.group:hover .row-actions {
+  opacity: 1;
+}

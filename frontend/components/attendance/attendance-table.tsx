@@ -1,6 +1,36 @@
 import { AttendanceRecord } from "@/types/attendance";
 import { AttendanceStatusBadge } from "./attendance-status-badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CalendarCheck2 } from "lucide-react";
+import { motion } from "framer-motion";
+
+// Shimmer skeleton for loading state
+export function AttendanceTableSkeleton() {
+  return (
+    <div className="rounded-lg border border-line bg-surface overflow-hidden">
+      <table className="w-full text-left text-sm">
+        <thead className="border-b border-line bg-canvas">
+          <tr>
+            {["Date", "Clock In", "Clock Out", "Status"].map((h) => (
+              <th key={h} className="px-4 py-3 text-xs uppercase tracking-wide text-muted font-medium">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <tr key={i}>
+              <td className="px-4 py-3.5"><div className="h-3 w-20 rounded skeleton-shimmer" /></td>
+              <td className="px-4 py-3.5"><div className="h-3 w-14 rounded skeleton-shimmer" /></td>
+              <td className="px-4 py-3.5"><div className="h-3 w-14 rounded skeleton-shimmer" /></td>
+              <td className="px-4 py-3.5"><div className="h-5 w-16 rounded-full skeleton-shimmer" /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 function formatDate(iso: string): string {
   return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
@@ -22,11 +52,18 @@ interface Props {
 }
 
 export function AttendanceTable({ records, showEmployee = false, onEdit }: Props) {
+  const rowVariants = {
+    hidden: { opacity: 0, y: 6 },
+    show: { opacity: 1, y: 0 },
+  };
+
   if (records.length === 0) {
     return (
-      <div className="rounded-lg border border-line bg-surface py-16 text-center text-sm text-muted">
-        No attendance records in this range.
-      </div>
+      <EmptyState
+        icon={<CalendarCheck2 size={32} />}
+        title="No records found"
+        description="No attendance records exist in this date range."
+      />
     );
   }
 
@@ -69,7 +106,7 @@ export function AttendanceTable({ records, showEmployee = false, onEdit }: Props
       {/* Table layout at sm and up */}
       <div className="hidden overflow-x-auto rounded-lg border border-line bg-surface sm:block">
         <table className="w-full min-w-[560px] text-left text-sm">
-          <thead className="border-b border-line bg-canvas text-xs uppercase tracking-wide text-muted">
+          <thead className="sticky top-0 z-10 border-b border-line bg-canvas text-xs uppercase tracking-wide text-muted shadow-sm">
             <tr>
               <th className="px-4 py-3 font-medium">Date</th>
               {showEmployee && <th className="px-4 py-3 font-medium">Employee</th>}
@@ -79,9 +116,19 @@ export function AttendanceTable({ records, showEmployee = false, onEdit }: Props
               {onEdit && <th className="px-4 py-3 font-medium text-right">Actions</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-line">
+          <motion.tbody
+            className="divide-y divide-line"
+            initial="hidden"
+            animate="show"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+          >
             {records.map((record) => (
-              <tr key={record.id} className="hover:bg-canvas/60">
+              <motion.tr
+                key={record.id}
+                variants={rowVariants}
+                transition={{ duration: 0.2 }}
+                className="hover:bg-canvas/60 transition-colors"
+              >
                 <td className="px-4 py-3 text-ink">{formatDate(record.attendanceDate)}</td>
                 {showEmployee && (
                   <td className="px-4 py-3">
@@ -91,19 +138,15 @@ export function AttendanceTable({ records, showEmployee = false, onEdit }: Props
                 )}
                 <td className="px-4 py-3 text-muted">{formatTime(record.clockIn)}</td>
                 <td className="px-4 py-3 text-muted">{formatTime(record.clockOut)}</td>
-                <td className="px-4 py-3">
-                  <AttendanceStatusBadge status={record.status} />
-                </td>
+                <td className="px-4 py-3"><AttendanceStatusBadge status={record.status} /></td>
                 {onEdit && (
                   <td className="px-4 py-3 text-right">
-                    <Button variant="ghost" className="px-2 py-1" onClick={() => onEdit(record)}>
-                      Edit
-                    </Button>
+                    <Button variant="ghost" className="px-2 py-1" onClick={() => onEdit(record)}>Edit</Button>
                   </td>
                 )}
-              </tr>
+              </motion.tr>
             ))}
-          </tbody>
+          </motion.tbody>
         </table>
       </div>
     </>

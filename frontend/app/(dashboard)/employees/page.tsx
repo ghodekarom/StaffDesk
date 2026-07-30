@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api, ApiError } from "@/lib/api";
 import { Employee, EmployeeRequest, Page } from "@/types/employee";
-import { EmployeeTable } from "@/components/employees/employee-table";
+import { EmployeeTable, EmployeeTableSkeleton } from "@/components/employees/employee-table";
 import { EmployeeForm } from "@/components/employees/employee-form";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -159,9 +159,7 @@ export default function EmployeesPage() {
       )}
 
       {loading && !page ? (
-        <div className="rounded-lg border border-line bg-surface py-16 text-center text-sm text-muted">
-          Loading employees…
-        </div>
+        <EmployeeTableSkeleton />
       ) : page ? (
         <>
           <EmployeeTable

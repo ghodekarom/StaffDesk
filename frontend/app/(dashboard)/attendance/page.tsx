@@ -6,7 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { AttendancePage as AttendancePageType } from "@/types/attendance";
 import { ClockWidget } from "@/components/attendance/clock-widget";
-import { AttendanceTable } from "@/components/attendance/attendance-table";
+import { AttendanceTable, AttendanceTableSkeleton } from "@/components/attendance/attendance-table";
 import { Button } from "@/components/ui/button";
 
 const PAGE_SIZE = 20;
@@ -89,9 +89,7 @@ export default function AttendancePage() {
       )}
 
       {loading && !page ? (
-        <div className="rounded-lg border border-line bg-surface py-16 text-center text-sm text-muted">
-          Loading attendance…
-        </div>
+        <AttendanceTableSkeleton />
       ) : page ? (
         <>
           <AttendanceTable records={page.content} />

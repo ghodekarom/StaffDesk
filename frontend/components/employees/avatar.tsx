@@ -19,11 +19,20 @@ function colorFor(name: string): string {
   return PALETTE[Math.abs(hash) % PALETTE.length];
 }
 
-export function Avatar({ firstName, lastName }: { firstName: string; lastName: string }) {
+function statusRingClass(status?: string): string {
+  const s = status?.toUpperCase();
+  if (s === "ACTIVE") return "ring-active animate-pulse-ring";
+  if (s === "INACTIVE") return "ring-inactive";
+  if (s === "TERMINATED") return "ring-terminated";
+  return "";
+}
+
+export function Avatar({ firstName, lastName, status }: { firstName: string; lastName: string; status?: string }) {
   const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
+  const ring = statusRingClass(status);
   return (
     <div
-      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+      className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white transition-shadow ${ring}`}
       style={{ backgroundColor: colorFor(`${firstName}${lastName}`) }}
       aria-hidden="true"
     >
@@ -31,3 +40,6 @@ export function Avatar({ firstName, lastName }: { firstName: string; lastName: s
     </div>
   );
 }
+
+// Animations need to be defined in globals.css (already added).
+// @keyframes pulseRing and .animate-pulse-ring are in globals.css.
