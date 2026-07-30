@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Employee } from "@/types/employee";
@@ -31,10 +32,12 @@ type ModalState =
   | { mode: "edit"; record: AttendanceRecord }
   | { mode: "create" };
 
-export default function TeamAttendancePage() {
+function TeamAttendanceContent() {
   const { role, isInitializing } = useAuth();
+  const searchParams = useSearchParams();
+  const initialEmpId = searchParams.get("employeeId");
 
-  const [employeeId, setEmployeeId] = useState<number | null>(null);
+  const [employeeId, setEmployeeId] = useState<number | null>(initialEmpId ? parseInt(initialEmpId) : null);
   const [employee, setEmployee] = useState<Employee | null>(null);
 
   const [page, setPage] = useState<AttendancePageType | null>(null);
@@ -217,5 +220,13 @@ export default function TeamAttendancePage() {
         </Modal>
       )}
     </div>
+  );
+}
+
+export default function TeamAttendancePage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-muted">Loading attendance...</div>}>
+      <TeamAttendanceContent />
+    </Suspense>
   );
 }

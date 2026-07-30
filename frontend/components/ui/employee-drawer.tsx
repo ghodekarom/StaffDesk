@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useToast } from "@/components/ui/toast-notifications";
 
 export interface EmployeeDrawerData {
+  id: number;
   name: string;
   code: string;
   role: string;
@@ -110,6 +112,13 @@ export function EmployeeDrawer({ data, onClose }: EmployeeDrawerProps) {
           >
             Send Direct Message
           </button>
+          <Link 
+            href={`/attendance/team?employeeId=${data.id}`} 
+            onClick={onClose}
+            className="w-full h-10 mt-3 border border-line bg-surface hover:bg-line text-ink font-semibold rounded-lg text-sm flex items-center justify-center transition-colors"
+          >
+            View Attendance Record
+          </Link>
         </div>
       </div>
     </div>

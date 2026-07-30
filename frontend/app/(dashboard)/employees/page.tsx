@@ -63,6 +63,7 @@ export default function EmployeesPage() {
 
   const handleInspect = (emp: Employee) => {
     const detail = {
+      id: emp.id,
       name: `${emp.firstName} ${emp.lastName}`,
       code: emp.employeeCode,
       role: emp.designation || "Staff",

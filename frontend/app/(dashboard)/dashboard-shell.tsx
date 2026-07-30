@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { ToastProvider } from "@/components/ui/toast-notifications";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { EmployeeDrawer, EmployeeDrawerData } from "@/components/ui/employee-drawer";
+import { Employee } from "@/types/employee";
 
 function SunIcon() {
   return (
@@ -38,17 +39,17 @@ function LogoutIcon() {
   );
 }
 
-function LogoIcon({ className }: { className?: string }) {
+function LogoIcon({ className, idPrefix = "logo" }: { className?: string; idPrefix?: string }) {
   return (
     <svg className={className} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M22 10.5C22 14.0899 19.0899 17 15.5 17H10V10.5C10 6.91015 12.9101 4 16.5 4H22V10.5Z" fill="url(#logo-grad-1)"/>
-      <path d="M10 21.5C10 17.9101 12.9101 15 16.5 15H22V21.5C22 25.0899 19.0899 28 15.5 28H10V21.5Z" fill="url(#logo-grad-2)"/>
+      <path d="M22 10.5C22 14.0899 19.0899 17 15.5 17H10V10.5C10 6.91015 12.9101 4 16.5 4H22V10.5Z" fill={`url(#${idPrefix}-grad-1)`}/>
+      <path d="M10 21.5C10 17.9101 12.9101 15 16.5 15H22V21.5C22 25.0899 19.0899 28 15.5 28H10V21.5Z" fill={`url(#${idPrefix}-grad-2)`}/>
       <defs>
-        <linearGradient id="logo-grad-1" x1="10" y1="4" x2="22" y2="17" gradientUnits="userSpaceOnUse">
+        <linearGradient id={`${idPrefix}-grad-1`} x1="10" y1="4" x2="22" y2="17" gradientUnits="userSpaceOnUse">
           <stop stopColor="#38bdf8" />
           <stop offset="1" stopColor="#818cf8" />
         </linearGradient>
-        <linearGradient id="logo-grad-2" x1="10" y1="15" x2="22" y2="28" gradientUnits="userSpaceOnUse">
+        <linearGradient id={`${idPrefix}-grad-2`} x1="10" y1="15" x2="22" y2="28" gradientUnits="userSpaceOnUse">
           <stop stopColor="#818cf8" />
           <stop offset="1" stopColor="#c084fc" />
         </linearGradient>
@@ -97,7 +98,7 @@ interface LeaveRequestPage {
 }
 
 export function DashboardShell({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isInitializing, role, logout } = useAuth();
+  const { isAuthenticated, isInitializing, role, employeeId, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const { theme, toggle: toggleTheme } = useTheme();
@@ -106,6 +107,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [inspectData, setInspectData] = useState<EmployeeDrawerData | null>(null);
   const [liveTime, setLiveTime] = useState("");
   const [pendingLeaveCount, setPendingLeaveCount] = useState<number | null>(null);
+  const [employeeName, setEmployeeName] = useState("Loading...");
+
+  useEffect(() => {
+    if (employeeId) {
+      api.get<Employee>(`/employees/${employeeId}`)
+        .then(emp => setEmployeeName(`${emp.firstName} ${emp.lastName}`))
+        .catch(() => setEmployeeName("User"));
+    }
+  }, [employeeId]);
 
   const handleLogout = async () => {
     await logout();
@@ -219,7 +229,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <aside className="hidden md:flex sticky top-0 h-screen w-60 bg-sidebarBg text-white flex-col border-r border-white/10 shrink-0">
           {/* Logo */}
           <div className="flex items-center gap-2.5 px-5 pt-5 pb-4 border-b border-white/10 font-display text-lg font-bold text-white tracking-tight">
-            <LogoIcon className="w-7 h-7" />
+            <LogoIcon className="w-7 h-7" idPrefix="desktop" />
             StaffDesk
           </div>
 
@@ -262,12 +272,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <div className="px-3 py-4 border-t border-white/10 space-y-2">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-sky-600 text-white font-semibold text-xs flex items-center justify-center">
-                  {role?.[0] ?? "A"}
+                <div className="w-8 h-8 rounded-lg bg-sky-600 text-white font-semibold text-xs flex items-center justify-center uppercase">
+                  {employeeName.charAt(0)}
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-white">Aisha Rahman</div>
-                  <div className="text-[11px] text-slate-400">{role || "Admin"}</div>
+                  <div className="text-xs font-semibold text-white">{employeeName}</div>
+                  <div className="text-[11px] text-slate-400 capitalize">{role ? role.toLowerCase() : "Loading..."}</div>
                 </div>
               </div>
               <button
@@ -295,7 +305,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2">
               {/* Mobile: StaffDesk wordmark (no hamburger) */}
               <span className="md:hidden flex items-center gap-2 font-display text-base font-bold text-ink tracking-tight">
-                <LogoIcon className="w-6 h-6" />
+                <LogoIcon className="w-6 h-6" idPrefix="mobile" />
                 StaffDesk
               </span>
               {/* Desktop: page title */}
