@@ -57,6 +57,7 @@
   body {
     @apply antialiased;
     font-family: var(--font-body), sans-serif;
+    overflow-x: clip;
   }
   :focus-visible {
     outline: 2px solid rgb(var(--color-accent));

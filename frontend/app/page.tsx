@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 
 function HexagonPattern() {
   return (
-    <svg className="absolute inset-0 w-[200%] h-[200%] opacity-[0.04] pointer-events-none -translate-x-1/4 -translate-y-1/4" xmlns="http://www.w3.org/2000/svg">
+    <svg className="fixed inset-0 w-full h-full opacity-[0.04] pointer-events-none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <pattern id="hexagons-pattern" width="60" height="52" patternUnits="userSpaceOnUse" patternTransform="scale(1.5)">
           <path d="M30 0 L60 17.32 L60 51.96 L30 69.28 L0 51.96 L0 17.32 Z" fill="none" stroke="#60A5FA" strokeWidth="1" />
@@ -30,12 +30,12 @@ export default function LandingPage() {
   if (!mounted) return null;
 
   return (
-    <div className="bg-[#070A11] text-slate-300 font-sans relative overflow-x-hidden selection:bg-cyan-500/30">
+    <div className="bg-[#070A11] text-slate-300 font-sans relative overflow-x-clip selection:bg-cyan-500/30">
       
       {/* Background Ambience */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#4F46E5] opacity-20 blur-[150px] rounded-full pointer-events-none mix-blend-screen animate-pulse-slow" />
-      <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] bg-[#06B6D4] opacity-15 blur-[120px] rounded-full pointer-events-none mix-blend-screen" />
-      <div className="absolute bottom-[-10%] left-[20%] w-[60%] h-[40%] bg-[#7C3AED] opacity-15 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
+      <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#4F46E5] opacity-20 blur-[150px] rounded-full pointer-events-none mix-blend-screen animate-pulse-slow" />
+      <div className="fixed top-[20%] right-[-10%] w-[40%] h-[40%] bg-[#06B6D4] opacity-15 blur-[120px] rounded-full pointer-events-none mix-blend-screen" />
+      <div className="fixed bottom-[-10%] left-[20%] w-[60%] h-[40%] bg-[#7C3AED] opacity-15 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
       
       <HexagonPattern />
 
@@ -736,7 +736,17 @@ export default function LandingPage() {
             {/* BG glow */}
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-[#0D1324] to-purple-900/40" />
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
-            <div className="absolute inset-0 opacity-5"><HexagonPattern /></div>
+            {/* Inline hex pattern — avoids creating a second fixed-position SVG */}
+            <div className="absolute inset-0 opacity-[0.04] pointer-events-none overflow-hidden">
+              <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="hexagons-cta" width="60" height="52" patternUnits="userSpaceOnUse" patternTransform="scale(1.5)">
+                    <path d="M30 0 L60 17.32 L60 51.96 L30 69.28 L0 51.96 L0 17.32 Z" fill="none" stroke="#60A5FA" strokeWidth="1" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#hexagons-cta)" />
+              </svg>
+            </div>
 
             <div className="relative z-10">
               <h2 className="text-[44px] lg:text-[52px] font-bold text-white mb-6 leading-tight">

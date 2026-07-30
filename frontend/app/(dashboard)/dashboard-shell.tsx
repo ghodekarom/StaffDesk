@@ -434,7 +434,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </header>
 
           {/* Page Content */}
-          <main className="flex-1 overflow-x-hidden">
+          <main className="flex-1 overflow-x-clip">
             <AnimatePresence mode="wait">
               <motion.div
                 key={pathname}
