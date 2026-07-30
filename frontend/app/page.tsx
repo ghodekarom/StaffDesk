@@ -84,35 +84,15 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="mt-20 mx-auto max-w-5xl rounded-[32px] border border-white/10 bg-slate-900/50 backdrop-blur-2xl p-4 shadow-2xl relative"
+            className="mt-20 mx-auto max-w-5xl rounded-[32px] border border-white/10 bg-slate-900/50 backdrop-blur-2xl p-4 shadow-2xl relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 rounded-[32px] pointer-events-none" />
-            <div className="rounded-[20px] overflow-hidden border border-white/5 bg-slate-950 flex flex-col h-[400px]">
-              {/* Mockup Header */}
-              <div className="h-14 border-b border-white/5 flex items-center px-6 gap-4">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-rose-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                </div>
-                <div className="ml-4 h-6 w-48 bg-white/5 rounded-md" />
-              </div>
-              {/* Mockup Body */}
-              <div className="flex flex-1 p-6 gap-6">
-                <div className="w-48 hidden sm:flex flex-col gap-3">
-                  <div className="h-8 bg-indigo-500/20 rounded-lg w-full" />
-                  <div className="h-8 bg-white/5 rounded-lg w-full" />
-                  <div className="h-8 bg-white/5 rounded-lg w-full" />
-                </div>
-                <div className="flex-1 flex flex-col gap-6">
-                  <div className="flex gap-4">
-                    <div className="h-24 bg-white/5 rounded-xl flex-1 border border-white/5" />
-                    <div className="h-24 bg-white/5 rounded-xl flex-1 border border-white/5" />
-                    <div className="h-24 bg-white/5 rounded-xl flex-1 border border-white/5 hidden md:block" />
-                  </div>
-                  <div className="flex-1 bg-white/5 rounded-xl border border-white/5" />
-                </div>
-              </div>
+            <div className="rounded-[20px] overflow-hidden border border-white/5 bg-slate-950 relative aspect-[16/9]">
+              <img 
+                src="/landing-preview.jpg" 
+                alt="StaffDesk Platform Preview" 
+                className="w-full h-full object-cover opacity-90 object-top"
+              />
             </div>
           </motion.div>
         </div>
