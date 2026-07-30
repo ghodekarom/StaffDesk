@@ -459,7 +459,360 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ─── Trusted By ─────────────────────────────────────────────────────── */}
+        <section className="px-6 lg:px-12 pb-24 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            className="text-center mb-14"
+          >
+            <p className="text-[13px] uppercase tracking-[0.2em] text-slate-500 font-semibold mb-10">Trusted by modern teams at</p>
+            <div className="flex flex-wrap items-center justify-center gap-10 lg:gap-16">
+              {["Horizon Corp", "NexaWave", "Orbital HR", "PeakForce", "Synapse Co"].map((brand, i) => (
+                <motion.span
+                  key={brand}
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="text-[18px] font-bold text-slate-600 hover:text-slate-400 transition-colors tracking-tight cursor-default select-none"
+                >
+                  {brand}
+                </motion.span>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Separator glow line */}
+          <div className="relative h-px my-4">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
+          </div>
+        </section>
+
+        {/* ─── How It Works ────────────────────────────────────────────────────── */}
+        <section className="px-6 lg:px-12 pb-32 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            className="text-center mb-20"
+          >
+            <span className="inline-block px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[12px] font-semibold uppercase tracking-wider mb-5">
+              How It Works
+            </span>
+            <h2 className="text-[40px] font-bold text-white mb-5">Up and running in minutes</h2>
+            <p className="text-slate-400 text-[17px] max-w-xl mx-auto">No lengthy onboarding. No consultants. Just connect, configure, and go.</p>
+          </motion.div>
+
+          <div className="relative">
+            {/* Connecting line */}
+            <div className="absolute top-8 left-[16.67%] right-[16.67%] h-px bg-gradient-to-r from-indigo-500/20 via-cyan-500/30 to-purple-500/20 hidden lg:block" />
+
+            <div className="grid lg:grid-cols-3 gap-10">
+              {[
+                {
+                  step: "01",
+                  color: "indigo",
+                  border: "border-indigo-500/30",
+                  bg: "bg-indigo-500/10",
+                  glow: "shadow-[0_0_20px_rgba(99,102,241,0.2)]",
+                  text: "text-indigo-400",
+                  title: "Connect Your Team",
+                  desc: "Import employees from your existing HR system or invite them via email in seconds. SSO supported."
+                },
+                {
+                  step: "02",
+                  color: "cyan",
+                  border: "border-cyan-500/30",
+                  bg: "bg-cyan-500/10",
+                  glow: "shadow-[0_0_20px_rgba(6,182,212,0.2)]",
+                  text: "text-cyan-400",
+                  title: "Configure Your Workflows",
+                  desc: "Set up departments, shift patterns, leave policies, and approval chains using our guided setup."
+                },
+                {
+                  step: "03",
+                  color: "purple",
+                  border: "border-purple-500/30",
+                  bg: "bg-purple-500/10",
+                  glow: "shadow-[0_0_20px_rgba(168,85,247,0.2)]",
+                  text: "text-purple-400",
+                  title: "Manage Everything",
+                  desc: "Your entire workforce operation is live. Track, approve, report — all from one dashboard."
+                },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.step}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-80px" }}
+                  transition={{ duration: 0.6, delay: i * 0.15 }}
+                  className="flex flex-col items-center text-center"
+                >
+                  <div className={`w-16 h-16 rounded-2xl border ${item.border} ${item.bg} ${item.glow} flex items-center justify-center mb-6 text-[22px] font-bold ${item.text}`}>
+                    {item.step}
+                  </div>
+                  <h3 className="text-[20px] font-bold text-white mb-3">{item.title}</h3>
+                  <p className="text-slate-400 text-[15px] leading-relaxed max-w-xs">{item.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Testimonials ─────────────────────────────────────────────────────── */}
+        <section className="px-6 lg:px-12 pb-32 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-[40px] font-bold text-white mb-4">Loved by HR teams everywhere</h2>
+            <p className="text-slate-400 text-[17px]">See what our customers are saying.</p>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+            {[
+              {
+                quote: "StaffDesk completely transformed how we manage our 200+ person team. Scheduling conflicts are a thing of the past.",
+                name: "Sarah Chen",
+                role: "Head of People, Horizon Corp",
+                gradient: "from-indigo-500/20 to-transparent",
+                border: "border-indigo-500/20",
+                initials: "SC",
+                avatarBg: "bg-indigo-600",
+              },
+              {
+                quote: "The real-time attendance tracking alone saved us 15 hours a week. I can't imagine going back to spreadsheets.",
+                name: "Marcus Reid",
+                role: "Operations Manager, NexaWave",
+                gradient: "from-cyan-500/20 to-transparent",
+                border: "border-cyan-500/20",
+                initials: "MR",
+                avatarBg: "bg-cyan-600",
+              },
+              {
+                quote: "Payroll used to take us 2 full days every month. With StaffDesk it's done in under an hour with zero errors.",
+                name: "Priya Patel",
+                role: "Finance Director, Synapse Co",
+                gradient: "from-purple-500/20 to-transparent",
+                border: "border-purple-500/20",
+                initials: "PP",
+                avatarBg: "bg-purple-600",
+              },
+            ].map((t, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ duration: 0.6, delay: i * 0.15 }}
+                className={`rounded-2xl p-[1px] bg-gradient-to-b ${t.gradient} ${t.border} border hover:scale-[1.02] transition-transform duration-300`}
+              >
+                <div className="h-full bg-[#0D1324] rounded-[15px] p-8 flex flex-col gap-6">
+                  {/* Stars */}
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, j) => (
+                      <svg key={j} className="w-4 h-4 text-amber-400 fill-amber-400" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    ))}
+                  </div>
+                  <p className="text-slate-300 text-[15px] leading-relaxed flex-1">"{t.quote}"</p>
+                  <div className="flex items-center gap-3 pt-2 border-t border-white/5">
+                    <div className={`w-10 h-10 rounded-full ${t.avatarBg} flex items-center justify-center text-[12px] font-bold text-white`}>
+                      {t.initials}
+                    </div>
+                    <div>
+                      <div className="text-[14px] font-semibold text-white">{t.name}</div>
+                      <div className="text-[12px] text-slate-500">{t.role}</div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* ─── Pricing ──────────────────────────────────────────────────────────── */}
+        <section className="px-6 lg:px-12 pb-32 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <span className="inline-block px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[12px] font-semibold uppercase tracking-wider mb-5">
+              Pricing
+            </span>
+            <h2 className="text-[40px] font-bold text-white mb-4">Simple, transparent pricing</h2>
+            <p className="text-slate-400 text-[17px]">No hidden fees. Scale as your team grows.</p>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              {
+                plan: "Starter",
+                price: "$0",
+                period: "Free forever",
+                desc: "Perfect for small teams getting started.",
+                features: ["Up to 10 employees", "Basic attendance tracking", "Leave management", "Email support"],
+                cta: "Get Started Free",
+                highlighted: false,
+                border: "border-white/10",
+                ctaClass: "bg-white/5 hover:bg-white/10 text-white border border-white/10",
+              },
+              {
+                plan: "Growth",
+                price: "$29",
+                period: "per month",
+                desc: "For growing teams that need more power.",
+                features: ["Up to 100 employees", "Advanced scheduling", "Payroll automation", "Real-time analytics", "Priority support"],
+                cta: "Start Free Trial",
+                highlighted: true,
+                border: "border-indigo-500/40",
+                ctaClass: "bg-gradient-to-r from-indigo-600 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white shadow-[0_0_30px_rgba(99,102,241,0.4)]",
+              },
+              {
+                plan: "Enterprise",
+                price: "Custom",
+                period: "contact us",
+                desc: "For large organisations with complex needs.",
+                features: ["Unlimited employees", "Custom integrations", "SSO & SAML", "Dedicated CSM", "SLA guarantee"],
+                cta: "Contact Sales",
+                highlighted: false,
+                border: "border-white/10",
+                ctaClass: "bg-white/5 hover:bg-white/10 text-white border border-white/10",
+              },
+            ].map((tier, i) => (
+              <motion.div
+                key={tier.plan}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ duration: 0.6, delay: i * 0.15 }}
+                className={`relative rounded-2xl border ${tier.border} ${tier.highlighted ? "bg-gradient-to-b from-[#141E36] to-[#0D1324]" : "bg-[#0D1324]"} p-8 flex flex-col gap-6`}
+              >
+                {tier.highlighted && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-indigo-500 to-cyan-500 text-[11px] font-bold text-white uppercase tracking-wider">
+                    Most Popular
+                  </div>
+                )}
+                <div>
+                  <div className="text-[13px] font-semibold text-slate-400 uppercase tracking-wider mb-3">{tier.plan}</div>
+                  <div className="flex items-end gap-2 mb-2">
+                    <span className="text-[42px] font-bold text-white leading-none">{tier.price}</span>
+                    <span className="text-slate-500 text-[14px] mb-1">{tier.period}</span>
+                  </div>
+                  <p className="text-slate-500 text-[14px]">{tier.desc}</p>
+                </div>
+                <ul className="space-y-3 flex-1">
+                  {tier.features.map((f) => (
+                    <li key={f} className="flex items-center gap-3 text-[14px] text-slate-300">
+                      <svg className="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/login" className={`w-full text-center py-3 rounded-xl font-semibold text-[15px] transition-all ${tier.ctaClass}`}>
+                  {tier.cta}
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* ─── Final CTA ────────────────────────────────────────────────────────── */}
+        <section className="px-6 lg:px-12 pb-32 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7 }}
+            className="relative rounded-3xl overflow-hidden border border-white/10 p-16 text-center"
+          >
+            {/* BG glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-[#0D1324] to-purple-900/40" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
+            <div className="absolute inset-0 opacity-5"><HexagonPattern /></div>
+
+            <div className="relative z-10">
+              <h2 className="text-[44px] lg:text-[52px] font-bold text-white mb-6 leading-tight">
+                Ready to transform your <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C084FC] via-[#60A5FA] to-[#22D3EE]">
+                  workforce operations?
+                </span>
+              </h2>
+              <p className="text-slate-400 text-[18px] mb-10 max-w-lg mx-auto">
+                Join thousands of HR teams already saving hours every week with StaffDesk.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
+                <Link href="/login" className="px-10 py-4 rounded-full bg-gradient-to-r from-[#9333EA] to-[#06B6D4] text-white font-semibold text-[17px] flex items-center gap-2 shadow-[0_0_40px_rgba(147,51,234,0.4)] hover:shadow-[0_0_60px_rgba(147,51,234,0.6)] transition-all">
+                  Get Started Free <ChevronRight className="w-5 h-5" />
+                </Link>
+                <Link href="#" className="px-10 py-4 rounded-full border border-white/10 text-white font-semibold text-[17px] hover:bg-white/5 transition-all">
+                  Book a Demo
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* ─── Footer ───────────────────────────────────────────────────────────── */}
+        <footer className="border-t border-white/5 px-6 lg:px-12 py-16 relative z-10">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-14">
+            {/* Brand */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-3 mb-5">
+                <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                  <path d="M22 10.5C22 14.0899 19.0899 17 15.5 17H10V10.5C10 6.91015 12.9101 4 16.5 4H22V10.5Z" fill="url(#logo-footer-1)"/>
+                  <path d="M10 21.5C10 17.9101 12.9101 15 16.5 15H22V21.5C22 25.0899 19.0899 28 15.5 28H10V21.5Z" fill="url(#logo-footer-2)"/>
+                  <defs>
+                    <linearGradient id="logo-footer-1" x1="10" y1="4" x2="22" y2="17" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#2DD4BF"/><stop offset="1" stopColor="#3B82F6"/>
+                    </linearGradient>
+                    <linearGradient id="logo-footer-2" x1="10" y1="15" x2="22" y2="28" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#3B82F6"/><stop offset="1" stopColor="#A855F7"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <span className="text-xl font-bold text-white tracking-tight">StaffDesk</span>
+              </div>
+              <p className="text-slate-500 text-[14px] leading-relaxed max-w-xs">
+                The all-in-one workforce management platform built for modern, distributed teams.
+              </p>
+            </div>
+
+            {/* Links */}
+            {[
+              { heading: "Product", links: ["Features", "Pricing", "Changelog", "Roadmap"] },
+              { heading: "Company", links: ["About", "Blog", "Careers", "Press"] },
+              { heading: "Legal", links: ["Privacy", "Terms", "Security", "Contact"] },
+            ].map((col) => (
+              <div key={col.heading}>
+                <div className="text-[12px] font-semibold uppercase tracking-widest text-slate-500 mb-5">{col.heading}</div>
+                <ul className="space-y-3">
+                  {col.links.map((l) => (
+                    <li key={l}>
+                      <a href="#" className="text-[14px] text-slate-400 hover:text-white transition-colors">{l}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-slate-600 text-[13px]">© 2026 StaffDesk Operations Inc. All rights reserved.</p>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-slate-500 text-[13px]">All systems operational</span>
+            </div>
+          </div>
+        </footer>
+
       </div>
     </div>
   );
 }
+
