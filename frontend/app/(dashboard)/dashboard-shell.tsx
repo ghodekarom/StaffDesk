@@ -311,43 +311,45 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 bg-[#070A11]">
-          {/* Desktop Topbar */}
-          <header className="hidden md:flex items-center justify-between px-8 h-16 bg-[#0E1322]/80 backdrop-blur-md border-b border-white/5 shrink-0 sticky top-0 z-[40]">
+          {/* Seamless Desktop Topbar (Merged into page background matching Image 1) */}
+          <header className="hidden md:flex items-center justify-between px-8 h-16 bg-transparent shrink-0 z-[40]">
             <div className="flex items-center gap-3">
-              <h1 className="text-lg font-bold text-white tracking-tight">{getTitle(pathname)}</h1>
+              <h1 className="text-xl font-bold text-white tracking-tight">{getTitle(pathname)}</h1>
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Search trigger */}
-              <div
-                onClick={() => setCmdOpen(true)}
-                className="flex items-center gap-2 bg-[#151C2C] border border-white/10 px-3.5 py-1.5 rounded-xl text-xs text-slate-400 cursor-pointer hover:border-white/20 w-48 lg:w-64"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" />
-                </svg>
-                <span className="truncate">Search employees, departments...</span>
-                <kbd className="hidden sm:inline bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-400 ml-auto">
-                  Ctrl K
-                </kbd>
-              </div>
-
               {/* Bookmark Icon */}
-              <button className="w-8 h-8 rounded-full bg-[#151C2C] border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors" title="Quick Actions">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              <button 
+                onClick={() => setCmdOpen(true)}
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors" 
+                title="Quick Search & Actions (Ctrl K)"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
               </button>
 
               {/* Notification Bell with red dot */}
-              <button className="w-8 h-8 rounded-full bg-[#151C2C] border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors relative" title="Notifications">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#0E1322]" />
+              <button 
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors relative" 
+                title="Notifications"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#070A11]" />
               </button>
 
-              {/* IST Clock */}
-              <div className="flex font-mono text-xs text-slate-300 items-center gap-1.5 bg-[#151C2C] px-3 py-1.5 rounded-xl border border-white/10 whitespace-nowrap">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{liveTime}</span>
+              {/* User Avatar with Chevron (as shown in Image 1) */}
+              <div 
+                onClick={toggleTheme}
+                className="flex items-center gap-2 cursor-pointer group"
+                title={`Logged in as ${employeeName} — Click to toggle theme`}
+              >
+                <div className="w-8 h-8 rounded-full p-0.5 bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 shadow-md">
+                  <div className="w-full h-full rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white uppercase">
+                    {employeeName ? employeeName.split(" ").map(n => n[0]).join("").slice(0, 2) : "JS"}
+                  </div>
+                </div>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400 group-hover:text-white transition-colors">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
               </div>
             </div>
           </header>
