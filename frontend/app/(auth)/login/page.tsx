@@ -57,7 +57,7 @@ function LoginForm() {
     setSubmitting(true);
     try {
       await login({ email: username, password });
-      const next = searchParams.get("next") ?? "/overview";
+      const next = searchParams.get("next") ?? "/employees";
       router.replace(next);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Authentication failed");
@@ -95,7 +95,6 @@ function LoginForm() {
               <path d="M19 12H5M5 12l7-7M5 12l7 7" />
             </svg>
           </span>
-          <span className="hidden sm:inline">Back to home</span>
         </Link>
       </div>
 
