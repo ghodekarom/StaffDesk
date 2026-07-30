@@ -32,11 +32,11 @@ export function EmployeeDrawer({ data, onClose }: EmployeeDrawerProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-slate-900/45 backdrop-blur-sm z-[50] flex justify-end"
+      className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[50] flex justify-end"
       onClick={onClose}
     >
       <div
-        className="w-[420px] max-w-full bg-surface h-full p-6 sm:p-7 shadow-2xl animate-[slideDrawer_0.25s_cubic-bezier(0.16,1,0.3,1)] flex flex-col"
+        className="w-[420px] max-w-full bg-surface/95 backdrop-blur-2xl border-l border-line h-full p-6 sm:p-7 shadow-2xl animate-[slideDrawer_0.25s_cubic-bezier(0.16,1,0.3,1)] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">

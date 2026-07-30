@@ -4,6 +4,25 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { EmptyState } from "@/components/ui/empty-state";
+import { DepartmentChart, AttendanceTrendChart } from "@/components/ui/overview-charts";
+import { CalendarOff, CalendarCheck2 } from "lucide-react";
+import { motion } from "framer-motion";
+
+const MOCK_DEPT_DATA = [
+  { name: 'Engineering', value: 12 },
+  { name: 'HR', value: 3 },
+  { name: 'Sales', value: 8 },
+  { name: 'Marketing', value: 5 },
+];
+
+const MOCK_ATTENDANCE_TREND = [
+  { date: 'Mon', present: 24, absent: 4 },
+  { date: 'Tue', present: 26, absent: 2 },
+  { date: 'Wed', present: 25, absent: 3 },
+  { date: 'Thu', present: 27, absent: 1 },
+  { date: 'Fri', present: 28, absent: 0 },
+];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Employee { id: number; firstName: string; lastName: string; status: string; departmentName?: string; designation?: string; email?: string; employeeCode?: string; }
@@ -161,6 +180,18 @@ export default function OverviewPage() {
         />
       </div>
 
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+        <div className="bg-surface border border-line rounded-xl shadow-sm overflow-hidden p-5">
+          <h2 className="font-semibold text-sm text-ink mb-4">Department Distribution</h2>
+          <DepartmentChart data={MOCK_DEPT_DATA} />
+        </div>
+        <div className="bg-surface border border-line rounded-xl shadow-sm overflow-hidden p-5">
+          <h2 className="font-semibold text-sm text-ink mb-4">Attendance Trend (This Week)</h2>
+          <AttendanceTrendChart data={MOCK_ATTENDANCE_TREND} />
+        </div>
+      </div>
+
       {/* Two-col grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Recent Attendance */}
@@ -172,9 +203,17 @@ export default function OverviewPage() {
           {loading ? (
             <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
           ) : todayAttendance.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-muted">No attendance records yet today.</div>
+            <EmptyState 
+              icon={<CalendarCheck2 size={32} />}
+              title="All Caught Up!"
+              description="No attendance records have been logged yet today."
+            />
           ) : (
-            <ul>
+            <motion.ul
+              initial="hidden"
+              animate="show"
+              variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
+            >
               {todayAttendance.map((rec, i) => {
                 const name = rec.employeeName ?? rec.employeeCode ?? "Employee";
                 const time = rec.clockIn
@@ -183,7 +222,11 @@ export default function OverviewPage() {
                     })
                   : "—";
                 return (
-                  <li key={rec.id ?? i} className="flex items-center gap-3 px-4 py-3 border-b border-line last:border-0 hover:bg-canvas transition-colors">
+                  <motion.li 
+                    variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}
+                    key={rec.id ?? i} 
+                    className="flex items-center gap-3 px-4 py-3 border-b border-line last:border-0 hover:bg-canvas transition-colors"
+                  >
                     <div className={`w-8 h-8 rounded-lg ${avatarColor(name)} text-white text-xs font-semibold flex items-center justify-center shrink-0`}>
                       {initials(name)}
                     </div>
@@ -192,10 +235,10 @@ export default function OverviewPage() {
                       <div className="text-xs text-muted font-mono">{time}</div>
                     </div>
                     <StatusBadge status={rec.status ?? "PRESENT"} />
-                  </li>
+                  </motion.li>
                 );
               })}
-            </ul>
+            </motion.ul>
           )}
         </div>
 
@@ -212,14 +255,26 @@ export default function OverviewPage() {
           {loading ? (
             <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
           ) : recentLeave.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-muted">No leave requests found.</div>
+            <EmptyState 
+              icon={<CalendarOff size={32} />}
+              title="No Leave Requests"
+              description="Looks like everyone is geared up and ready for work!"
+            />
           ) : (
-            <ul>
+            <motion.ul
+              initial="hidden"
+              animate="show"
+              variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
+            >
               {recentLeave.map((req, i) => {
                 const name = req.employeeName ?? "Me";
                 const range = `${new Date(req.startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${new Date(req.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
                 return (
-                  <li key={req.id ?? i} className="flex items-center gap-3 px-4 py-3 border-b border-line last:border-0 hover:bg-canvas transition-colors">
+                  <motion.li 
+                    variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}
+                    key={req.id ?? i} 
+                    className="flex items-center gap-3 px-4 py-3 border-b border-line last:border-0 hover:bg-canvas transition-colors"
+                  >
                     <div className={`w-8 h-8 rounded-lg ${avatarColor(name)} text-white text-xs font-semibold flex items-center justify-center shrink-0`}>
                       {initials(name)}
                     </div>
@@ -228,10 +283,10 @@ export default function OverviewPage() {
                       <div className="text-xs text-muted capitalize">{req.leaveType?.toLowerCase().replace("_", " ")} · {range}</div>
                     </div>
                     <StatusBadge status={req.status} />
-                  </li>
+                  </motion.li>
                 );
               })}
-            </ul>
+            </motion.ul>
           )}
         </div>
       </div>

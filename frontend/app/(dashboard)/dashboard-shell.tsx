@@ -11,6 +11,7 @@ import { ToastProvider } from "@/components/ui/toast-notifications";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { EmployeeDrawer, EmployeeDrawerData } from "@/components/ui/employee-drawer";
 import { Employee } from "@/types/employee";
+import { motion, AnimatePresence } from "framer-motion";
 
 function SunIcon() {
   return (
@@ -220,13 +221,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     if (path.startsWith("/leave")) return "Leave Requests & Approvals";
     return "StaffDesk";
   };
-
   return (
     <ToastProvider>
       <div className="flex min-h-screen">
 
-        {/* ── Desktop Sidebar (hidden on mobile) ───────────────────────── */}
-        <aside className="hidden md:flex sticky top-0 h-screen w-60 bg-sidebarBg text-white flex-col border-r border-white/10 shrink-0">
+        {/* Desktop Sidebar */}
+        <aside className="hidden md:flex sticky top-0 h-screen w-60 bg-sidebarBg/90 backdrop-blur-xl text-white flex-col border-r border-white/10 shrink-0 z-50 shadow-2xl">
           {/* Logo */}
           <div className="flex items-center gap-2.5 px-5 pt-5 pb-4 border-b border-white/10 font-display text-lg font-bold text-white tracking-tight">
             <LogoIcon className="w-7 h-7" idPrefix="desktop" />
@@ -298,18 +298,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        {/* ── Main Content ───────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Topbar */}
-          <header className="h-14 px-4 sm:px-6 bg-surface flex items-center justify-between sticky top-0 z-30 gap-3">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 bg-canvas">
+          {/* Mobile Topbar */}
+          <header className="md:hidden flex items-center justify-between px-5 h-16 bg-surface/80 backdrop-blur-md border-b border-line shrink-0 sticky top-0 z-[40]">
             <div className="flex items-center gap-2">
               {/* Mobile: StaffDesk wordmark (no hamburger) */}
               <span className="md:hidden flex items-center gap-2 font-display text-base font-bold text-ink tracking-tight">
                 <LogoIcon className="w-6 h-6" idPrefix="mobile" />
                 StaffDesk
               </span>
-              {/* Desktop: page title */}
-              <h1 className="hidden md:block font-semibold text-sm text-ink">{getTitle(pathname)}</h1>
             </div>
 
             <div className="flex items-center gap-2.5">
@@ -354,9 +352,20 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </div>
           </header>
 
-          {/* Page content — extra bottom padding on mobile for the tab bar */}
-          <main className="flex-1 p-4 sm:p-6 pb-32 md:pb-6 overflow-y-auto">
-            {children}
+          {/* Page Content */}
+          <main className="flex-1 overflow-x-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={pathname}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="p-5 sm:p-8 lg:p-10 max-w-7xl mx-auto"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
           </main>
         </div>
 
