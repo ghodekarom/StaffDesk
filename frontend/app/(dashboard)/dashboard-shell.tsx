@@ -109,6 +109,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [liveTime, setLiveTime] = useState("");
   const [pendingLeaveCount, setPendingLeaveCount] = useState<number | null>(null);
   const [employeeName, setEmployeeName] = useState("Loading...");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (employeeId) {
@@ -332,8 +333,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <span>{liveTime}</span>
               </div>
 
-              {/* Mobile: theme & logout in topbar */}
-              <div className="md:hidden flex items-center gap-1.5">
+              {/* Mobile: theme toggle + hamburger menu */}
+              <div className="md:hidden flex items-center gap-1.5 relative">
                 <button
                   onClick={toggleTheme}
                   className="w-8 h-8 rounded-md border border-line bg-input text-ink flex items-center justify-center hover:bg-canvas transition-colors"
@@ -341,13 +342,93 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 >
                   {theme === "dark" ? <SunIcon /> : <MoonIcon />}
                 </button>
+
+                {/* Hamburger button */}
                 <button
-                  onClick={handleLogout}
-                  className="w-8 h-8 rounded-md border border-rose-500/20 bg-rose-500/10 text-rose-500 flex items-center justify-center hover:bg-rose-500/20 transition-colors"
-                  title="Sign Out"
+                  onClick={() => setMobileMenuOpen((o) => !o)}
+                  className="w-8 h-8 rounded-md border border-line bg-input text-ink flex items-center justify-center hover:bg-canvas transition-colors"
+                  aria-label="Open navigation menu"
                 >
-                  <LogoutIcon />
+                  {mobileMenuOpen ? (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  )}
                 </button>
+
+                {/* Dropdown panel */}
+                <AnimatePresence>
+                  {mobileMenuOpen && (
+                    <>
+                      {/* Backdrop */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[45]"
+                        onClick={() => setMobileMenuOpen(false)}
+                      />
+                      {/* Menu panel */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute top-10 right-0 z-[46] w-52 bg-surface/95 backdrop-blur-xl border border-line rounded-xl shadow-2xl overflow-hidden"
+                      >
+                        {/* User info header */}
+                        <div className="px-4 py-3.5 border-b border-line flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-sky-600 text-white font-semibold text-xs flex items-center justify-center uppercase shrink-0">
+                            {employeeName.charAt(0)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold text-ink truncate">{employeeName}</div>
+                            <div className="text-[11px] text-muted capitalize">{role ? role.toLowerCase() : ""}</div>
+                          </div>
+                        </div>
+
+                        {/* Nav links */}
+                        <div className="py-1.5">
+                          {items.map((item) => {
+                            const active = item.href === "/overview"
+                              ? pathname === "/overview"
+                              : pathname.startsWith(item.href);
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
+                                  active
+                                    ? "text-accent bg-accentTint"
+                                    : "text-ink hover:bg-canvas"
+                                }`}
+                              >
+                                <span className="text-muted">{NAV_ICONS[item.href as keyof typeof NAV_ICONS]}</span>
+                                {item.label}
+                              </Link>
+                            );
+                          })}
+                        </div>
+
+                        {/* Logout */}
+                        <div className="border-t border-line py-1.5">
+                          <button
+                            onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-roseTxt hover:bg-roseBg transition-colors"
+                          >
+                            <LogoutIcon />
+                            Sign Out
+                          </button>
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </header>
