@@ -21,8 +21,7 @@ function HexagonPattern() {
 export default function LandingPage() {
   const [mounted, setMounted] = useState(false);
   const { scrollY } = useScroll();
-  const y1 = useTransform(scrollY, [0, 1000], [0, 200]);
-  const y2 = useTransform(scrollY, [0, 1000], [0, -200]);
+  const y1 = useTransform(scrollY, [0, 600], [0, 40]);
 
   useEffect(() => {
     setMounted(true);
@@ -31,7 +30,7 @@ export default function LandingPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#070A11] text-slate-300 font-sans relative overflow-x-hidden selection:bg-cyan-500/30">
+    <div className="bg-[#070A11] text-slate-300 font-sans relative overflow-x-hidden selection:bg-cyan-500/30">
       
       {/* Background Ambience */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#4F46E5] opacity-20 blur-[150px] rounded-full pointer-events-none mix-blend-screen animate-pulse-slow" />
@@ -41,7 +40,7 @@ export default function LandingPage() {
       <HexagonPattern />
 
       {/* Main Container */}
-      <div className="max-w-[1400px] mx-auto min-h-screen flex flex-col relative z-10">
+      <div className="max-w-[1400px] mx-auto flex flex-col relative z-10">
         
         {/* Navigation */}
         <header className="flex items-center justify-between px-6 lg:px-12 py-8 relative z-50">
@@ -105,28 +104,29 @@ export default function LandingPage() {
         </header>
 
         {/* Hero Section */}
-        <main className="flex-1 flex flex-col lg:flex-row items-center justify-between px-6 lg:px-12 pt-8 pb-32 gap-16 relative">
+        <section className="flex flex-col lg:flex-row items-center justify-between px-6 lg:px-12 pt-10 pb-20 gap-10 relative">
           
           {/* Left Text */}
-          <div className="flex-1 max-w-2xl relative z-20">
+          <div className="flex-[0.9] max-w-xl relative z-20">
             <motion.h1 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-[52px] sm:text-[64px] lg:text-[72px] font-bold leading-[1.05] tracking-tight mb-8"
+              className="font-bold leading-[1.08] tracking-tight mb-5"
             >
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C084FC] via-[#60A5FA] to-[#22D3EE] drop-shadow-lg">
+              <span className="block text-[42px] sm:text-[52px] lg:text-[58px] text-transparent bg-clip-text bg-gradient-to-r from-[#C084FC] via-[#818CF8] to-[#22D3EE]">
                 Workforce operations,
               </span>
-              <br />
-              <span className="text-white">managed in one system</span>
+              <span className="block text-[42px] sm:text-[52px] lg:text-[58px] text-white">
+                managed in one system
+              </span>
             </motion.h1>
             
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-              className="text-[18px] sm:text-[20px] text-[#94A3B8] leading-relaxed mb-12 max-w-[540px]"
+              className="text-[16px] text-[#94A3B8] leading-relaxed mb-10 max-w-md"
             >
               Optimize scheduling, track time, manage payroll, and streamline HR processes in a unified platform for modern teams.
             </motion.p>
@@ -135,17 +135,17 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-              className="flex flex-wrap items-center gap-8"
+              className="flex flex-wrap items-center gap-6"
             >
-              <Link href="/login" className="group relative px-8 py-4 rounded-full font-semibold flex items-center gap-2 transition-all overflow-hidden text-white">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#9333EA] to-[#06B6D4] transition-all group-hover:scale-105" />
+              <Link href="/login" className="group relative px-7 py-3.5 rounded-full font-semibold flex items-center gap-2 transition-all overflow-hidden text-white">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#9333EA] to-[#06B6D4]" />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#A855F7] to-[#22D3EE] opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute -inset-1 bg-gradient-to-r from-[#9333EA] to-[#06B6D4] blur-xl opacity-40 group-hover:opacity-70 transition-opacity" />
-                <span className="relative z-10 flex items-center gap-2 text-[17px] tracking-wide">
-                  Request Demo <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <span className="relative z-10 flex items-center gap-2 text-[15px] font-semibold tracking-wide">
+                  Request Demo <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
               </Link>
-              <Link href="#" className="text-[#38BDF8] font-medium text-[17px] hover:text-[#7DD3FC] hover:underline underline-offset-4 transition-all">
+              <Link href="#" className="text-[#38BDF8] font-medium text-[15px] hover:text-[#7DD3FC] hover:underline underline-offset-4 transition-all">
                 Learn More
               </Link>
             </motion.div>
@@ -157,10 +157,12 @@ export default function LandingPage() {
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             style={{ y: y1 }}
-            className="flex-[1.3] relative w-full lg:min-w-[700px] xl:min-w-[850px]"
+            className="flex-[1.2] relative w-full"
           >
+            {/* Glow halo behind window */}
+            <div className="absolute -inset-4 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-cyan-500/10 rounded-3xl blur-2xl pointer-events-none" />
             {/* The Dashboard UI Window */}
-            <div className="bg-[#0B1120] border border-white/10 rounded-2xl shadow-[0_30px_100px_rgba(0,0,0,0.8),_0_0_80px_rgba(56,189,248,0.15)] relative z-10 overflow-hidden flex flex-col group">
+            <div className="bg-[#0B1120] border border-white/10 rounded-2xl shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_30px_80px_rgba(0,0,0,0.7),0_0_60px_rgba(99,102,241,0.12)] relative z-10 overflow-hidden flex flex-col group">
               
               {/* Window Header */}
               <div className="h-14 bg-[#111827] border-b border-white/5 flex items-center justify-between px-5 relative">
@@ -368,7 +370,7 @@ export default function LandingPage() {
               </div>
             </div>
           </motion.div>
-        </main>
+        </section>
 
         {/* Features Section */}
         <section className="px-6 lg:px-12 pb-32 pt-10 relative z-10">
