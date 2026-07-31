@@ -15,7 +15,19 @@
 
   --color-accent: 2 132 199;
   --color-accent-hover: 3 105 161;
-  --color-accent-tint: 240 249 255;
+  --color-accent-tint: 12 46 66;
+  --color-accent-ink: 125 211 252;
+
+  --color-status-active: 110 231 183;
+  --color-status-active-bg: 6 46 34;
+  --color-status-inactive: 252 211 77;
+  --color-status-inactive-bg: 51 39 8;
+  --color-status-terminated: 253 164 175;
+  --color-status-terminated-bg: 63 15 24;
+  --color-status-present: 110 231 183;
+  --color-status-present-bg: 6 46 34;
+  --color-status-late: 252 211 77;
+  --color-status-late-bg: 51 39 8;
 
   --color-emerald-primary: 5 150 105;
   --color-emerald-bg: 236 253 245;
@@ -36,6 +48,7 @@
   html {
     @apply bg-canvas text-ink;
     color-scheme: dark;
+    scroll-behavior: smooth;
   }
   body {
     @apply antialiased;

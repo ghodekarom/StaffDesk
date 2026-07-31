@@ -1,10 +1,8 @@
 import { AttendanceStatus, ATTENDANCE_STATUS_LABEL } from "@/types/attendance";
 
-// Reuses only tokens already confirmed in use elsewhere (accent/status-terminated
-// pairs) rather than inventing new design-system colors for LATE/HALF_DAY.
 const STYLES: Record<AttendanceStatus, string> = {
-  PRESENT: "bg-accentTint text-accentInk",
-  LATE: "bg-status-terminatedBg text-status-terminated",
+  PRESENT: "bg-status-presentBg text-status-present",
+  LATE: "bg-status-lateBg text-status-late",
   HALF_DAY: "bg-canvas text-muted border border-line",
   ABSENT: "bg-status-terminatedBg text-status-terminated",
 };

@@ -74,13 +74,28 @@ function HexagonPattern() {
   );
 }
 
+const NAV_LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "Integrations", href: "#integrations" },
+  { label: "Company", href: "#company" },
+];
+
 export default function LandingPage() {
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 600], [0, 40]);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) setMobileMenuOpen(false);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   if (!mounted) return null;
@@ -129,13 +144,15 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="hidden lg:flex items-center gap-1 bg-[#101726]/60 backdrop-blur-xl px-2 py-1.5 rounded-full border border-white/5 shadow-2xl"
           >
-            <button className="flex items-center gap-1.5 text-[13px] font-medium text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full transition-all">
-              Features <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-            </button>
-            <Link href="#" className="text-[13px] font-medium text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full transition-all">Integrations</Link>
-            <button className="flex items-center gap-1.5 text-[13px] font-medium text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full transition-all">
-              Company <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-            </button>
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-[13px] font-medium text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full transition-all"
+              >
+                {link.label}
+              </Link>
+            ))}
           </motion.nav>
 
           <motion.div
@@ -153,9 +170,55 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Mobile Menu Toggle */}
-          <button className="md:hidden text-white p-2">
-            <Menu />
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-expanded={mobileMenuOpen}
+            aria-label="Toggle navigation menu"
+            className="lg:hidden text-white p-2 relative z-50"
+          >
+            <Menu className={mobileMenuOpen ? "hidden" : "block"} />
+            <ChevronDown className={mobileMenuOpen ? "block rotate-180 transition-transform" : "hidden"} />
           </button>
+
+          {/* Mobile Dropdown Menu */}
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="lg:hidden absolute top-full left-4 right-4 mt-2 bg-[#101726]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-40"
+            >
+              <div className="flex flex-col p-2">
+                {NAV_LINKS.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-[14px] font-medium text-slate-300 hover:text-white hover:bg-white/5 px-4 py-3 rounded-xl transition-all"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+                <div className="h-px bg-white/10 my-2 mx-2" />
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-[14px] font-medium text-slate-300 hover:text-white hover:bg-white/5 px-4 py-3 rounded-xl transition-all"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-[14px] font-semibold text-[#2DD4BF] mx-2 mt-1 px-4 py-3 rounded-xl border border-[#2DD4BF]/40 bg-[#2DD4BF]/10 text-center transition-all"
+                >
+                  Get Started
+                </Link>
+              </div>
+            </motion.div>
+          )}
         </header>
 
         {/* Hero Section */}
@@ -220,10 +283,12 @@ export default function LandingPage() {
             <div className="bg-[#0B0F19] border border-cyan-500/20 rounded-[24px] shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_30px_80px_rgba(0,0,0,0.8),0_0_50px_rgba(6,182,212,0.15)] relative z-10 overflow-hidden flex flex-col group">
 
               {/* Window Body */}
-              <div className="flex bg-[#0B0F19] p-2 sm:p-4 gap-4">
+              <div className="flex bg-[#0B0F19] p-3 sm:p-4 gap-3 sm:gap-4">
 
-                {/* Sidebar */}
-                <div className="w-48 flex flex-col gap-6 bg-[#0E1322] rounded-2xl p-4 border border-white/5 shrink-0">
+                {/* Sidebar — hidden on small screens; the fixed 192px width was
+                    forcing the whole mockup wider than the mobile viewport,
+                    which got clipped by the page's overflow-x-clip. */}
+                <div className="hidden md:flex w-48 flex-col gap-6 bg-[#0E1322] rounded-2xl p-4 border border-white/5 shrink-0">
                   {/* Brand Logo */}
                   <div className="flex items-center gap-2.5 px-2 pt-1">
                     <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#38BDF8] via-[#818CF8] to-[#C084FC] p-0.5 flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.3)]">
@@ -478,7 +543,7 @@ export default function LandingPage() {
                         <div className="space-y-3.5">
                           {DASHBOARD_STATS.teamRows.map((row) => (
                             <div key={row.initials} className="flex items-center justify-between gap-4">
-                              <div className="flex items-center gap-3 w-36 shrink-0">
+                              <div className="flex items-center gap-3 w-28 sm:w-36 shrink-0 min-w-0">
                                 <div className={`w-8 h-8 rounded-full ${row.color} flex items-center justify-center text-xs font-bold text-white border border-white/10 shrink-0`}>
                                   {row.initials}
                                 </div>
@@ -487,7 +552,7 @@ export default function LandingPage() {
                                   <div className="text-[10px] text-slate-500 truncate">{row.employees} Employees</div>
                                 </div>
                               </div>
-                              <div className="flex-1 flex items-center gap-3">
+                              <div className="flex-1 flex items-center gap-3 min-w-0">
                                 <div className="flex-1 h-2 bg-[#1A2234] rounded-full overflow-hidden">
                                   <div
                                     className={`h-full rounded-full ${row.bar.startsWith("from-") ? `bg-gradient-to-r ${row.bar}` : row.bar}`}
@@ -555,7 +620,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section className="px-6 lg:px-12 pb-32 pt-10 relative z-10">
+        <section id="features" className="px-6 lg:px-12 pb-32 pt-10 relative z-10 scroll-mt-24">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -599,7 +664,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─── Trusted By ─────────────────────────────────────────────────────── */}
-        <section className="px-6 lg:px-12 pb-24 relative z-10">
+        <section id="integrations" className="px-6 lg:px-12 pb-24 relative z-10 scroll-mt-24">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -761,7 +826,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─── Footer ───────────────────────────────────────────────────────────── */}
-        <footer className="border-t border-white/5 px-6 lg:px-12 py-16 relative z-10">
+        <footer id="company" className="border-t border-white/5 px-6 lg:px-12 py-16 relative z-10 scroll-mt-24">
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-14">
             {/* Brand */}
             <div className="lg:col-span-2">

@@ -22,6 +22,22 @@ const config: Config = {
         accent: "rgb(var(--color-accent) / <alpha-value>)",
         accentHover: "rgb(var(--color-accent-hover) / <alpha-value>)",
         accentTint: "rgb(var(--color-accent-tint) / <alpha-value>)",
+        accentInk: "rgb(var(--color-accent-ink) / <alpha-value>)",
+
+        // Semantic status tokens referenced by StatusBadge / AttendanceStatusBadge /
+        // LeaveStatusBadge and various form error boxes. These were used throughout
+        // the app but never actually defined here, so they rendered with no color
+        // at all (the washed-out/invisible pill bug).
+        "status-active": "rgb(var(--color-status-active) / <alpha-value>)",
+        "status-activeBg": "rgb(var(--color-status-active-bg) / <alpha-value>)",
+        "status-inactive": "rgb(var(--color-status-inactive) / <alpha-value>)",
+        "status-inactiveBg": "rgb(var(--color-status-inactive-bg) / <alpha-value>)",
+        "status-terminated": "rgb(var(--color-status-terminated) / <alpha-value>)",
+        "status-terminatedBg": "rgb(var(--color-status-terminated-bg) / <alpha-value>)",
+        "status-present": "rgb(var(--color-status-present) / <alpha-value>)",
+        "status-presentBg": "rgb(var(--color-status-present-bg) / <alpha-value>)",
+        "status-late": "rgb(var(--color-status-late) / <alpha-value>)",
+        "status-lateBg": "rgb(var(--color-status-late-bg) / <alpha-value>)",
 
         emeraldPri: "rgb(var(--color-emerald-primary) / <alpha-value>)",
         emeraldBg: "rgb(var(--color-emerald-bg) / <alpha-value>)",
