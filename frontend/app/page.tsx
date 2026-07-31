@@ -2,8 +2,64 @@
 
 import Link from "next/link";
 import { ChevronDown, Clock, Search, LayoutDashboard, Users, Calendar, DollarSign, FileText, Settings, ChevronRight, Activity, LineChart as LineChartIcon, Menu } from "lucide-react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useState, useEffect } from "react";
+import { motion, useScroll, useTransform, useInView, useMotionValue, useSpring } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import {
+  TRUSTED_LOGOS,
+  FEATURES,
+  HOW_IT_WORKS,
+  TESTIMONIALS,
+  FOOTER_COLUMNS,
+  FOOTER_TAGLINE,
+  DASHBOARD_STATS,
+  FINAL_CTA,
+} from "@/lib/landing-content";
+
+const FEATURE_ICON_MAP = { clock: Clock, activity: Activity, chart: LineChartIcon } as const;
+const ACCENT_CLASSES = {
+  indigo: {
+    borderGrad: "from-indigo-500/30 to-transparent hover:from-indigo-400/60",
+    glowBg: "bg-indigo-500/5 group-hover:bg-indigo-500/10",
+    iconBox: "border-indigo-500/30 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.15)] group-hover:shadow-[0_0_25px_rgba(99,102,241,0.3)]",
+    iconColor: "text-indigo-400",
+  },
+  cyan: {
+    borderGrad: "from-cyan-500/30 to-transparent hover:from-cyan-400/60",
+    glowBg: "bg-cyan-500/5 group-hover:bg-cyan-500/10",
+    iconBox: "border-cyan-500/30 bg-cyan-500/10 shadow-[0_0_15px_rgba(6,182,212,0.15)] group-hover:shadow-[0_0_25px_rgba(6,182,212,0.3)]",
+    iconColor: "text-cyan-400",
+  },
+  purple: {
+    borderGrad: "from-purple-500/30 to-transparent hover:from-purple-400/60",
+    glowBg: "bg-purple-500/5 group-hover:bg-purple-500/10",
+    iconBox: "border-purple-500/30 bg-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.15)] group-hover:shadow-[0_0_25px_rgba(168,85,247,0.3)]",
+    iconColor: "text-purple-400",
+  },
+} as const;
+
+// Animated count-up number, triggers once when scrolled into view.
+function CountUp({ value, className }: { value: number; className?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const motionVal = useMotionValue(0);
+  const spring = useSpring(motionVal, { duration: 1200, bounce: 0 } as any);
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (inView) motionVal.set(value);
+  }, [inView, value, motionVal]);
+
+  useEffect(() => {
+    const unsub = spring.on("change", (v) => setDisplay(Math.round(v)));
+    return () => unsub();
+  }, [spring]);
+
+  return (
+    <span ref={ref} className={className}>
+      {display.toLocaleString()}
+    </span>
+  );
+}
 
 function HexagonPattern() {
   return (
@@ -31,20 +87,20 @@ export default function LandingPage() {
 
   return (
     <div className="bg-[#070A11] text-slate-300 font-sans relative overflow-x-clip selection:bg-cyan-500/30">
-      
+
       {/* Background Ambience */}
       <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#4F46E5] opacity-20 blur-[150px] rounded-full pointer-events-none mix-blend-screen animate-pulse-slow" />
       <div className="fixed top-[20%] right-[-10%] w-[40%] h-[40%] bg-[#06B6D4] opacity-15 blur-[120px] rounded-full pointer-events-none mix-blend-screen" />
       <div className="fixed bottom-[-10%] left-[20%] w-[60%] h-[40%] bg-[#7C3AED] opacity-15 blur-[150px] rounded-full pointer-events-none mix-blend-screen" />
-      
+
       <HexagonPattern />
 
       {/* Main Container */}
       <div className="max-w-[1400px] mx-auto flex flex-col relative z-10">
-        
+
         {/* Navigation */}
         <header className="flex items-center justify-between px-6 lg:px-12 py-8 relative z-50">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
@@ -66,8 +122,8 @@ export default function LandingPage() {
             </svg>
             <span className="font-display text-2xl font-bold tracking-tight text-white">StaffDesk</span>
           </motion.div>
-          
-          <motion.nav 
+
+          <motion.nav
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
@@ -76,14 +132,13 @@ export default function LandingPage() {
             <button className="flex items-center gap-1.5 text-[13px] font-medium text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full transition-all">
               Features <ChevronDown className="w-3.5 h-3.5 opacity-60" />
             </button>
-            <Link href="#" className="text-[13px] font-medium text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full transition-all">Pricing</Link>
             <Link href="#" className="text-[13px] font-medium text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full transition-all">Integrations</Link>
             <button className="flex items-center gap-1.5 text-[13px] font-medium text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-full transition-all">
               Company <ChevronDown className="w-3.5 h-3.5 opacity-60" />
             </button>
           </motion.nav>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
@@ -96,7 +151,7 @@ export default function LandingPage() {
               Get Started
             </Link>
           </motion.div>
-          
+
           {/* Mobile Menu Toggle */}
           <button className="md:hidden text-white p-2">
             <Menu />
@@ -105,10 +160,10 @@ export default function LandingPage() {
 
         {/* Hero Section */}
         <section className="flex flex-col lg:flex-row items-center justify-between px-6 lg:px-12 pt-10 pb-20 gap-10 relative">
-          
+
           {/* Left Text */}
           <div className="flex-[0.9] max-w-xl relative z-20">
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
@@ -121,8 +176,8 @@ export default function LandingPage() {
                 managed in one system
               </span>
             </motion.h1>
-            
-            <motion.p 
+
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
@@ -130,8 +185,8 @@ export default function LandingPage() {
             >
               Optimize scheduling, track time, manage payroll, and streamline HR processes in a unified platform for modern teams.
             </motion.p>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
@@ -152,7 +207,7 @@ export default function LandingPage() {
           </div>
 
           {/* Right Dashboard Mockup */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95, x: 40 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
@@ -163,10 +218,10 @@ export default function LandingPage() {
             <div className="absolute -inset-4 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-cyan-500/10 rounded-3xl blur-2xl pointer-events-none" />
             {/* The Dashboard UI Window */}
             <div className="bg-[#0B0F19] border border-cyan-500/20 rounded-[24px] shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_30px_80px_rgba(0,0,0,0.8),0_0_50px_rgba(6,182,212,0.15)] relative z-10 overflow-hidden flex flex-col group">
-              
+
               {/* Window Body */}
               <div className="flex bg-[#0B0F19] p-2 sm:p-4 gap-4">
-                
+
                 {/* Sidebar */}
                 <div className="w-48 flex flex-col gap-6 bg-[#0E1322] rounded-2xl p-4 border border-white/5 shrink-0">
                   {/* Brand Logo */}
@@ -222,17 +277,17 @@ export default function LandingPage() {
 
                 {/* Right / Main Dashboard Body */}
                 <div className="flex-1 flex flex-col gap-4 min-w-0">
-                  
+
                   {/* Top Bar Header */}
                   <div className="flex items-center justify-between px-2 pt-1 pb-1">
                     <h2 className="text-xl font-bold text-white tracking-tight">Dashboard</h2>
-                    
+
                     <div className="flex items-center gap-3">
                       {/* Bookmark Icon */}
                       <button className="w-8 h-8 rounded-full bg-[#151C2C] border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
                         <FileText className="w-4 h-4" />
                       </button>
-                      
+
                       {/* Bell with indicator dot */}
                       <button className="w-8 h-8 rounded-full bg-[#151C2C] border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors relative">
                         <Activity className="w-4 h-4" />
@@ -253,10 +308,10 @@ export default function LandingPage() {
 
                   {/* Dashboard Grid - 2 Rows */}
                   <div className="flex flex-col gap-4">
-                    
+
                     {/* TOP ROW: Left Main Chart (2 cols) + Right 2 Cards (1 col) */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                      
+
                       {/* Top Left: Main Wave Chart (2 cols width) */}
                       <div className="lg:col-span-2 bg-[#121826] border border-white/5 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between group/chart">
                         {/* Header */}
@@ -294,34 +349,34 @@ export default function LandingPage() {
                               </defs>
 
                               {/* Purple Upper Wave */}
-                              <path 
-                                d="M 0 130 C 50 110 80 80 130 90 C 180 100 220 50 280 60 C 340 70 390 10 440 20 C 470 28 490 10 500 5 L 500 160 L 0 160 Z" 
-                                fill="url(#purple-glow)" 
+                              <path
+                                d="M 0 130 C 50 110 80 80 130 90 C 180 100 220 50 280 60 C 340 70 390 10 440 20 C 470 28 490 10 500 5 L 500 160 L 0 160 Z"
+                                fill="url(#purple-glow)"
                               />
-                              <path 
-                                d="M 0 130 C 50 110 80 80 130 90 C 180 100 220 50 280 60 C 340 70 390 10 440 20 C 470 28 490 10 500 5" 
-                                fill="none" 
-                                stroke="#C084FC" 
-                                strokeWidth="3" 
-                                strokeLinecap="round" 
+                              <path
+                                d="M 0 130 C 50 110 80 80 130 90 C 180 100 220 50 280 60 C 340 70 390 10 440 20 C 470 28 490 10 500 5"
+                                fill="none"
+                                stroke="#C084FC"
+                                strokeWidth="3"
+                                strokeLinecap="round"
                               />
 
                               {/* Cyan Lower Wave */}
-                              <path 
-                                d="M 0 100 C 40 70 90 60 140 90 C 190 120 240 70 290 80 C 350 90 400 60 450 70 C 480 76 495 50 500 45 L 500 160 L 0 160 Z" 
-                                fill="url(#cyan-glow)" 
+                              <path
+                                d="M 0 100 C 40 70 90 60 140 90 C 190 120 240 70 290 80 C 350 90 400 60 450 70 C 480 76 495 50 500 45 L 500 160 L 0 160 Z"
+                                fill="url(#cyan-glow)"
                               />
-                              <path 
-                                d="M 0 100 C 40 70 90 60 140 90 C 190 120 240 70 290 80 C 350 90 400 60 450 70 C 480 76 495 50 500 45" 
-                                fill="none" 
-                                stroke="#22D3EE" 
-                                strokeWidth="3" 
-                                strokeLinecap="round" 
+                              <path
+                                d="M 0 100 C 40 70 90 60 140 90 C 190 120 240 70 290 80 C 350 90 400 60 450 70 C 480 76 495 50 500 45"
+                                fill="none"
+                                stroke="#22D3EE"
+                                strokeWidth="3"
+                                strokeLinecap="round"
                               />
 
                               {/* Vertical Guide Line on Thu (around x=280) */}
                               <line x1="280" y1="0" x2="280" y2="160" stroke="#FFFFFF" strokeOpacity="0.15" strokeDasharray="4 4" strokeWidth="1.5" />
-                              
+
                               {/* Dots on vertical line */}
                               <circle cx="280" cy="60" r="4.5" fill="#C084FC" stroke="#FFFFFF" strokeWidth="2" />
                               <circle cx="280" cy="80" r="4.5" fill="#22D3EE" stroke="#FFFFFF" strokeWidth="2" />
@@ -330,7 +385,7 @@ export default function LandingPage() {
                             {/* Floating Tooltip Box */}
                             <div className="absolute top-[18%] left-[50%] -translate-x-1/2 bg-[#1C2537] border border-white/10 rounded-xl px-3 py-1.5 shadow-2xl flex items-center gap-2 pointer-events-none z-20">
                               <div className="w-2 h-2 rounded-full bg-[#C084FC]" />
-                              <span className="text-[11px] font-bold text-white font-mono">530</span>
+                              <CountUp value={DASHBOARD_STATS.activityValue} className="text-[11px] font-bold text-white font-mono" />
                               <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">20%</span>
                             </div>
                           </div>
@@ -344,7 +399,7 @@ export default function LandingPage() {
 
                       {/* Top Right Column: 2 Cards Stacked */}
                       <div className="flex flex-col gap-4">
-                        
+
                         {/* Card 1: Team Activity + Avatars */}
                         <div className="bg-[#121826] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
                           <span className="text-[14px] font-bold text-white">Team Activity</span>
@@ -376,7 +431,7 @@ export default function LandingPage() {
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="text-[11px] font-medium text-slate-400">Active Employees</div>
-                              <div className="text-2xl font-bold text-white mt-0.5">184</div>
+                              <CountUp value={DASHBOARD_STATS.activeEmployees} className="block text-2xl font-bold text-white mt-0.5" />
                             </div>
                             {/* Purple Donut Ring Icon */}
                             <div className="w-10 h-10 relative flex items-center justify-center">
@@ -394,7 +449,7 @@ export default function LandingPage() {
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="text-[11px] font-medium text-slate-400">Total Hours</div>
-                              <div className="text-2xl font-bold text-white mt-0.5">3,210</div>
+                              <CountUp value={DASHBOARD_STATS.totalHours} className="block text-2xl font-bold text-white mt-0.5" />
                             </div>
                             {/* Cyan Donut Ring Icon */}
                             <div className="w-10 h-10 relative flex items-center justify-center">
@@ -412,7 +467,7 @@ export default function LandingPage() {
 
                     {/* BOTTOM ROW: Left Progress List (2 cols) + Right Analytics (1 col) */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                      
+
                       {/* Bottom Left: Team Activity Employee List */}
                       <div className="lg:col-span-2 bg-[#121826] border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-4">
@@ -421,70 +476,35 @@ export default function LandingPage() {
                         </div>
 
                         <div className="space-y-3.5">
-                          {/* Row 1 */}
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3 w-36 shrink-0">
-                              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white border border-white/10 shrink-0">
-                                AM
+                          {DASHBOARD_STATS.teamRows.map((row) => (
+                            <div key={row.initials} className="flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3 w-36 shrink-0">
+                                <div className={`w-8 h-8 rounded-full ${row.color} flex items-center justify-center text-xs font-bold text-white border border-white/10 shrink-0`}>
+                                  {row.initials}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-[12px] font-bold text-white truncate">{row.name}</div>
+                                  <div className="text-[10px] text-slate-500 truncate">{row.employees} Employees</div>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <div className="text-[12px] font-bold text-white truncate">Axel Montana</div>
-                                <div className="text-[10px] text-slate-500 truncate">32 Employees</div>
-                              </div>
-                            </div>
-                            <div className="flex-1 flex items-center gap-3">
-                              <div className="flex-1 h-2 bg-[#1A2234] rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full" style={{ width: '86%' }} />
-                              </div>
-                              <span className="text-[11px] font-bold text-slate-300 font-mono w-8 text-right">86%</span>
-                            </div>
-                          </div>
-
-                          {/* Row 2 */}
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3 w-36 shrink-0">
-                              <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-xs font-bold text-white border border-white/10 shrink-0">
-                                JR
-                              </div>
-                              <div className="min-w-0">
-                                <div className="text-[12px] font-bold text-white truncate">Jaron Retie</div>
-                                <div className="text-[10px] text-slate-500 truncate">15 Employees</div>
+                              <div className="flex-1 flex items-center gap-3">
+                                <div className="flex-1 h-2 bg-[#1A2234] rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${row.bar.startsWith("from-") ? `bg-gradient-to-r ${row.bar}` : row.bar}`}
+                                    style={{ width: `${row.pct}%` }}
+                                  />
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-300 font-mono w-8 text-right">{row.pct}%</span>
                               </div>
                             </div>
-                            <div className="flex-1 flex items-center gap-3">
-                              <div className="flex-1 h-2 bg-[#1A2234] rounded-full overflow-hidden">
-                                <div className="h-full bg-[#22D3EE] rounded-full" style={{ width: '73%' }} />
-                              </div>
-                              <span className="text-[11px] font-bold text-slate-300 font-mono w-8 text-right">73%</span>
-                            </div>
-                          </div>
-
-                          {/* Row 3 */}
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3 w-36 shrink-0">
-                              <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white border border-white/10 shrink-0">
-                                SD
-                              </div>
-                              <div className="min-w-0">
-                                <div className="text-[12px] font-bold text-white truncate">Soea Desmar</div>
-                                <div className="text-[10px] text-slate-500 truncate">10 Employees</div>
-                              </div>
-                            </div>
-                            <div className="flex-1 flex items-center gap-3">
-                              <div className="flex-1 h-2 bg-[#1A2234] rounded-full overflow-hidden">
-                                <div className="h-full bg-[#C084FC] rounded-full" style={{ width: '70%' }} />
-                              </div>
-                              <span className="text-[11px] font-bold text-slate-300 font-mono w-8 text-right">70%</span>
-                            </div>
-                          </div>
-
+                          ))}
                         </div>
                       </div>
 
                       {/* Bottom Right: Analytics */}
                       <div className="bg-[#121826] border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
                         <div className="text-[14px] font-bold text-white mb-3">Analytics</div>
-                        
+
                         <div className="space-y-3">
                           {/* Item 1 */}
                           <div>
@@ -536,7 +556,7 @@ export default function LandingPage() {
 
         {/* Features Section */}
         <section className="px-6 lg:px-12 pb-32 pt-10 relative z-10">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
@@ -544,82 +564,37 @@ export default function LandingPage() {
           >
             Features
           </motion.h2>
-          
+
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6 }}
-              className="group rounded-2xl p-[1px] bg-gradient-to-b from-indigo-500/30 to-transparent hover:from-indigo-400/60 transition-all duration-500"
-            >
-              <div className="h-full bg-gradient-to-b from-[#121A2F] to-[#0A0F18] rounded-[15px] p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors" />
-                <div className="flex items-center gap-4 mb-6 relative z-10">
-                  <div className="w-12 h-12 rounded-xl border border-indigo-500/30 flex items-center justify-center bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.15)] group-hover:shadow-[0_0_25px_rgba(99,102,241,0.3)] transition-all">
-                    <Clock className="w-5 h-5 text-indigo-400" />
+            {FEATURES.map((feature, i) => {
+              const Icon = FEATURE_ICON_MAP[feature.icon];
+              const accent = ACCENT_CLASSES[feature.accent];
+              return (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  whileHover={{ y: -6 }}
+                  transition={{ duration: 0.6, delay: i * 0.15 }}
+                  className={`group rounded-2xl p-[1px] bg-gradient-to-b transition-all duration-500 ${accent.borderGrad}`}
+                >
+                  <div className="h-full bg-gradient-to-b from-[#121A2F] to-[#0A0F18] rounded-[15px] p-8 relative overflow-hidden">
+                    <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-2xl transition-colors ${accent.glowBg}`} />
+                    <div className="flex items-center gap-4 mb-6 relative z-10">
+                      <div className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all ${accent.iconBox}`}>
+                        <Icon className={`w-5 h-5 ${accent.iconColor}`} />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-200">{feature.title}</h3>
+                    </div>
+                    <div className="space-y-3 relative z-10">
+                      <h4 className="text-[15px] font-semibold text-slate-300">{feature.subtitle}</h4>
+                      <p className="text-[14px] text-slate-500 leading-relaxed">{feature.description}</p>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-200">Automated Scheduling</h3>
-                </div>
-                <div className="space-y-3 relative z-10">
-                  <h4 className="text-[15px] font-semibold text-slate-300">Smart shift planning & rotas</h4>
-                  <p className="text-[14px] text-slate-500 leading-relaxed">
-                    Easily create schedules, manage shifts, and reduce conflicts.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Feature 2 */}
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: 0.15 }}
-              className="group rounded-2xl p-[1px] bg-gradient-to-b from-cyan-500/30 to-transparent hover:from-cyan-400/60 transition-all duration-500"
-            >
-              <div className="h-full bg-gradient-to-b from-[#121A2F] to-[#0A0F18] rounded-[15px] p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-2xl group-hover:bg-cyan-500/10 transition-colors" />
-                <div className="flex items-center gap-4 mb-6 relative z-10">
-                  <div className="w-12 h-12 rounded-xl border border-cyan-500/30 flex items-center justify-center bg-cyan-500/10 shadow-[0_0_15px_rgba(6,182,212,0.15)] group-hover:shadow-[0_0_25px_rgba(6,182,212,0.3)] transition-all">
-                    <Activity className="w-5 h-5 text-cyan-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-200">Time & Attendance</h3>
-                </div>
-                <div className="space-y-3 relative z-10">
-                  <h4 className="text-[15px] font-semibold text-slate-300">Real-time tracking & reporting</h4>
-                  <p className="text-[14px] text-slate-500 leading-relaxed">
-                    Monitor attendance, clock-ins/outs, and generate accurate reports.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Feature 3 */}
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="group rounded-2xl p-[1px] bg-gradient-to-b from-purple-500/30 to-transparent hover:from-purple-400/60 transition-all duration-500"
-            >
-              <div className="h-full bg-gradient-to-b from-[#121A2F] to-[#0A0F18] rounded-[15px] p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-colors" />
-                <div className="flex items-center gap-4 mb-6 relative z-10">
-                  <div className="w-12 h-12 rounded-xl border border-purple-500/30 flex items-center justify-center bg-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.15)] group-hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all">
-                    <LineChartIcon className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-200">Payroll Management</h3>
-                </div>
-                <div className="space-y-3 relative z-10">
-                  <h4 className="text-[15px] font-semibold text-slate-300">Seamless payroll processing</h4>
-                  <p className="text-[14px] text-slate-500 leading-relaxed">
-                    Automate payroll calculations, handle tax filings, and ensure compliance.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
+                </motion.div>
+              );
+            })}
           </div>
         </section>
 
@@ -633,7 +608,7 @@ export default function LandingPage() {
           >
             <p className="text-[13px] uppercase tracking-[0.2em] text-slate-500 font-semibold mb-10">Trusted by modern teams at</p>
             <div className="flex flex-wrap items-center justify-center gap-10 lg:gap-16">
-              {["Horizon Corp", "NexaWave", "Orbital HR", "PeakForce", "Synapse Co"].map((brand, i) => (
+              {TRUSTED_LOGOS.map((brand, i) => (
                 <motion.span
                   key={brand}
                   initial={{ opacity: 0 }}
@@ -674,38 +649,7 @@ export default function LandingPage() {
             <div className="absolute top-8 left-[16.67%] right-[16.67%] h-px bg-gradient-to-r from-indigo-500/20 via-cyan-500/30 to-purple-500/20 hidden lg:block" />
 
             <div className="grid lg:grid-cols-3 gap-10">
-              {[
-                {
-                  step: "01",
-                  color: "indigo",
-                  border: "border-indigo-500/30",
-                  bg: "bg-indigo-500/10",
-                  glow: "shadow-[0_0_20px_rgba(99,102,241,0.2)]",
-                  text: "text-indigo-400",
-                  title: "Connect Your Team",
-                  desc: "Import employees from your existing HR system or invite them via email in seconds. SSO supported."
-                },
-                {
-                  step: "02",
-                  color: "cyan",
-                  border: "border-cyan-500/30",
-                  bg: "bg-cyan-500/10",
-                  glow: "shadow-[0_0_20px_rgba(6,182,212,0.2)]",
-                  text: "text-cyan-400",
-                  title: "Configure Your Workflows",
-                  desc: "Set up departments, shift patterns, leave policies, and approval chains using our guided setup."
-                },
-                {
-                  step: "03",
-                  color: "purple",
-                  border: "border-purple-500/30",
-                  bg: "bg-purple-500/10",
-                  glow: "shadow-[0_0_20px_rgba(168,85,247,0.2)]",
-                  text: "text-purple-400",
-                  title: "Manage Everything",
-                  desc: "Your entire workforce operation is live. Track, approve, report — all from one dashboard."
-                },
-              ].map((item, i) => (
+              {HOW_IT_WORKS.map((item, i) => (
                 <motion.div
                   key={item.step}
                   initial={{ opacity: 0, y: 30 }}
@@ -738,35 +682,7 @@ export default function LandingPage() {
           </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            {[
-              {
-                quote: "StaffDesk completely transformed how we manage our 200+ person team. Scheduling conflicts are a thing of the past.",
-                name: "Sarah Chen",
-                role: "Head of People, Horizon Corp",
-                gradient: "from-indigo-500/20 to-transparent",
-                border: "border-indigo-500/20",
-                initials: "SC",
-                avatarBg: "bg-indigo-600",
-              },
-              {
-                quote: "The real-time attendance tracking alone saved us 15 hours a week. I can't imagine going back to spreadsheets.",
-                name: "Marcus Reid",
-                role: "Operations Manager, NexaWave",
-                gradient: "from-cyan-500/20 to-transparent",
-                border: "border-cyan-500/20",
-                initials: "MR",
-                avatarBg: "bg-cyan-600",
-              },
-              {
-                quote: "Payroll used to take us 2 full days every month. With StaffDesk it's done in under an hour with zero errors.",
-                name: "Priya Patel",
-                role: "Finance Director, Synapse Co",
-                gradient: "from-purple-500/20 to-transparent",
-                border: "border-purple-500/20",
-                initials: "PP",
-                avatarBg: "bg-purple-600",
-              },
-            ].map((t, i) => (
+            {TESTIMONIALS.map((t, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
@@ -798,94 +714,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ─── Pricing ──────────────────────────────────────────────────────────── */}
-        <section className="px-6 lg:px-12 pb-32 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="inline-block px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[12px] font-semibold uppercase tracking-wider mb-5">
-              Pricing
-            </span>
-            <h2 className="text-[40px] font-bold text-white mb-4">Simple, transparent pricing</h2>
-            <p className="text-slate-400 text-[17px]">No hidden fees. Scale as your team grows.</p>
-          </motion.div>
-
-          <div className="grid lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {[
-              {
-                plan: "Starter",
-                price: "$0",
-                period: "Free forever",
-                desc: "Perfect for small teams getting started.",
-                features: ["Up to 10 employees", "Basic attendance tracking", "Leave management", "Email support"],
-                cta: "Get Started Free",
-                highlighted: false,
-                border: "border-white/10",
-                ctaClass: "bg-white/5 hover:bg-white/10 text-white border border-white/10",
-              },
-              {
-                plan: "Growth",
-                price: "$29",
-                period: "per month",
-                desc: "For growing teams that need more power.",
-                features: ["Up to 100 employees", "Advanced scheduling", "Payroll automation", "Real-time analytics", "Priority support"],
-                cta: "Start Free Trial",
-                highlighted: true,
-                border: "border-indigo-500/40",
-                ctaClass: "bg-gradient-to-r from-indigo-600 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white shadow-[0_0_30px_rgba(99,102,241,0.4)]",
-              },
-              {
-                plan: "Enterprise",
-                price: "Custom",
-                period: "contact us",
-                desc: "For large organisations with complex needs.",
-                features: ["Unlimited employees", "Custom integrations", "SSO & SAML", "Dedicated CSM", "SLA guarantee"],
-                cta: "Contact Sales",
-                highlighted: false,
-                border: "border-white/10",
-                ctaClass: "bg-white/5 hover:bg-white/10 text-white border border-white/10",
-              },
-            ].map((tier, i) => (
-              <motion.div
-                key={tier.plan}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.6, delay: i * 0.15 }}
-                className={`relative rounded-2xl border ${tier.border} ${tier.highlighted ? "bg-gradient-to-b from-[#141E36] to-[#0D1324]" : "bg-[#0D1324]"} p-8 flex flex-col gap-6`}
-              >
-                {tier.highlighted && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-indigo-500 to-cyan-500 text-[11px] font-bold text-white uppercase tracking-wider">
-                    Most Popular
-                  </div>
-                )}
-                <div>
-                  <div className="text-[13px] font-semibold text-slate-400 uppercase tracking-wider mb-3">{tier.plan}</div>
-                  <div className="flex items-end gap-2 mb-2">
-                    <span className="text-[42px] font-bold text-white leading-none">{tier.price}</span>
-                    <span className="text-slate-500 text-[14px] mb-1">{tier.period}</span>
-                  </div>
-                  <p className="text-slate-500 text-[14px]">{tier.desc}</p>
-                </div>
-                <ul className="space-y-3 flex-1">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-center gap-3 text-[14px] text-slate-300">
-                      <svg className="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/login" className={`w-full text-center py-3 rounded-xl font-semibold text-[15px] transition-all ${tier.ctaClass}`}>
-                  {tier.cta}
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
         {/* ─── Final CTA ────────────────────────────────────────────────────────── */}
         <section className="px-6 lg:px-12 pb-32 relative z-10">
           <motion.div
@@ -912,20 +740,20 @@ export default function LandingPage() {
 
             <div className="relative z-10">
               <h2 className="text-[44px] lg:text-[52px] font-bold text-white mb-6 leading-tight">
-                Ready to transform your <br />
+                {FINAL_CTA.titleWhite} <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C084FC] via-[#60A5FA] to-[#22D3EE]">
-                  workforce operations?
+                  {FINAL_CTA.titleGradient}
                 </span>
               </h2>
               <p className="text-slate-400 text-[18px] mb-10 max-w-lg mx-auto">
-                Join thousands of HR teams already saving hours every week with StaffDesk.
+                {FINAL_CTA.subtitle}
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
-                <Link href="/login" className="px-10 py-4 rounded-full bg-gradient-to-r from-[#9333EA] to-[#06B6D4] text-white font-semibold text-[17px] flex items-center gap-2 shadow-[0_0_40px_rgba(147,51,234,0.4)] hover:shadow-[0_0_60px_rgba(147,51,234,0.6)] transition-all">
-                  Get Started Free <ChevronRight className="w-5 h-5" />
+                <Link href={FINAL_CTA.primaryCta.href} className="px-10 py-4 rounded-full bg-gradient-to-r from-[#9333EA] to-[#06B6D4] text-white font-semibold text-[17px] flex items-center gap-2 shadow-[0_0_40px_rgba(147,51,234,0.4)] hover:shadow-[0_0_60px_rgba(147,51,234,0.6)] transition-all">
+                  {FINAL_CTA.primaryCta.label} <ChevronRight className="w-5 h-5" />
                 </Link>
-                <Link href="#" className="px-10 py-4 rounded-full border border-white/10 text-white font-semibold text-[17px] hover:bg-white/5 transition-all">
-                  Book a Demo
+                <Link href={FINAL_CTA.secondaryCta.href} className="px-10 py-4 rounded-full border border-white/10 text-white font-semibold text-[17px] hover:bg-white/5 transition-all">
+                  {FINAL_CTA.secondaryCta.label}
                 </Link>
               </div>
             </div>
@@ -953,16 +781,12 @@ export default function LandingPage() {
                 <span className="text-xl font-bold text-white tracking-tight">StaffDesk</span>
               </div>
               <p className="text-slate-500 text-[14px] leading-relaxed max-w-xs">
-                The all-in-one workforce management platform built for modern, distributed teams.
+                {FOOTER_TAGLINE}
               </p>
             </div>
 
             {/* Links */}
-            {[
-              { heading: "Product", links: ["Features", "Pricing", "Changelog", "Roadmap"] },
-              { heading: "Company", links: ["About", "Blog", "Careers", "Press"] },
-              { heading: "Legal", links: ["Privacy", "Terms", "Security", "Contact"] },
-            ].map((col) => (
+            {FOOTER_COLUMNS.map((col) => (
               <div key={col.heading}>
                 <div className="text-[12px] font-semibold uppercase tracking-widest text-slate-500 mb-5">{col.heading}</div>
                 <ul className="space-y-3">
@@ -989,4 +813,3 @@ export default function LandingPage() {
     </div>
   );
 }
-

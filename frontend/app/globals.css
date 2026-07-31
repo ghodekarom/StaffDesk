@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --color-canvas: 248 250 252;
-  --color-surface: 255 255 255;
-  --color-card: 255 255 255;
-  --color-input: 241 245 249;
-  --color-ink: 15 23 42;
-  --color-secondary: 51 65 85;
-  --color-muted: 100 116 139;
-  --color-line: 226 232 240;
-  --color-line-hover: 203 213 225;
+  --color-canvas: 11 15 25;
+  --color-surface: 11 15 25;
+  --color-card: 16 22 35;
+  --color-input: 20 27 43;
+  --color-ink: 248 250 252;
+  --color-secondary: 203 213 225;
+  --color-muted: 148 163 184;
+  --color-line: 30 40 60;
+  --color-line-hover: 45 60 90;
 
   --color-accent: 2 132 199;
   --color-accent-hover: 3 105 161;
@@ -29,29 +29,12 @@
   --color-rose-bg: 255 241 242;
   --color-rose-text: 190 18 60;
 
-  --color-sidebar: 15 23 42;
-}
-
-[data-theme="dark"] {
-  --color-canvas: 11 15 25;
-  --color-surface: 11 15 25;
-  --color-card: 16 22 35;
-  --color-input: 20 27 43;
-  --color-ink: 248 250 252;
-  --color-secondary: 203 213 225;
-  --color-muted: 148 163 184;
-  --color-line: 30 40 60;
-  --color-line-hover: 45 60 90;
-
   --color-sidebar: 11 15 25;
 }
 
 @layer base {
   html {
     @apply bg-canvas text-ink;
-    color-scheme: light;
-  }
-  html[data-theme="dark"] {
     color-scheme: dark;
   }
   body {

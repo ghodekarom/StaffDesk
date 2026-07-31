@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "@/lib/theme";
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -10,8 +9,7 @@ interface CommandPaletteProps {
 }
 
 export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
-  const router = Router();
-  const { theme, toggle: toggleTheme } = useTheme();
+  const router = useRouter();
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -83,16 +81,6 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           >
             <span>Open Leave Requests</span>
             <kbd className="text-[10px] border border-line px-1.5 py-0.5 rounded">Nav</kbd>
-          </div>
-          <div
-            className="p-2.5 rounded-md text-xs sm:text-sm cursor-pointer flex justify-between items-center text-muted hover:bg-canvas hover:text-ink"
-            onClick={() => {
-              toggleTheme();
-              onClose();
-            }}
-          >
-            <span>Toggle Dark / Light Theme (Current: {theme})</span>
-            <kbd className="text-[10px] border border-line px-1.5 py-0.5 rounded">Theme</kbd>
           </div>
         </div>
       </div>

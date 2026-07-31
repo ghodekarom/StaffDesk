@@ -5,30 +5,12 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { visibleNavItems } from "@/lib/nav-config";
-import { useTheme } from "@/lib/theme";
 import { api } from "@/lib/api";
 import { ToastProvider } from "@/components/ui/toast-notifications";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { EmployeeDrawer, EmployeeDrawerData } from "@/components/ui/employee-drawer";
 import { Employee } from "@/types/employee";
 import { motion, AnimatePresence } from "framer-motion";
-
-function SunIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="5" />
-      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
 
 function LogoutIcon() {
   return (
@@ -102,7 +84,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const { isAuthenticated, isInitializing, role, employeeId, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const { theme, toggle: toggleTheme } = useTheme();
 
   const [cmdOpen, setCmdOpen] = useState(false);
   const [inspectData, setInspectData] = useState<EmployeeDrawerData | null>(null);
@@ -291,13 +272,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   <div className="text-[11px] text-slate-400 capitalize">{role ? role.toLowerCase() : "Loading..."}</div>
                 </div>
               </div>
-              <button
-                onClick={toggleTheme}
-                className="w-7 h-7 rounded-lg border border-white/10 bg-white/5 text-white flex items-center justify-center hover:bg-white/10 transition-colors"
-                title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              >
-                {theme === "dark" ? <SunIcon /> : <MoonIcon />}
-              </button>
             </div>
             <button
               onClick={handleLogout}
@@ -319,29 +293,25 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
             <div className="flex items-center gap-4">
               {/* Bookmark Icon */}
-              <button 
+              <button
                 onClick={() => setCmdOpen(true)}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors" 
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
                 title="Quick Search & Actions (Ctrl K)"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
               </button>
 
               {/* Notification Bell with red dot */}
-              <button 
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors relative" 
+              <button
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors relative"
                 title="Notifications"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#070A11]" />
               </button>
 
-              {/* User Avatar with Chevron (as shown in Image 1) */}
-              <div 
-                onClick={toggleTheme}
-                className="flex items-center gap-2 cursor-pointer group"
-                title={`Logged in as ${employeeName} — Click to toggle theme`}
-              >
+              {/* User Avatar with Chevron */}
+              <div className="flex items-center gap-2 group" title={`Logged in as ${employeeName}`}>
                 <div className="w-8 h-8 rounded-full p-0.5 bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 shadow-md">
                   <div className="w-full h-full rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white uppercase">
                     {employeeName ? employeeName.split(" ").map(n => n[0]).join("").slice(0, 2) : "JS"}
@@ -376,14 +346,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               </div>
 
               <div className="flex items-center gap-1.5 relative">
-                <button
-                  onClick={toggleTheme}
-                  className="w-8 h-8 rounded-md border border-white/10 bg-[#151C2C] text-white flex items-center justify-center hover:bg-white/10 transition-colors"
-                  title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-                >
-                  {theme === "dark" ? <SunIcon /> : <MoonIcon />}
-                </button>
-
                 <button
                   onClick={() => setMobileMenuOpen((o) => !o)}
                   className="w-8 h-8 rounded-md border border-white/10 bg-[#151C2C] text-white flex items-center justify-center hover:bg-white/10 transition-colors"
