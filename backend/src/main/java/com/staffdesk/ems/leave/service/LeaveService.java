@@ -10,6 +10,8 @@ import com.staffdesk.ems.leave.entity.LeaveBalance;
 import com.staffdesk.ems.leave.entity.LeaveRequest;
 import com.staffdesk.ems.leave.repository.LeaveBalanceRepository;
 import com.staffdesk.ems.leave.repository.LeaveRequestRepository;
+import com.staffdesk.ems.notification.entity.Notification;
+import com.staffdesk.ems.notification.service.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,13 +28,16 @@ public class LeaveService {
     private final LeaveRequestRepository leaveRequestRepository;
     private final LeaveBalanceRepository leaveBalanceRepository;
     private final EmployeeRepository employeeRepository;
+    private final NotificationService notificationService;
 
     public LeaveService(LeaveRequestRepository leaveRequestRepository,
-                         LeaveBalanceRepository leaveBalanceRepository,
-                         EmployeeRepository employeeRepository) {
+                        LeaveBalanceRepository leaveBalanceRepository,
+                        EmployeeRepository employeeRepository,
+                        NotificationService notificationService) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.leaveBalanceRepository = leaveBalanceRepository;
         this.employeeRepository = employeeRepository;
+        this.notificationService = notificationService;
     }
 
     // ---------- Self-service ----------
@@ -75,6 +80,23 @@ public class LeaveService {
         leaveRequest.setStatus(LeaveRequest.LeaveStatus.PENDING);
 
         LeaveRequest saved = leaveRequestRepository.save(leaveRequest);
+
+        // Notify the requester's manager, if they have one. There's no
+        // "assigned approver" concept in the data model today — review is
+        // open to any ADMIN/HR/MANAGER — so this is the one unambiguous
+        // recipient we can resolve without a broader role lookup. See the
+        // note left with this change for how to extend it to all HR/Admin.
+        if (employee.getManager() != null) {
+            notificationService.notify(
+                    employee.getManager().getId(),
+                    Notification.Type.LEAVE_REQUEST_SUBMITTED,
+                    "New leave request",
+                    employee.getFirstName() + " " + employee.getLastName() + " requested " + requestedDays
+                            + " day(s) off (" + request.getStartDate() + " to " + request.getEndDate() + ")",
+                    "/leave/team"
+            );
+        }
+
         return LeaveRequestResponse.from(saved);
     }
 
@@ -167,6 +189,16 @@ public class LeaveService {
         }
 
         LeaveRequest saved = leaveRequestRepository.save(leaveRequest);
+
+        notificationService.notify(
+                saved.getEmployee().getId(),
+                Notification.Type.LEAVE_REQUEST_APPROVED,
+                "Leave request approved",
+                "Your request for " + saved.getStartDate() + " to " + saved.getEndDate() + " was approved by "
+                        + approver.getFirstName() + " " + approver.getLastName(),
+                "/leave"
+        );
+
         return LeaveRequestResponse.from(saved);
     }
 
@@ -189,6 +221,16 @@ public class LeaveService {
         }
 
         LeaveRequest saved = leaveRequestRepository.save(leaveRequest);
+
+        notificationService.notify(
+                saved.getEmployee().getId(),
+                Notification.Type.LEAVE_REQUEST_REJECTED,
+                "Leave request rejected",
+                "Your request for " + saved.getStartDate() + " to " + saved.getEndDate() + " was rejected by "
+                        + approver.getFirstName() + " " + approver.getLastName(),
+                "/leave"
+        );
+
         return LeaveRequestResponse.from(saved);
     }
 

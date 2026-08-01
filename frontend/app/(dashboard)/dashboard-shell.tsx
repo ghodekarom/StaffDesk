@@ -9,7 +9,10 @@ import { api } from "@/lib/api";
 import { ToastProvider } from "@/components/ui/toast-notifications";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { EmployeeDrawer, EmployeeDrawerData } from "@/components/ui/employee-drawer";
+import { NotificationPanel } from "@/components/notifications/notification-panel";
+import { StaffDeskLogo } from "@/components/ui/logo-mark";
 import { Employee } from "@/types/employee";
+import { UnreadCountResponse } from "@/types/notification";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -31,21 +34,6 @@ const NAV_ICONS: Record<string, ReactNode> = {
   "/settings": <Settings size={16} />,
 };
 
-const PAGE_TITLES: Record<string, string> = {
-  "/overview": "Overview",
-  "/employees": "Employees",
-  "/departments": "Departments",
-  "/attendance": "Attendance",
-  "/leave": "Leave",
-  "/settings": "Settings",
-};
-
-function getPageTitle(path: string): string {
-  if (path.startsWith("/attendance")) return "Attendance";
-  if (path.startsWith("/leave")) return "Leave";
-  return PAGE_TITLES[path] ?? "StaffDesk";
-}
-
 function initials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 }
@@ -64,6 +52,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [pendingLeaveCount, setPendingLeaveCount] = useState<number | null>(null);
   const [employeeName, setEmployeeName] = useState("Loading...");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (employeeId) {
@@ -104,6 +94,27 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       refreshLeaveCount();
     }
   }, [isAuthenticated, role, pathname, refreshLeaveCount]);
+
+  const refreshUnreadCount = useCallback(async () => {
+    try {
+      const data = await api.get<UnreadCountResponse>("/notifications/unread-count", undefined, {
+        fresh: true,
+      });
+      setUnreadCount(data?.count ?? null);
+    } catch {
+      setUnreadCount(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    refreshUnreadCount();
+    // Notifications can arrive from other users' actions (e.g. someone
+    // submits a leave request), not just from this user's own navigation,
+    // so poll rather than only refreshing on pathname change.
+    const interval = setInterval(refreshUnreadCount, 60_000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, refreshUnreadCount]);
 
   useEffect(() => {
     if (!isInitializing && !isAuthenticated) {
@@ -182,9 +193,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <aside className="hidden md:flex sticky top-0 h-screen w-[168px] flex-col shrink-0 z-50 p-4 justify-between">
           <div>
             <div className="flex items-center gap-2 px-0 pt-1.5 pb-5">
-              <div className="w-[26px] h-[26px] rounded-[7px] bg-gradient-to-br from-[#8b7ffb] to-[#22d3c0] flex items-center justify-center text-[13px] font-medium text-[#0d0d16]">
-                S
-              </div>
+              <StaffDeskLogo size={26} idPrefix="logo-shell-sidebar" />
               <span className="text-[15px] font-medium">StaffDesk</span>
             </div>
             <nav className="flex flex-col gap-0.5">
@@ -215,16 +224,28 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Desktop Topbar */}
-          <header className="hidden md:flex items-center justify-between px-6 h-14 shrink-0">
-            <span className="text-[17px] font-medium">{getPageTitle(pathname)}</span>
+          <header className="hidden md:flex items-center justify-end px-6 h-14 shrink-0">
             <div className="flex items-center gap-3 text-[#9d9cae]">
-              <button
-                onClick={() => setCmdOpen(true)}
-                className="hover:text-[#e6e6ef] transition-colors"
-                title="Quick search (Ctrl+K)"
-              >
-                <Bell size={17} />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setNotifOpen((o) => !o)}
+                  className="relative hover:text-[#e6e6ef] transition-colors"
+                  title="Notifications"
+                  aria-label="Notifications"
+                >
+                  <Bell size={17} />
+                  {unreadCount !== null && unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-[3px] rounded-full bg-[#e24b4a] text-[10px] font-medium text-white flex items-center justify-center">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+                <NotificationPanel
+                  isOpen={notifOpen}
+                  onClose={() => setNotifOpen(false)}
+                  onCountChanged={refreshUnreadCount}
+                />
+              </div>
               <div className="w-[26px] h-[26px] rounded-full bg-[#8b7ffb] flex items-center justify-center text-[11px] font-medium text-[#0d0d16]">
                 {initials(employeeName)}
               </div>
@@ -234,14 +255,38 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           {/* Mobile Topbar */}
           <header className="md:hidden flex items-center justify-between px-5 h-14 border-b border-[#26263a] shrink-0 sticky top-0 z-40 bg-[#12121c]">
             <div className="flex items-center gap-2">
-              <div className="w-[26px] h-[26px] rounded-[7px] bg-gradient-to-br from-[#8b7ffb] to-[#22d3c0] flex items-center justify-center text-[13px] font-medium text-[#0d0d16]">
-                S
-              </div>
+              <StaffDeskLogo size={26} idPrefix="logo-shell-mobile" />
               <span className="text-[15px] font-medium">StaffDesk</span>
             </div>
             <div className="flex items-center gap-2">
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setNotifOpen((o) => !o);
+                  }}
+                  className="relative w-8 h-8 rounded-lg border border-[#26263a] flex items-center justify-center text-[#9d9cae] hover:text-[#e6e6ef] transition-colors"
+                  title="Notifications"
+                  aria-label="Notifications"
+                >
+                  <Bell size={15} />
+                  {unreadCount !== null && unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-[3px] rounded-full bg-[#e24b4a] text-[9px] font-medium text-white flex items-center justify-center">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+                <NotificationPanel
+                  isOpen={notifOpen}
+                  onClose={() => setNotifOpen(false)}
+                  onCountChanged={refreshUnreadCount}
+                />
+              </div>
               <button
-                onClick={() => setMobileMenuOpen((o) => !o)}
+                onClick={() => {
+                  setNotifOpen(false);
+                  setMobileMenuOpen((o) => !o);
+                }}
                 className="w-8 h-8 rounded-lg border border-[#26263a] flex items-center justify-center"
                 aria-label="Open navigation menu"
               >

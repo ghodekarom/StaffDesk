@@ -171,6 +171,11 @@ export default function OverviewPage() {
   return (
     <div className="space-y-6 animate-fade-up">
 
+      <div>
+        <h1 className="font-display text-2xl font-semibold text-ink">Overview</h1>
+        <p className="text-sm text-muted">{today}</p>
+      </div>
+
       {error && (
         <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
           {error} — make sure the backend server is running.
@@ -179,10 +184,10 @@ export default function OverviewPage() {
 
       {/* ─── SECTION 1: Dual Wave Chart + Gauges & Progress Bars Grid ────────────── */}
       <div className="flex flex-col gap-5">
-        
+
         {/* TOP ROW: Dual Wave Chart (2 cols) + Avatars & Donut Gauges (1 col) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          
+
           {/* Top Left: Interactive Dynamic Dual-Wave Chart */}
           <div className="lg:col-span-2 bg-[#121826] border border-white/5 rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between group/chart">
             {/* Chart Header */}
@@ -220,34 +225,34 @@ export default function OverviewPage() {
                   </defs>
 
                   {/* Upper Purple Wave Path (Dynamically scaled) */}
-                  <path 
+                  <path
                     d={`M 0 ${130 * dynamicMultiplier} C 50 110 80 80 130 90 C 180 100 220 50 280 ${60 * dynamicMultiplier} C 340 70 390 10 440 20 C 470 28 490 10 500 5 L 500 160 L 0 160 Z`}
-                    fill="url(#purple-glow-dash)" 
+                    fill="url(#purple-glow-dash)"
                   />
-                  <path 
+                  <path
                     d={`M 0 ${130 * dynamicMultiplier} C 50 110 80 80 130 90 C 180 100 220 50 280 ${60 * dynamicMultiplier} C 340 70 390 10 440 20 C 470 28 490 10 500 5`}
-                    fill="none" 
-                    stroke="#C084FC" 
-                    strokeWidth="3.5" 
-                    strokeLinecap="round" 
+                    fill="none"
+                    stroke="#C084FC"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
                   />
 
                   {/* Lower Cyan Wave Path (Dynamically scaled) */}
-                  <path 
+                  <path
                     d={`M 0 100 C 40 70 90 60 140 90 C 190 120 240 70 290 ${80 * dynamicMultiplier} C 350 90 400 60 450 70 C 480 76 495 50 500 45 L 500 160 L 0 160 Z`}
-                    fill="url(#cyan-glow-dash)" 
+                    fill="url(#cyan-glow-dash)"
                   />
-                  <path 
+                  <path
                     d={`M 0 100 C 40 70 90 60 140 90 C 190 120 240 70 290 ${80 * dynamicMultiplier} C 350 90 400 60 450 70 C 480 76 495 50 500 45`}
-                    fill="none" 
-                    stroke="#22D3EE" 
-                    strokeWidth="3.5" 
-                    strokeLinecap="round" 
+                    fill="none"
+                    stroke="#22D3EE"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
                   />
 
                   {/* Vertical Guide Line on Thu */}
                   <line x1="280" y1="0" x2="280" y2="160" stroke="#FFFFFF" strokeOpacity="0.2" strokeDasharray="4 4" strokeWidth="1.5" />
-                  
+
                   {/* Indicator Dots */}
                   <circle cx="280" cy={60 * dynamicMultiplier} r="5" fill="#C084FC" stroke="#FFFFFF" strokeWidth="2" />
                   <circle cx="280" cy={80 * dynamicMultiplier} r="5" fill="#22D3EE" stroke="#FFFFFF" strokeWidth="2" />
@@ -270,7 +275,7 @@ export default function OverviewPage() {
 
           {/* Top Right Column: Avatars & Gauges */}
           <div className="flex flex-col gap-5">
-            
+
             {/* Card 1: Dynamic Team Avatars */}
             <div className="bg-[#121826] border border-white/5 rounded-2xl p-5 flex items-center justify-between">
               <span className="text-[15px] font-bold text-white">Team Activity</span>
@@ -342,7 +347,7 @@ export default function OverviewPage() {
 
         {/* BOTTOM ROW: Progress Bars List (2 cols) + Analytics (1 col) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          
+
           {/* Bottom Left: Dynamic Employee Progress Bar List */}
           <div className="lg:col-span-2 bg-[#121826] border border-white/5 rounded-2xl p-6 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-5">
@@ -416,7 +421,7 @@ export default function OverviewPage() {
           {/* Bottom Right: Analytics Card */}
           <div className="bg-[#121826] border border-white/5 rounded-2xl p-6 flex flex-col justify-between">
             <div className="text-[15px] font-bold text-white mb-4">Analytics</div>
-            
+
             <div className="space-y-4">
               {/* Item 1 */}
               <div>
@@ -482,7 +487,7 @@ export default function OverviewPage() {
           {loading ? (
             <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
           ) : todayAttendance.length === 0 ? (
-            <EmptyState 
+            <EmptyState
               icon={<CalendarCheck2 size={32} />}
               title="All Caught Up!"
               description="No attendance records have been logged yet today."
@@ -501,9 +506,9 @@ export default function OverviewPage() {
                     })
                   : "—";
                 return (
-                  <motion.li 
+                  <motion.li
                     variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}
-                    key={rec.id ?? i} 
+                    key={rec.id ?? i}
                     className="flex items-center gap-3 px-5 py-3.5 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
                   >
                     <div className={`w-8 h-8 rounded-full ${avatarColor(name)} text-white text-xs font-bold flex items-center justify-center shrink-0`}>
@@ -534,7 +539,7 @@ export default function OverviewPage() {
           {loading ? (
             <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
           ) : recentLeave.length === 0 ? (
-            <EmptyState 
+            <EmptyState
               icon={<CalendarOff size={32} />}
               title="No Leave Requests"
               description="Looks like everyone is geared up and ready for work!"
@@ -549,9 +554,9 @@ export default function OverviewPage() {
                 const name = req.employeeName ?? "Me";
                 const range = `${new Date(req.startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${new Date(req.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
                 return (
-                  <motion.li 
+                  <motion.li
                     variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}
-                    key={req.id ?? i} 
+                    key={req.id ?? i}
                     className="flex items-center gap-3 px-5 py-3.5 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
                   >
                     <div className={`w-8 h-8 rounded-full ${avatarColor(name)} text-white text-xs font-bold flex items-center justify-center shrink-0`}>
