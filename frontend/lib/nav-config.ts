@@ -3,15 +3,16 @@ import type { Role } from "@/types/auth";
 interface NavItem {
   href: string;
   label: string;
-  roles: Role[]; // which roles see this item
+  roles: Role[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  { href: "/overview", label: "Overview", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/employees", label: "Employees", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/departments", label: "Departments", roles: ["ADMIN", "HR", "MANAGER"] },
-  { href: "/overview", label: "Overview", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/attendance", label: "Attendance", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/leave", label: "Leave", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
+  { href: "/settings", label: "Settings", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
 ];
 
 export function visibleNavItems(role: Role | null): NavItem[] {

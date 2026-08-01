@@ -8,6 +8,15 @@ interface CommandPaletteProps {
   onClose: () => void;
 }
 
+const NAV_COMMANDS = [
+  { path: "/overview", label: "Go to Overview" },
+  { path: "/employees", label: "Open Employees" },
+  { path: "/departments", label: "Open Departments" },
+  { path: "/attendance", label: "Open Attendance" },
+  { path: "/leave", label: "Open Leave" },
+  { path: "/settings", label: "Open Settings" },
+];
+
 export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -29,13 +38,17 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     onClose();
   };
 
+  const filtered = NAV_COMMANDS.filter((c) =>
+    c.label.toLowerCase().includes(query.toLowerCase())
+  );
+
   return (
     <div
-      className="fixed inset-0 bg-slate-900/45 backdrop-blur-sm z-[60] flex items-start justify-center pt-20 px-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-start justify-center pt-20 px-4"
       onClick={onClose}
     >
       <div
-        className="w-[500px] max-w-[90vw] bg-surface border border-line rounded-xl shadow-2xl overflow-hidden"
+        className="w-[500px] max-w-[90vw] bg-[#1b1b29] border border-[#26263a] rounded-xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <input
@@ -43,51 +56,25 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           placeholder="Type a command or search view..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full h-12 px-4 border-b border-line bg-transparent text-sm text-ink outline-none"
+          className="w-full h-12 px-4 border-b border-[#26263a] bg-transparent text-sm text-[#e6e6ef] outline-none placeholder:text-[#9d9cae]"
           autoFocus
         />
         <div className="p-2 max-h-64 overflow-y-auto space-y-1">
-          <div
-            className="p-2.5 rounded-md text-xs sm:text-sm cursor-pointer flex justify-between items-center text-muted hover:bg-canvas hover:text-ink"
-            onClick={() => navigate("/")}
-          >
-            <span>Go to Overview Dashboard</span>
-            <kbd className="text-[10px] border border-line px-1.5 py-0.5 rounded">Nav</kbd>
-          </div>
-          <div
-            className="p-2.5 rounded-md text-xs sm:text-sm cursor-pointer flex justify-between items-center text-muted hover:bg-canvas hover:text-ink"
-            onClick={() => navigate("/employees")}
-          >
-            <span>Open Employee Directory</span>
-            <kbd className="text-[10px] border border-line px-1.5 py-0.5 rounded">Nav</kbd>
-          </div>
-          <div
-            className="p-2.5 rounded-md text-xs sm:text-sm cursor-pointer flex justify-between items-center text-muted hover:bg-canvas hover:text-ink"
-            onClick={() => navigate("/departments")}
-          >
-            <span>Open Departments Hierarchy</span>
-            <kbd className="text-[10px] border border-line px-1.5 py-0.5 rounded">Nav</kbd>
-          </div>
-          <div
-            className="p-2.5 rounded-md text-xs sm:text-sm cursor-pointer flex justify-between items-center text-muted hover:bg-canvas hover:text-ink"
-            onClick={() => navigate("/attendance")}
-          >
-            <span>Open Attendance Tracker</span>
-            <kbd className="text-[10px] border border-line px-1.5 py-0.5 rounded">Nav</kbd>
-          </div>
-          <div
-            className="p-2.5 rounded-md text-xs sm:text-sm cursor-pointer flex justify-between items-center text-muted hover:bg-canvas hover:text-ink"
-            onClick={() => navigate("/leave")}
-          >
-            <span>Open Leave Requests</span>
-            <kbd className="text-[10px] border border-line px-1.5 py-0.5 rounded">Nav</kbd>
-          </div>
+          {filtered.map((cmd) => (
+            <div
+              key={cmd.path}
+              className="p-2.5 rounded-md text-xs sm:text-sm cursor-pointer flex justify-between items-center text-[#9d9cae] hover:bg-[#26263a]/50 hover:text-[#e6e6ef]"
+              onClick={() => navigate(cmd.path)}
+            >
+              <span>{cmd.label}</span>
+              <kbd className="text-[10px] border border-[#26263a] px-1.5 py-0.5 rounded">Nav</kbd>
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <p className="px-3 py-4 text-sm text-[#9d9cae]">No matching commands</p>
+          )}
         </div>
       </div>
     </div>
   );
-}
-
-function Router() {
-  return useRouter();
 }

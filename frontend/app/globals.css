@@ -3,20 +3,21 @@
 @tailwind utilities;
 
 :root {
-  --color-canvas: 11 15 25;
-  --color-surface: 11 15 25;
-  --color-card: 16 22 35;
-  --color-input: 20 27 43;
-  --color-ink: 248 250 252;
-  --color-secondary: 203 213 225;
-  --color-muted: 148 163 184;
-  --color-line: 30 40 60;
-  --color-line-hover: 45 60 90;
+  --color-canvas: 18 18 28;
+  --color-surface: 18 18 28;
+  --color-card: 27 27 41;
+  --color-input: 27 27 41;
+  --color-ink: 230 230 239;
+  --color-secondary: 201 194 255;
+  --color-muted: 157 156 174;
+  --color-line: 38 38 58;
+  --color-line-hover: 52 52 72;
 
-  --color-accent: 2 132 199;
-  --color-accent-hover: 3 105 161;
-  --color-accent-tint: 12 46 66;
-  --color-accent-ink: 125 211 252;
+  --color-accent: 139 127 251;
+  --color-accent-hover: 120 108 235;
+  --color-accent-tint: 139 127 251;
+  --color-accent-ink: 201 194 255;
+  --color-teal: 34 211 192;
 
   --color-status-active: 110 231 183;
   --color-status-active-bg: 6 46 34;

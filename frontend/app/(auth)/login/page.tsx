@@ -57,7 +57,7 @@ function LoginForm() {
     setSubmitting(true);
     try {
       await login({ email: username, password });
-      const next = searchParams.get("next") ?? "/employees";
+      const next = searchParams.get("next") ?? searchParams.get("from") ?? "/overview";
       router.replace(next);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Authentication failed");
