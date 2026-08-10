@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,6 +24,7 @@ public class EmployeeController {
     private final EmployeeService employeeService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
     @Operation(summary = "Create a new employee")
     public ResponseEntity<EmployeeResponseDto> create(@Valid @RequestBody EmployeeRequestDto request) {
         EmployeeResponseDto created = employeeService.create(request);
@@ -44,6 +46,7 @@ public class EmployeeController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
     @Operation(summary = "Update an existing employee")
     public ResponseEntity<EmployeeResponseDto> update(
             @PathVariable Long id, @Valid @RequestBody EmployeeRequestDto request) {
@@ -51,6 +54,7 @@ public class EmployeeController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete an employee")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         employeeService.delete(id);

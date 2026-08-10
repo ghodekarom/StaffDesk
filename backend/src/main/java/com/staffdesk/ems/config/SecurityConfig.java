@@ -83,10 +83,12 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth
-                        // NOTE: this also permits /api/v1/auth/register, which ideally should
-                        // be ADMIN-only. Left open until the first ADMIN user is seeded --
-                        // see the TODO on AuthController#register.
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Only login/refresh are open to unauthenticated callers. /register
+                        // now requires ADMIN (enforced via @PreAuthorize on the controller
+                        // method) -- the first ADMIN account is seeded via Flyway
+                        // (V2__seed_data.sql / V4__phase1_schema.sql), so the bootstrap
+                        // chicken-and-egg problem this used to work around no longer applies.
+                        .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
