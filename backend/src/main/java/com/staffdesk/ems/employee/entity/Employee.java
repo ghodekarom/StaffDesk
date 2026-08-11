@@ -52,6 +52,11 @@ public class Employee {
     @Column(name = "date_of_joining", nullable = false)
     private LocalDate dateOfJoining;
 
+    // Added for Payroll (Phase 2) — Professional Tax is state-specific.
+    // Nullable: existing employees have no value until backfilled.
+    @Column(name = "work_state", length = 50)
+    private String workState;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private EmployeeStatus status = EmployeeStatus.ACTIVE;
