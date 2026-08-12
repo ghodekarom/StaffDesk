@@ -4,14 +4,16 @@ import com.staffdesk.ems.payroll.dto.PayslipResponse;
 import com.staffdesk.ems.payroll.entity.Payslip;
 import com.staffdesk.ems.payroll.exception.PayrollCalculationException;
 import com.staffdesk.ems.payroll.repository.PayslipRepository;
+import com.staffdesk.ems.payroll.service.port.PdfStoragePort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 /**
- * Read side of the payroll module — JSON payslip API (build step 6). PDF
- * generation/streaming is step 7, out of scope here.
+ * Read side of the payroll module — JSON payslip API (step 6) plus PDF byte
+ * retrieval for the download endpoint (step 7). PDF generation itself lives in
+ * PayslipPdfService, called from PayrollRunService at run time, not here.
  *
  * §7.4 assumption used below (role model still open): ADMIN/HR can view any
  * payslip; EMPLOYEE can only view their own. Role gating itself belongs on the
@@ -24,9 +26,11 @@ import java.util.List;
 public class PayslipService {
 
     private final PayslipRepository payslipRepository;
+    private final PdfStoragePort pdfStoragePort;
 
-    public PayslipService(PayslipRepository payslipRepository) {
+    public PayslipService(PayslipRepository payslipRepository, PdfStoragePort pdfStoragePort) {
         this.payslipRepository = payslipRepository;
+        this.pdfStoragePort = pdfStoragePort;
     }
 
     public List<PayslipResponse> getPayslipsForRun(Long payrollRunId) {
@@ -47,13 +51,26 @@ public class PayslipService {
      *                             the caller is ADMIN/HR (exempt from the ownership check)
      */
     public PayslipResponse getPayslip(Long payslipId, Long requesterEmployeeId) {
+        Payslip payslip = findOwnedPayslip(payslipId, requesterEmployeeId);
+        return PayslipResponse.from(payslip);
+    }
+
+    /** Same ownership rule as getPayslip; throws if the PDF hasn't been generated yet. */
+    public byte[] getPdfBytes(Long payslipId, Long requesterEmployeeId) {
+        Payslip payslip = findOwnedPayslip(payslipId, requesterEmployeeId);
+        if (payslip.getPdfPath() == null) {
+            throw new PayrollCalculationException("PDF not yet generated for payslip " + payslipId);
+        }
+        return pdfStoragePort.retrieve(payslip.getPdfPath());
+    }
+
+    private Payslip findOwnedPayslip(Long payslipId, Long requesterEmployeeId) {
         Payslip payslip = payslipRepository.findById(payslipId)
                 .orElseThrow(() -> new PayrollCalculationException("Payslip not found: " + payslipId));
 
         if (requesterEmployeeId != null && !payslip.getEmployeeId().equals(requesterEmployeeId)) {
             throw new PayrollCalculationException("Not authorized to view this payslip");
         }
-
-        return PayslipResponse.from(payslip);
+        return payslip;
     }
 }

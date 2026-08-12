@@ -34,7 +34,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Orchestrates a payroll run across all active employees for a given period
@@ -73,6 +72,7 @@ public class PayrollRunService {
     private final SalaryStructureLookupPort salaryStructureLookupPort;
     private final AttendanceLeavePort attendanceLeavePort;
     private final EmployeeDirectoryPort employeeDirectoryPort;
+    private final PayslipPdfService payslipPdfService;
 
     private final PfCalculator pfCalculator = new PfCalculator();
     private final EsiCalculator esiCalculator = new EsiCalculator();
@@ -86,7 +86,8 @@ public class PayrollRunService {
                               ProfessionalTaxSlabRepository professionalTaxSlabRepository,
                               SalaryStructureLookupPort salaryStructureLookupPort,
                               AttendanceLeavePort attendanceLeavePort,
-                              EmployeeDirectoryPort employeeDirectoryPort) {
+                              EmployeeDirectoryPort employeeDirectoryPort,
+                              PayslipPdfService payslipPdfService) {
         this.payrollRunRepository = payrollRunRepository;
         this.payslipRepository = payslipRepository;
         this.settingsRepository = settingsRepository;
@@ -95,6 +96,7 @@ public class PayrollRunService {
         this.salaryStructureLookupPort = salaryStructureLookupPort;
         this.attendanceLeavePort = attendanceLeavePort;
         this.employeeDirectoryPort = employeeDirectoryPort;
+        this.payslipPdfService = payslipPdfService;
     }
 
     /**
@@ -215,6 +217,13 @@ public class PayrollRunService {
         payslip.setGeneratedAt(Instant.now());
         payslip.setEarnings(earningsBreakdown(salary, prorationFactor));
 
+        payslipRepository.save(payslip); // assign an id first — the PDF storage key uses it
+
+        String employeeDisplayName = profile.displayName() != null
+                ? profile.displayName()
+                : ("Employee #" + employeeId);
+        String pdfPath = payslipPdfService.generateAndStore(payslip, employeeDisplayName);
+        payslip.setPdfPath(pdfPath);
         payslipRepository.save(payslip);
     }
 
