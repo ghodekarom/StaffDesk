@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { api, ApiError } from "@/lib/api";
+import { api, apiFetch, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { PayrollRunRecord, PayslipRecord, MONTH_LABEL } from "@/types/payroll";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export default function PayrollPage() {
   const [run, setRun] = useState<PayrollRunRecord | null>(null);
   const [payslips, setPayslips] = useState<PayslipRecord[]>([]);
   const [loadingPayslips, setLoadingPayslips] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const isAuthorized = role === "ADMIN" || role === "HR";
 
@@ -78,6 +79,32 @@ export default function PayrollPage() {
       showToast(err instanceof ApiError ? err.message : "Failed to load payslips for this run.", "error");
     } finally {
       setLoadingPayslips(false);
+    }
+  }
+
+  async function handleDownloadPdf(payslip: PayslipRecord) {
+    setDownloadingId(payslip.id);
+    try {
+      const response = await apiFetch(`/payroll/payslips/${payslip.id}/pdf`);
+      if (!response.ok) {
+        throw new ApiError(`Couldn't download payslip PDF (${response.status})`, response.status);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `payslip-${payslip.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Couldn't reach the server to download the PDF.";
+      showToast(message, "error");
+    } finally {
+      setDownloadingId(null);
     }
   }
 
@@ -164,32 +191,81 @@ export default function PayrollPage() {
           ) : payslips.length === 0 ? (
             <div className="py-10 text-center text-sm text-muted">No payslips generated for this run.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-muted border-b border-line">
-                    <th className="py-2 pr-4 font-medium">Employee ID</th>
-                    <th className="py-2 pr-4 font-medium">Working days</th>
-                    <th className="py-2 pr-4 font-medium">Paid days</th>
-                    <th className="py-2 pr-4 font-medium">Gross</th>
-                    <th className="py-2 pr-4 font-medium">Deductions</th>
-                    <th className="py-2 pr-4 font-medium">Net pay</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payslips.map((p) => (
-                    <tr key={p.id} className="border-b border-line/50 text-ink">
-                      <td className="py-2 pr-4">{p.employeeId}</td>
-                      <td className="py-2 pr-4">{p.workingDays}</td>
-                      <td className="py-2 pr-4">{p.paidDays}</td>
-                      <td className="py-2 pr-4">{formatCurrency(p.grossEarnings)}</td>
-                      <td className="py-2 pr-4">{formatCurrency(p.totalDeductions)}</td>
-                      <td className="py-2 pr-4 font-medium">{formatCurrency(p.netPay)}</td>
+            <>
+              {/* Table — md and up. Six-plus columns don't fit a phone width without
+                  scrolling data out of view, so this is swapped for stacked cards below md. */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-muted border-b border-line">
+                      <th className="py-2 pr-4 font-medium">Employee ID</th>
+                      <th className="py-2 pr-4 font-medium">Working days</th>
+                      <th className="py-2 pr-4 font-medium">Paid days</th>
+                      <th className="py-2 pr-4 font-medium">Gross</th>
+                      <th className="py-2 pr-4 font-medium">Deductions</th>
+                      <th className="py-2 pr-4 font-medium">Net pay</th>
+                      <th className="py-2 pr-4 font-medium"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {payslips.map((p) => (
+                      <tr key={p.id} className="border-b border-line/50 text-ink">
+                        <td className="py-2 pr-4">{p.employeeId}</td>
+                        <td className="py-2 pr-4">{p.workingDays}</td>
+                        <td className="py-2 pr-4">{p.paidDays}</td>
+                        <td className="py-2 pr-4">{formatCurrency(p.grossEarnings)}</td>
+                        <td className="py-2 pr-4">{formatCurrency(p.totalDeductions)}</td>
+                        <td className="py-2 pr-4 font-medium">{formatCurrency(p.netPay)}</td>
+                        <td className="py-2 pr-4">
+                          <Button
+                            onClick={() => handleDownloadPdf(p)}
+                            disabled={downloadingId === p.id}
+                          >
+                            {downloadingId === p.id ? "Downloading…" : "Download PDF"}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Cards — below md. Net pay is the one number someone scanning on a
+                  phone actually needs first, so it leads each card; everything else
+                  is a label/value row instead of table columns squeezed into 375px. */}
+              <div className="flex flex-col gap-3 md:hidden">
+                {payslips.map((p) => (
+                  <div key={p.id} className="rounded-lg border border-line p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted">Employee {p.employeeId}</span>
+                      <span className="text-base font-medium text-ink">{formatCurrency(p.netPay)}</span>
+                    </div>
+
+                    <dl className="mt-3 grid grid-cols-2 gap-y-2 text-sm">
+                      <dt className="text-muted">Working days</dt>
+                      <dd className="text-right text-ink">{p.workingDays}</dd>
+
+                      <dt className="text-muted">Paid days</dt>
+                      <dd className="text-right text-ink">{p.paidDays}</dd>
+
+                      <dt className="text-muted">Gross</dt>
+                      <dd className="text-right text-ink">{formatCurrency(p.grossEarnings)}</dd>
+
+                      <dt className="text-muted">Deductions</dt>
+                      <dd className="text-right text-ink">{formatCurrency(p.totalDeductions)}</dd>
+                    </dl>
+
+                    <Button
+                      onClick={() => handleDownloadPdf(p)}
+                      disabled={downloadingId === p.id}
+                      className="mt-4 w-full"
+                    >
+                      {downloadingId === p.id ? "Downloading…" : "Download PDF"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}
