@@ -19,6 +19,7 @@ public interface EmployeeDirectoryPort {
 
     record EmployeePayrollProfile(
             Long employeeId,
+            String displayName,   // for the PDF header — adapt from wherever employee name lives today
             String workState,     // nullable until §7.1 is resolved
             boolean hasDisability,
             LocalDate dateOfJoining,
