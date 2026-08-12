@@ -26,6 +26,14 @@ function formatCurrency(amount: number) {
   }).format(amount);
 }
 
+// Wraps a value in quotes and escapes any embedded quotes, per RFC 4180 —
+// needed so a stray comma in future data (or Excel locale settings) can't
+// silently shift columns.
+function csvCell(value: string | number): string {
+  const str = String(value);
+  return `"${str.replace(/"/g, '""')}"`;
+}
+
 export default function PayrollPage() {
   const { role } = useAuth();
   const { showToast } = useToast();
@@ -82,12 +90,56 @@ export default function PayrollPage() {
     }
   }
 
+  function handleDownloadAllCsv() {
+    if (payslips.length === 0 || !run) return;
+
+    // TODO: swap employeeId for a real name column once we know how the
+    // rest of the app resolves employee names (frontend lookup vs a
+    // backend DTO change) — see conversation notes.
+    const header = [
+      "Employee ID",
+      "Working Days",
+      "Paid Days",
+      "Gross Earnings",
+      "Total Deductions",
+      "Net Pay",
+    ];
+
+    const rows = payslips.map((p) => [
+      p.employeeId,
+      p.workingDays,
+      p.paidDays,
+      p.grossEarnings,
+      p.totalDeductions,
+      p.netPay,
+    ]);
+
+    const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+
+    // Prefix with a UTF-8 BOM so Excel (Windows) doesn't mis-detect the
+    // encoding and mangle the ₹ symbol or any non-ASCII names later.
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `payroll-${run.periodYear}-${String(run.periodMonth).padStart(2, "0")}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   async function handleDownloadPdf(payslip: PayslipRecord) {
     setDownloadingId(payslip.id);
     try {
       const response = await apiFetch(`/payroll/payslips/${payslip.id}/pdf`);
       if (!response.ok) {
-        throw new ApiError(`Couldn't download payslip PDF (${response.status})`, response.status);
+        const errorBody = await response.json().catch(() => null);
+        throw new ApiError(
+          errorBody?.message ?? `Couldn't download payslip PDF (${response.status})`,
+          response.status,
+          errorBody
+        );
       }
 
       const blob = await response.blob();
@@ -181,9 +233,14 @@ export default function PayrollPage() {
             <h2 className="text-sm font-medium text-ink">
               {MONTH_LABEL[run.periodMonth]} {run.periodYear} — {run.status}
             </h2>
-            <span className="text-xs text-muted">
-              {payslips.length > 0 ? `${payslips.length} payslip(s)` : ""}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted">
+                {payslips.length > 0 ? `${payslips.length} payslip(s)` : ""}
+              </span>
+              {payslips.length > 0 && (
+                <Button onClick={handleDownloadAllCsv}>Download all (CSV)</Button>
+              )}
+            </div>
           </div>
 
           {loadingPayslips ? (
