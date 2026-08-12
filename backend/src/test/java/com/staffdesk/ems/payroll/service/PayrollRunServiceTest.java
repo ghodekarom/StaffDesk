@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,7 +29,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -44,6 +44,7 @@ class PayrollRunServiceTest {
     private SalaryStructureLookupPort salaryStructureLookupPort;
     private AttendanceLeavePort attendanceLeavePort;
     private EmployeeDirectoryPort employeeDirectoryPort;
+    private PayslipPdfService payslipPdfService;
 
     private PayrollRunService service;
 
@@ -59,10 +60,12 @@ class PayrollRunServiceTest {
         salaryStructureLookupPort = mock(SalaryStructureLookupPort.class);
         attendanceLeavePort = mock(AttendanceLeavePort.class);
         employeeDirectoryPort = mock(EmployeeDirectoryPort.class);
+        payslipPdfService = mock(PayslipPdfService.class);
 
         service = new PayrollRunService(
                 payrollRunRepository, payslipRepository, settingsRepository, tdsSlabRepository,
-                professionalTaxSlabRepository, salaryStructureLookupPort, attendanceLeavePort, employeeDirectoryPort);
+                professionalTaxSlabRepository, salaryStructureLookupPort, attendanceLeavePort,
+                employeeDirectoryPort, payslipPdfService);
     }
 
     @Test
@@ -80,7 +83,7 @@ class PayrollRunServiceTest {
         when(employeeDirectoryPort.findActiveEmployeeIds(any(LocalDate.class)))
                 .thenReturn(List.of(EMPLOYEE_ID));
         when(employeeDirectoryPort.findPayrollProfile(EMPLOYEE_ID))
-                .thenReturn(new EmployeePayrollProfile(EMPLOYEE_ID, "Maharashtra", false,
+                .thenReturn(new EmployeePayrollProfile(EMPLOYEE_ID, "Test Employee", "Maharashtra", false,
                         LocalDate.of(2020, 1, 1), null));
 
         when(salaryStructureLookupPort.findApplicable(eq(EMPLOYEE_ID), any(LocalDate.class)))
@@ -98,11 +101,13 @@ class PayrollRunServiceTest {
                 .thenReturn(Optional.empty());
         when(professionalTaxSlabRepository.findApplicableSlabs(eq("Maharashtra"), any(LocalDate.class)))
                 .thenReturn(maharashtraSlabs());
+        when(payslipPdfService.generateAndStore(any(Payslip.class), any(String.class)))
+                .thenReturn("payslips/test-payslip.pdf");
 
         service.processRun(3, 2027, 999L);
 
         ArgumentCaptor<Payslip> captor = ArgumentCaptor.forClass(Payslip.class);
-        verify(payslipRepository).save(captor.capture());
+        verify(payslipRepository, org.mockito.Mockito.atLeastOnce()).save(captor.capture());
         Payslip saved = captor.getValue();
 
         // gross = 20000+8000+1600+2000 = 31600, no LOP
@@ -121,7 +126,7 @@ class PayrollRunServiceTest {
     }
 
     private PayrollStatutorySettings seededSettings() throws Exception {
-        PayrollStatutorySettings s = new PayrollStatutorySettings();
+        PayrollStatutorySettings s = newEntity(PayrollStatutorySettings.class);
         set(s, "pfEmployeeRate", new BigDecimal("0.1200"));
         set(s, "pfEmployerRate", new BigDecimal("0.1200"));
         set(s, "pfWageCeiling", new BigDecimal("15000.00"));
@@ -153,7 +158,7 @@ class PayrollRunServiceTest {
     }
 
     private TdsSlab slab(int order, String from, String to, String rate) throws Exception {
-        TdsSlab s = new TdsSlab();
+        TdsSlab s = newEntity(TdsSlab.class);
         set(s, "financialYear", "2026-2027");
         set(s, "slabOrder", order);
         set(s, "fromAmount", new BigDecimal(from));
@@ -171,7 +176,7 @@ class PayrollRunServiceTest {
     }
 
     private ProfessionalTaxSlab ptSlab(String from, String to, String monthly) throws Exception {
-        ProfessionalTaxSlab p = new ProfessionalTaxSlab();
+        ProfessionalTaxSlab p = newEntity(ProfessionalTaxSlab.class);
         set(p, "state", "Maharashtra");
         set(p, "fromAmount", new BigDecimal(from));
         set(p, "toAmount", new BigDecimal(to));
@@ -181,7 +186,7 @@ class PayrollRunServiceTest {
     }
 
     private ProfessionalTaxSlab ptSlabNoUpperBound(String from, String monthly) throws Exception {
-        ProfessionalTaxSlab p = new ProfessionalTaxSlab();
+        ProfessionalTaxSlab p = newEntity(ProfessionalTaxSlab.class);
         set(p, "state", "Maharashtra");
         set(p, "fromAmount", new BigDecimal(from));
         set(p, "monthlyAmount", new BigDecimal(monthly));
@@ -189,10 +194,16 @@ class PayrollRunServiceTest {
         return p;
     }
 
-    // Test-only reflection helpers: entities use protected no-arg constructors +
-    // plain setters, and PayrollStatutorySettings/TdsSlab/ProfessionalTaxSlab don't
+    // Test-only reflection helpers: entities use protected no-arg constructors (JPA-only)
+    // plus plain setters, and PayrollStatutorySettings/TdsSlab/ProfessionalTaxSlab don't
     // expose public setters for every field, so this avoids adding test-only
-    // constructors to the production entities just to make them buildable here.
+    // constructors/setters to the production entities just to make them buildable here.
+    private <T> T newEntity(Class<T> clazz) throws Exception {
+        Constructor<T> ctor = clazz.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        return ctor.newInstance();
+    }
+
     private void set(Object target, String field, Object value) throws Exception {
         Field f = target.getClass().getDeclaredField(field);
         f.setAccessible(true);

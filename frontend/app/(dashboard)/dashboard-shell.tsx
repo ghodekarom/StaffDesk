@@ -20,6 +20,7 @@ import {
   Building2,
   Clock,
   CalendarOff,
+  Wallet,
   Settings,
   Bell,
   LogOut,
@@ -31,6 +32,7 @@ const NAV_ICONS: Record<string, ReactNode> = {
   "/departments": <Building2 size={16} />,
   "/attendance": <Clock size={16} />,
   "/leave": <CalendarOff size={16} />,
+  "/payroll": <Wallet size={16} />,
   "/settings": <Settings size={16} />,
 };
 

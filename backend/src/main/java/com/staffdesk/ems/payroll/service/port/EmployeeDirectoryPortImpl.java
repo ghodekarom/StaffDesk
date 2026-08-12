@@ -30,6 +30,7 @@ public class EmployeeDirectoryPortImpl implements EmployeeDirectoryPort {
 
     @Override
     public List<Long> findActiveEmployeeIds(LocalDate periodDate) {
+        System.out.println("Total employees in DB: " + employeeRepository.count());
         return employeeRepository.findAll().stream()
                 .filter(e -> e.getStatus() == Employee.EmployeeStatus.ACTIVE)
                 .map(Employee::getId)
