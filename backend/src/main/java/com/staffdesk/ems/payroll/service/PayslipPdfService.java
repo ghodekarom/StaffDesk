@@ -26,6 +26,23 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.Locale;
 
+/**
+ * Renders the payslip PDF on demand — called from PayslipService#getPdfBytes on
+ * every download request. Nothing is persisted here; there is no storage
+ * dependency at all. Must stay a pure function of (Payslip, employeeDisplayName):
+ * same inputs in, byte-identical PDF out, every time, so a payslip downloaded
+ * today looks the same as one downloaded a year from now for the same period.
+ * The "Generated on" timestamp on the document therefore comes from
+ * payslip.getGeneratedAt() (frozen at payroll-run time) rather than the current
+ * render/download time, to preserve that determinism.
+ *
+ * Uses OpenPDF (com.github.librepdf:openpdf) — confirm the dependency is in
+ * pom.xml before building.
+ *
+ * OpenPDF kept iText 4's legacy package name for drop-in compatibility, hence the
+ * {@code com.lowagie.text.*} imports above rather than anything with "openpdf" in
+ * the package — that's expected, not a mistake.
+ */
 @Service
 public class PayslipPdfService {
 
