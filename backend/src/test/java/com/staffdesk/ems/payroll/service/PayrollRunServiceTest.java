@@ -44,7 +44,6 @@ class PayrollRunServiceTest {
     private SalaryStructureLookupPort salaryStructureLookupPort;
     private AttendanceLeavePort attendanceLeavePort;
     private EmployeeDirectoryPort employeeDirectoryPort;
-    private PayslipPdfService payslipPdfService;
 
     private PayrollRunService service;
 
@@ -60,12 +59,11 @@ class PayrollRunServiceTest {
         salaryStructureLookupPort = mock(SalaryStructureLookupPort.class);
         attendanceLeavePort = mock(AttendanceLeavePort.class);
         employeeDirectoryPort = mock(EmployeeDirectoryPort.class);
-        payslipPdfService = mock(PayslipPdfService.class);
 
         service = new PayrollRunService(
                 payrollRunRepository, payslipRepository, settingsRepository, tdsSlabRepository,
                 professionalTaxSlabRepository, salaryStructureLookupPort, attendanceLeavePort,
-                employeeDirectoryPort, payslipPdfService);
+                employeeDirectoryPort);
     }
 
     @Test
@@ -101,8 +99,6 @@ class PayrollRunServiceTest {
                 .thenReturn(Optional.empty());
         when(professionalTaxSlabRepository.findApplicableSlabs(eq("Maharashtra"), any(LocalDate.class)))
                 .thenReturn(maharashtraSlabs());
-        when(payslipPdfService.generateAndStore(any(Payslip.class), any(String.class)))
-                .thenReturn("payslips/test-payslip.pdf");
 
         service.processRun(3, 2027, 999L);
 
