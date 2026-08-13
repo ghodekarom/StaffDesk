@@ -72,7 +72,6 @@ public class PayrollRunService {
     private final SalaryStructureLookupPort salaryStructureLookupPort;
     private final AttendanceLeavePort attendanceLeavePort;
     private final EmployeeDirectoryPort employeeDirectoryPort;
-    private final PayslipPdfService payslipPdfService;
 
     private final PfCalculator pfCalculator = new PfCalculator();
     private final EsiCalculator esiCalculator = new EsiCalculator();
@@ -80,14 +79,13 @@ public class PayrollRunService {
     private final TdsCalculator tdsCalculator = new TdsCalculator();
 
     public PayrollRunService(PayrollRunRepository payrollRunRepository,
-                              PayslipRepository payslipRepository,
-                              PayrollStatutorySettingsRepository settingsRepository,
-                              TdsSlabRepository tdsSlabRepository,
-                              ProfessionalTaxSlabRepository professionalTaxSlabRepository,
-                              SalaryStructureLookupPort salaryStructureLookupPort,
-                              AttendanceLeavePort attendanceLeavePort,
-                              EmployeeDirectoryPort employeeDirectoryPort,
-                              PayslipPdfService payslipPdfService) {
+                             PayslipRepository payslipRepository,
+                             PayrollStatutorySettingsRepository settingsRepository,
+                             TdsSlabRepository tdsSlabRepository,
+                             ProfessionalTaxSlabRepository professionalTaxSlabRepository,
+                             SalaryStructureLookupPort salaryStructureLookupPort,
+                             AttendanceLeavePort attendanceLeavePort,
+                             EmployeeDirectoryPort employeeDirectoryPort) {
         this.payrollRunRepository = payrollRunRepository;
         this.payslipRepository = payslipRepository;
         this.settingsRepository = settingsRepository;
@@ -96,7 +94,6 @@ public class PayrollRunService {
         this.salaryStructureLookupPort = salaryStructureLookupPort;
         this.attendanceLeavePort = attendanceLeavePort;
         this.employeeDirectoryPort = employeeDirectoryPort;
-        this.payslipPdfService = payslipPdfService;
     }
 
     /**
@@ -146,7 +143,7 @@ public class PayrollRunService {
     }
 
     private void processEmployee(PayrollRun run, Long employeeId, LocalDate periodStart, LocalDate periodEnd,
-                                  PayrollStatutorySettings settings, List<TdsSlab> tdsSlabs) {
+                                 PayrollStatutorySettings settings, List<TdsSlab> tdsSlabs) {
 
         SalaryStructureSnapshot salary = salaryStructureLookupPort.findApplicable(employeeId, periodEnd)
                 .orElseThrow(() -> new PayrollCalculationException(
@@ -217,14 +214,9 @@ public class PayrollRunService {
         payslip.setGeneratedAt(Instant.now());
         payslip.setEarnings(earningsBreakdown(salary, prorationFactor));
 
-        payslipRepository.save(payslip); // assign an id first — the PDF storage key uses it
-
-        String employeeDisplayName = profile.displayName() != null
-                ? profile.displayName()
-                : ("Employee #" + employeeId);
-        String pdfPath = payslipPdfService.generateAndStore(payslip, employeeDisplayName);
-        payslip.setPdfPath(pdfPath);
         payslipRepository.save(payslip);
+        // PDF generation no longer happens here — PayslipService renders it on demand
+        // straight from this row (+ its earnings) whenever the download endpoint is hit.
     }
 
     private List<PayslipEarning> earningsBreakdown(SalaryStructureSnapshot salary, BigDecimal factor) {
@@ -296,16 +288,16 @@ public class PayrollRunService {
         boolean firstHalf = date.getMonthValue() >= 4 && date.getMonthValue() <= 9;
         return firstHalf ? LocalDate.of(date.getYear(), 4, 1)
                 : (date.getMonthValue() >= 10
-                    ? LocalDate.of(date.getYear(), 10, 1)
-                    : LocalDate.of(date.getYear() - 1, 10, 1));
+                ? LocalDate.of(date.getYear(), 10, 1)
+                : LocalDate.of(date.getYear() - 1, 10, 1));
     }
 
     private LocalDate esiPeriodEnd(LocalDate date) {
         boolean firstHalf = date.getMonthValue() >= 4 && date.getMonthValue() <= 9;
         return firstHalf ? LocalDate.of(date.getYear(), 9, 30)
                 : (date.getMonthValue() >= 10
-                    ? LocalDate.of(date.getYear() + 1, 3, 31)
-                    : LocalDate.of(date.getYear(), 3, 31));
+                ? LocalDate.of(date.getYear() + 1, 3, 31)
+                : LocalDate.of(date.getYear(), 3, 31));
     }
 
     private BigDecimal round(BigDecimal value) {

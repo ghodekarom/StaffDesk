@@ -4,16 +4,23 @@ import com.staffdesk.ems.payroll.dto.PayslipResponse;
 import com.staffdesk.ems.payroll.entity.Payslip;
 import com.staffdesk.ems.payroll.exception.PayrollCalculationException;
 import com.staffdesk.ems.payroll.repository.PayslipRepository;
-import com.staffdesk.ems.payroll.service.port.PdfStoragePort;
+import com.staffdesk.ems.payroll.service.port.EmployeeDirectoryPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 /**
- * Read side of the payroll module — JSON payslip API (step 6) plus PDF byte
- * retrieval for the download endpoint (step 7). PDF generation itself lives in
- * PayslipPdfService, called from PayrollRunService at run time, not here.
+ * Read side of the payroll module — JSON payslip API (step 6) plus PDF
+ * retrieval for the download endpoint (step 7).
+ *
+ * PDFs are NOT stored anywhere (no disk, no S3, no pdf_path lookup). They are
+ * rendered on demand, straight from the Payslip + PayslipEarning rows already
+ * in the database, on every download request. This sidesteps the multi-instance
+ * / persistent-disk file-storage problem entirely — there's no file storage
+ * dependency to fail. See PayslipPdfService for the render logic; it must
+ * remain a pure function of (Payslip, employeeName) so that the same payslip
+ * produces byte-identical PDFs on every call.
  *
  * §7.4 assumption used below (role model still open): ADMIN/HR can view any
  * payslip; EMPLOYEE can only view their own. Role gating itself belongs on the
@@ -26,11 +33,15 @@ import java.util.List;
 public class PayslipService {
 
     private final PayslipRepository payslipRepository;
-    private final PdfStoragePort pdfStoragePort;
+    private final PayslipPdfService payslipPdfService;
+    private final EmployeeDirectoryPort employeeDirectoryPort;
 
-    public PayslipService(PayslipRepository payslipRepository, PdfStoragePort pdfStoragePort) {
+    public PayslipService(PayslipRepository payslipRepository,
+                          PayslipPdfService payslipPdfService,
+                          EmployeeDirectoryPort employeeDirectoryPort) {
         this.payslipRepository = payslipRepository;
-        this.pdfStoragePort = pdfStoragePort;
+        this.payslipPdfService = payslipPdfService;
+        this.employeeDirectoryPort = employeeDirectoryPort;
     }
 
     public List<PayslipResponse> getPayslipsForRun(Long payrollRunId) {
@@ -55,13 +66,22 @@ public class PayslipService {
         return PayslipResponse.from(payslip);
     }
 
-    /** Same ownership rule as getPayslip; throws if the PDF hasn't been generated yet. */
+    /**
+     * Same ownership rule as getPayslip. Renders the PDF fresh on every call — nothing
+     * is read from disk/S3. This method (and the class) is @Transactional, so the lazy
+     * `earnings` collection on `payslip` is safe to access inside payslipPdfService.render():
+     * it's still within the same Hibernate session that loaded the entity.
+     */
     public byte[] getPdfBytes(Long payslipId, Long requesterEmployeeId) {
         Payslip payslip = findOwnedPayslip(payslipId, requesterEmployeeId);
-        if (payslip.getPdfPath() == null) {
-            throw new PayrollCalculationException("PDF not yet generated for payslip " + payslipId);
-        }
-        return pdfStoragePort.retrieve(payslip.getPdfPath());
+        String employeeName = resolveEmployeeName(payslip.getEmployeeId());
+        return payslipPdfService.render(payslip, employeeName);
+    }
+
+    /** Same lookup + "Employee #N" fallback that PayrollRunService uses at run time. */
+    private String resolveEmployeeName(Long employeeId) {
+        String displayName = employeeDirectoryPort.findPayrollProfile(employeeId).displayName();
+        return displayName != null ? displayName : ("Employee #" + employeeId);
     }
 
     private Payslip findOwnedPayslip(Long payslipId, Long requesterEmployeeId) {

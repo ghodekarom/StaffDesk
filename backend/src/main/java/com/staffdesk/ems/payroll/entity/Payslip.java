@@ -73,6 +73,12 @@ public class Payslip {
     @Column(name = "net_pay", nullable = false)
     private BigDecimal netPay;
 
+    /**
+     * @deprecated PDFs are now rendered on demand (see PayslipService#getPdfBytes) and
+     * never stored, so this column is no longer written to. Left in place until a
+     * migration drops payslips.pdf_path; do not read or write it in new code.
+     */
+    @Deprecated
     @Column(name = "pdf_path")
     private String pdfPath;
 

@@ -13,7 +13,6 @@ import com.lowagie.text.pdf.PdfWriter;
 import com.staffdesk.ems.payroll.entity.Payslip;
 import com.staffdesk.ems.payroll.entity.PayslipEarning;
 import com.staffdesk.ems.payroll.exception.PayrollCalculationException;
-import com.staffdesk.ems.payroll.service.port.PdfStoragePort;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -23,10 +22,14 @@ import java.time.format.TextStyle;
 import java.util.Locale;
 
 /**
- * Generates the payslip PDF at the time a payslip is finalized (called from
- * PayrollRunService right after a payslip is saved) and stores it via
- * {@link PdfStoragePort}, per §6. Uses OpenPDF (com.github.librepdf:openpdf) —
- * confirm the dependency is in pom.xml before building.
+ * Renders the payslip PDF on demand — called from PayslipService#getPdfBytes on
+ * every download request. Nothing is persisted here; there is no storage
+ * dependency at all. Must stay a pure function of (Payslip, employeeDisplayName):
+ * same inputs in, byte-identical PDF out, every time, so a payslip downloaded
+ * today looks the same as one downloaded a year from now for the same period.
+ *
+ * Uses OpenPDF (com.github.librepdf:openpdf) — confirm the dependency is in
+ * pom.xml before building.
  *
  * OpenPDF kept iText 4's legacy package name for drop-in compatibility, hence the
  * {@code com.lowagie.text.*} imports above rather than anything with "openpdf" in
@@ -35,19 +38,7 @@ import java.util.Locale;
 @Service
 public class PayslipPdfService {
 
-    private final PdfStoragePort pdfStoragePort;
-
-    public PayslipPdfService(PdfStoragePort pdfStoragePort) {
-        this.pdfStoragePort = pdfStoragePort;
-    }
-
-    public String generateAndStore(Payslip payslip, String employeeDisplayName) {
-        byte[] pdfBytes = render(payslip, employeeDisplayName);
-        String key = "payslips/%d/%d.pdf".formatted(payslip.getPayrollRun().getId(), payslip.getEmployeeId());
-        return pdfStoragePort.store(key, pdfBytes);
-    }
-
-    private byte[] render(Payslip payslip, String employeeDisplayName) {
+    public byte[] render(Payslip payslip, String employeeDisplayName) {
         try {
             Document document = new Document(PageSize.A4, 40, 40, 50, 50);
             ByteArrayOutputStream out = new ByteArrayOutputStream();

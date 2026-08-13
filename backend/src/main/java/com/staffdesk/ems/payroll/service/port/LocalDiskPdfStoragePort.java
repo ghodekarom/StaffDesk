@@ -17,7 +17,7 @@ import java.nio.file.Paths;
  * Override the base directory via application.yml / application.properties:
  * payroll.pdf.storage-dir: /some/absolute/path
  */
-@Component
+//@Component
 public class LocalDiskPdfStoragePort implements PdfStoragePort {
 
     @Value("${payroll.pdf.storage-dir:./storage/payslips}")
