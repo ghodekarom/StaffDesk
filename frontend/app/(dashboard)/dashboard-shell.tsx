@@ -33,9 +33,9 @@ const NAV_ICONS: Record<string, ReactNode> = {
   "/attendance": <Clock size={16} />,
   "/leave": <CalendarOff size={16} />,
   "/payroll": <Wallet size={16} />,
+  "/payroll/payslips": <Wallet size={16} />,
   "/settings": <Settings size={16} />,
 };
-
 function initials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 }
