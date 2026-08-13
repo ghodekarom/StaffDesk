@@ -1,6 +1,6 @@
 package com.staffdesk.ems.payroll.service;
 
-import com.lowagie.text.Color;
+import com.lowagie.text.*;
 import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
@@ -16,6 +16,7 @@ import com.staffdesk.ems.payroll.entity.PayslipEarning;
 import com.staffdesk.ems.payroll.exception.PayrollCalculationException;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
