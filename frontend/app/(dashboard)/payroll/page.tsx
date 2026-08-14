@@ -49,6 +49,7 @@ export default function PayrollPage() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [processing, setProcessing] = useState(false);
+  const [locking, setLocking] = useState(false);
   const [checkingExisting, setCheckingExisting] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [run, setRun] = useState<PayrollRunRecord | null>(null);
@@ -195,6 +196,31 @@ export default function PayrollPage() {
     }
   }
 
+  async function handleLock() {
+    if (!run) return;
+    if (
+      !confirm(
+        `Lock payroll for ${MONTH_LABEL[run.periodMonth]} ${run.periodYear}? ` +
+          "This cannot be undone — the run can no longer be reprocessed after this."
+      )
+    ) {
+      return;
+    }
+
+    setLocking(true);
+    try {
+      const result = await api.patch<PayrollRunRecord>(`/payroll/runs/${run.id}/lock`);
+      setRun(result);
+      showToast(`Payroll locked for ${MONTH_LABEL[run.periodMonth]} ${run.periodYear}`, "success");
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Couldn't reach the server. Is the backend running on :8080?";
+      showToast(message, "error");
+    } finally {
+      setLocking(false);
+    }
+  }
+
   function handleDownloadAllCsv() {
     if (payslips.length === 0 || !run) return;
 
@@ -326,8 +352,14 @@ export default function PayrollPage() {
             </select>
           </label>
 
-          <Button onClick={handleProcess} disabled={processing}>
-            {processing ? "Processing…" : run ? "Reprocess payroll" : "Process payroll"}
+          <Button onClick={handleProcess} disabled={processing || run?.status === "LOCKED"}>
+            {processing
+              ? "Processing…"
+              : run?.status === "LOCKED"
+              ? "Locked"
+              : run
+              ? "Reprocess payroll"
+              : "Process payroll"}
           </Button>
         </div>
       </div>
@@ -348,6 +380,11 @@ export default function PayrollPage() {
               </span>
               {payslips.length > 0 && (
                 <Button onClick={handleDownloadAllCsv}>Download all (CSV)</Button>
+              )}
+              {run.status === "PROCESSED" && (
+                <Button variant="secondary" onClick={handleLock} disabled={locking}>
+                  {locking ? "Locking…" : "Lock this run"}
+                </Button>
               )}
             </div>
           </div>

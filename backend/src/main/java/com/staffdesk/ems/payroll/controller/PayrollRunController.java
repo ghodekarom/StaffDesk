@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,6 +57,16 @@ public class PayrollRunController {
                                       @AuthenticationPrincipal UserPrincipal principal) {
         Long processedByEmployeeId = principal.getEmployeeId();
         return PayrollRunResponse.from(payrollRunService.processRun(month, year, processedByEmployeeId));
+    }
+
+    /**
+     * 1.1: transitions PROCESSED -> LOCKED. Irreversible from here — there's no
+     * unlock endpoint, by design, so the frontend must confirm before calling this.
+     */
+    @PatchMapping("/{id}/lock")
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
+    public PayrollRunResponse lock(@PathVariable Long id) {
+        return PayrollRunResponse.from(payrollRunService.lockRun(id));
     }
 
     @GetMapping("/{runId}/payslips")

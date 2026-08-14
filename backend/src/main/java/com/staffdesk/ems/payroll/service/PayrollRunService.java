@@ -155,6 +155,27 @@ public class PayrollRunService {
         return payrollRunRepository.save(run);
     }
 
+    /**
+     * Transitions a run from PROCESSED to LOCKED. Deliberately narrow: only a
+     * PROCESSED run can be locked (a DRAFT run has no payslips yet, and an
+     * already-LOCKED run is a no-op error rather than silently succeeding —
+     * better to surface a duplicate lock attempt than swallow it). Once LOCKED,
+     * processRun()'s existing guard (line ~123) refuses to reprocess it.
+     */
+    @Transactional
+    public PayrollRun lockRun(Long runId) {
+        PayrollRun run = payrollRunRepository.findById(runId)
+                .orElseThrow(() -> new PayrollCalculationException("No payroll run with id " + runId));
+
+        if (run.getStatus() != PayrollRunStatus.PROCESSED) {
+            throw new PayrollCalculationException(
+                    "Only a PROCESSED run can be locked (current status: " + run.getStatus() + ")");
+        }
+
+        run.setStatus(PayrollRunStatus.LOCKED);
+        return payrollRunRepository.save(run);
+    }
+
     private void processEmployee(PayrollRun run, Long employeeId, LocalDate periodStart, LocalDate periodEnd,
                                  PayrollStatutorySettings settings, List<TdsSlab> tdsSlabs) {
 
