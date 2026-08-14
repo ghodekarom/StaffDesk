@@ -2,6 +2,7 @@ export type NotificationType =
   | "LEAVE_REQUEST_SUBMITTED"
   | "LEAVE_REQUEST_APPROVED"
   | "LEAVE_REQUEST_REJECTED"
+  | "ATTENDANCE_REMINDER"
   | "GENERAL";
 
 export interface Notification {
@@ -24,4 +25,10 @@ export interface NotificationPage {
 
 export interface UnreadCountResponse {
   count: number;
+}
+
+export interface NotificationPreferences {
+  leaveDecisionEnabled: boolean;
+  newLeaveRequestEnabled: boolean;
+  attendanceReminderEnabled: boolean;
 }

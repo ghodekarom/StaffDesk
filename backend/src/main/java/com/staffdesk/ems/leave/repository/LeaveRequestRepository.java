@@ -31,4 +31,18 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
             @Param("employeeId") Long employeeId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
+
+    // Used by AttendanceReminderScheduler to skip employees who are on
+    // approved leave today — only APPROVED matters here, unlike
+    // findOverlapping's "anything not rejected" check for booking conflicts.
+    @Query("""
+            SELECT COUNT(lr) > 0 FROM LeaveRequest lr
+            WHERE lr.employee.id = :employeeId
+              AND lr.status = com.staffdesk.ems.leave.entity.LeaveRequest.LeaveStatus.APPROVED
+              AND lr.startDate <= :date
+              AND lr.endDate >= :date
+            """)
+    boolean existsApprovedLeaveCoveringDate(
+            @Param("employeeId") Long employeeId,
+            @Param("date") LocalDate date);
 }

@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/toast-notifications";
 import { Button } from "@/components/ui/button";
 import { Input, Field } from "@/components/ui/input";
 import type { Employee, EmployeeRequest } from "@/types/employee";
+import type { NotificationPreferences } from "@/types/notification";
 
 type TabKey = "profile" | "security" | "notifications" | "organization";
 
@@ -310,28 +311,88 @@ function SecuritySection() {
 
 /* ─────────────────────────────── Notifications ───────────────────────── */
 
+type PreferenceKey = keyof NotificationPreferences;
+
+const PREFERENCE_ROWS: { key: PreferenceKey; label: string }[] = [
+  { key: "newLeaveRequestEnabled", label: "New leave request awaiting your approval" },
+  { key: "leaveDecisionEnabled", label: "Leave request approved or declined" },
+  { key: "attendanceReminderEnabled", label: "Attendance reminders" },
+];
+
 function NotificationsSection() {
-  const rows = [
-    { label: "Leave request approved or declined" },
-    { label: "New leave request awaiting your approval" },
-    { label: "Attendance reminders" },
-  ];
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
+  // Tracks which single toggle is mid-save, so only that row shows a
+  // disabled/pending state instead of locking the whole list on every click.
+  const [savingKey, setSavingKey] = useState<PreferenceKey | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    api
+      .get<NotificationPreferences>("/notifications/preferences")
+      .then((data) => {
+        if (!cancelled) setPrefs(data);
+      })
+      .catch(() => {
+        if (!cancelled) showToast("Couldn't load notification preferences", "error");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleToggle = async (key: PreferenceKey) => {
+    if (!prefs || savingKey) return;
+
+    const next = { ...prefs, [key]: !prefs[key] };
+    setPrefs(next);
+    setSavingKey(key);
+    try {
+      const saved = await api.put<NotificationPreferences>("/notifications/preferences", next);
+      setPrefs(saved);
+    } catch (err) {
+      setPrefs(prefs); // revert
+      const message = err instanceof ApiError ? err.message : "Couldn't save that preference";
+      showToast(message, "error");
+    } finally {
+      setSavingKey(null);
+    }
+  };
+
+  if (loading) {
+    return <p className="text-sm text-muted">Loading your notification preferences…</p>;
+  }
+
+  if (!prefs) {
+    return <p className="text-sm text-muted">We couldn't load your notification preferences. Try refreshing the page.</p>;
+  }
 
   return (
     <div className="flex max-w-xl flex-col gap-5">
-      <ComingSoonNotice>
-        Notification preferences aren't available yet — there's no notification system on the
-        backend yet for these to control.
-      </ComingSoonNotice>
+      <p className="text-sm text-muted">
+        Choose which events send you an in-app notification.
+      </p>
 
-      <div className="flex flex-col divide-y divide-line rounded-md border border-line opacity-60">
-        {rows.map((row) => (
+      <div className="flex flex-col divide-y divide-line rounded-md border border-line">
+        {PREFERENCE_ROWS.map((row) => (
           <label
-            key={row.label}
+            key={row.key}
             className="flex items-center justify-between gap-4 px-4 py-3 text-sm text-ink"
           >
             {row.label}
-            <input type="checkbox" disabled className="h-4 w-4 rounded border-line" />
+            <input
+              type="checkbox"
+              checked={prefs[row.key]}
+              disabled={savingKey === row.key}
+              onChange={() => handleToggle(row.key)}
+              className="h-4 w-4 rounded border-line accent-accent disabled:opacity-50"
+            />
           </label>
         ))}
       </div>

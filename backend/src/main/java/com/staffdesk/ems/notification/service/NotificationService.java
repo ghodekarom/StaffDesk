@@ -13,9 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final NotificationPreferenceService preferenceService;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository,
+                               NotificationPreferenceService preferenceService) {
         this.notificationRepository = notificationRepository;
+        this.preferenceService = preferenceService;
     }
 
     @Transactional(readOnly = true)
@@ -50,13 +53,21 @@ public class NotificationService {
     }
 
     /**
-     * Called from other services (LeaveService, and future modules) when a
-     * domain event happens that the recipient should be told about. Not
-     * exposed via any controller — internal only.
+     * Called from other services (LeaveService, AttendanceReminderScheduler,
+     * and future modules) when a domain event happens that the recipient
+     * should be told about. Not exposed via any controller — internal only.
+     *
+     * Silently no-ops if the recipient has turned this category off in
+     * Settings > Notifications, rather than each caller having to check
+     * first — GENERAL has no toggle in the UI and always fires.
      */
     @Transactional
     public void notify(Long recipientEmployeeId, Notification.Type type,
                        String title, String message, String link) {
+        if (!isEnabled(recipientEmployeeId, type)) {
+            return;
+        }
+
         Notification notification = new Notification();
         notification.setRecipientEmployeeId(recipientEmployeeId);
         notification.setType(type);
@@ -64,5 +75,15 @@ public class NotificationService {
         notification.setMessage(message);
         notification.setLink(link);
         notificationRepository.save(notification);
+    }
+
+    private boolean isEnabled(Long employeeId, Notification.Type type) {
+        var preference = preferenceService.getOrDefault(employeeId);
+        return switch (type) {
+            case LEAVE_REQUEST_SUBMITTED -> preference.isNewLeaveRequestEnabled();
+            case LEAVE_REQUEST_APPROVED, LEAVE_REQUEST_REJECTED -> preference.isLeaveDecisionEnabled();
+            case ATTENDANCE_REMINDER -> preference.isAttendanceReminderEnabled();
+            case GENERAL -> true;
+        };
     }
 }
