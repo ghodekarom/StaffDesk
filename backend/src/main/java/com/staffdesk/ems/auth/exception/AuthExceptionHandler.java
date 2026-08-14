@@ -36,6 +36,14 @@ public class AuthExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
     }
 
+    // 400, not 401 -- the caller is already authenticated (valid JWT); they just got
+    // their own current password wrong, which is a bad request, not an auth failure.
+    @ExceptionHandler(AuthExceptions.InvalidCurrentPasswordException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidCurrentPassword(
+            AuthExceptions.InvalidCurrentPasswordException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
     @ExceptionHandler({
             AuthExceptions.EmailAlreadyExistsException.class,
             AuthExceptions.EmployeeAlreadyHasAccountException.class

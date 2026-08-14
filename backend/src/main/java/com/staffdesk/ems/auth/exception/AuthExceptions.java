@@ -28,4 +28,10 @@ public class AuthExceptions {
             super("Refresh token is invalid or expired");
         }
     }
+
+    public static class InvalidCurrentPasswordException extends RuntimeException {
+        public InvalidCurrentPasswordException() {
+            super("Current password is incorrect");
+        }
+    }
 }

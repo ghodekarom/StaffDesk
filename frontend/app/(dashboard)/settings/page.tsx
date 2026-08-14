@@ -215,31 +215,96 @@ function ProfileSection({ employeeId }: { employeeId: number }) {
 /* ─────────────────────────────── Security ────────────────────────────── */
 
 function SecuritySection() {
-  return (
-    <div className="flex max-w-xl flex-col gap-5">
-      <ComingSoonNotice>
-        Changing your password here isn't available yet — it needs a backend endpoint that
-        doesn't exist yet. Contact an administrator if you need your password reset in the
-        meantime.
-      </ComingSoonNotice>
+  const { showToast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-      <fieldset disabled className="flex flex-col gap-5 opacity-60">
-        <Field label="Current password" htmlFor="settings-current-password">
-          <Input id="settings-current-password" type="password" placeholder="••••••••" />
-        </Field>
-        <Field label="New password" htmlFor="settings-new-password">
-          <Input id="settings-new-password" type="password" placeholder="••••••••" />
-        </Field>
-        <Field label="Confirm new password" htmlFor="settings-confirm-password">
-          <Input id="settings-confirm-password" type="password" placeholder="••••••••" />
-        </Field>
-        <div>
-          <Button type="button" disabled>
-            Update password
-          </Button>
-        </div>
-      </fieldset>
-    </div>
+  const handleChange = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const validate = () => {
+    const next: Record<string, string> = {};
+    if (!form.currentPassword) next.currentPassword = "Current password is required";
+    if (!form.newPassword) {
+      next.newPassword = "New password is required";
+    } else if (form.newPassword.length < 8) {
+      // Mirrors the backend's @Size(min = 8) on ChangePasswordRequest — checked here
+      // too so the person doesn't have to make a round trip to find out.
+      next.newPassword = "Password must be at least 8 characters";
+    }
+    if (form.confirmPassword !== form.newPassword) next.confirmPassword = "Passwords don't match";
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setSaving(true);
+    try {
+      await api.post("/auth/change-password", {
+        currentPassword: form.currentPassword,
+        newPassword: form.newPassword,
+      });
+      showToast("Password updated", "success");
+      setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setErrors({});
+    } catch (err) {
+      // The backend's 400 "Current password is incorrect" (wrong current password)
+      // and the shared 400 (password too short) both come through as ApiError with
+      // a usable message already — no need to special-case the status here.
+      const message = err instanceof ApiError ? err.message : "Couldn't update your password";
+      showToast(message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex max-w-xl flex-col gap-5">
+      <Field label="Current password" htmlFor="settings-current-password" error={errors.currentPassword}>
+        <Input
+          id="settings-current-password"
+          type="password"
+          autoComplete="current-password"
+          value={form.currentPassword}
+          onChange={handleChange("currentPassword")}
+          error={errors.currentPassword}
+        />
+      </Field>
+      <Field label="New password" htmlFor="settings-new-password" error={errors.newPassword}>
+        <Input
+          id="settings-new-password"
+          type="password"
+          autoComplete="new-password"
+          value={form.newPassword}
+          onChange={handleChange("newPassword")}
+          error={errors.newPassword}
+        />
+      </Field>
+      <Field label="Confirm new password" htmlFor="settings-confirm-password" error={errors.confirmPassword}>
+        <Input
+          id="settings-confirm-password"
+          type="password"
+          autoComplete="new-password"
+          value={form.confirmPassword}
+          onChange={handleChange("confirmPassword")}
+          error={errors.confirmPassword}
+        />
+      </Field>
+      <div>
+        <Button type="submit" disabled={saving}>
+          {saving ? "Updating…" : "Update password"}
+        </Button>
+      </div>
+    </form>
   );
 }
 

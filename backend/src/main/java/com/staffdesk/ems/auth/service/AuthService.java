@@ -1,5 +1,6 @@
 package com.staffdesk.ems.auth.service;
 
+import com.staffdesk.ems.auth.dto.ChangePasswordRequest;
 import com.staffdesk.ems.auth.dto.LoginRequest;
 import com.staffdesk.ems.auth.dto.LoginResponse;
 import com.staffdesk.ems.auth.dto.RegisterRequest;
@@ -32,11 +33,11 @@ public class AuthService {
     private final JwtService jwtService;
 
     public AuthService(AuthenticationManager authenticationManager,
-                        UserDetailsService userDetailsService,
-                        UserRepository userRepository,
-                        EmployeeRepository employeeRepository,
-                        PasswordEncoder passwordEncoder,
-                        JwtService jwtService) {
+                       UserDetailsService userDetailsService,
+                       UserRepository userRepository,
+                       EmployeeRepository employeeRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService) {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.userRepository = userRepository;
@@ -88,6 +89,27 @@ public class AuthService {
 
         User saved = userRepository.save(user);
         return UserResponse.from(saved);
+    }
+
+    /**
+     * @param userId the id of the currently-authenticated User row (UserPrincipal#getId(),
+     *               not the employee id) — the caller can only ever change their own password.
+     */
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        // Should be unreachable in practice: userId comes from a validated JWT, so a
+        // missing row here means the user was deleted between token issuance and this
+        // call. Left as an unchecked 500 rather than a dedicated 4xx exception, since
+        // there's nothing the caller did wrong to fix.
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("Authenticated user " + userId + " no longer exists"));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new AuthExceptions.InvalidCurrentPasswordException();
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
     }
 
     public LoginResponse refresh(String refreshToken) {
