@@ -1,46 +1,37 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { api, ApiError } from "@/lib/api";
-import { Employee, EmployeeRequest, Page } from "@/types/employee";
-import { EmployeeTable, EmployeeTableSkeleton } from "@/components/employees/employee-table";
-import { EmployeeForm } from "@/components/employees/employee-form";
-import { Modal } from "@/components/ui/modal";
+import { useCallback, useEffect, useState } from "react";
+import { api, apiFetch, ApiError } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { PayslipRecord, MONTH_LABEL } from "@/types/payroll";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast-notifications";
+import { PayslipDetailModal } from "@/components/payroll/payslip-detail-modal";
 
-const PAGE_SIZE = 20;
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
-export default function EmployeesPage() {
-  const [page, setPage] = useState<Page<Employee> | null>(null);
-  const [pageIndex, setPageIndex] = useState(0);
+export default function MyPayslipsPage() {
+  const { role, isInitializing } = useAuth();
+  const { showToast } = useToast();
+
+  const [payslips, setPayslips] = useState<PayslipRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [detailPayslip, setDetailPayslip] = useState<PayslipRecord | null>(null);
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDept, setSelectedDept] = useState("ALL");
-  const [departments, setDepartments] = useState<any[]>([]);
-
-  const [modal, setModal] = useState<null | { mode: "create" } | { mode: "edit"; employee: Employee }>(
-    null
-  );
-
-  useEffect(() => {
-    api.get<{ content: any[] }>("/departments", { size: 100 })
-      .then((res) => setDepartments(res.content))
-      .catch((err) => console.error("Failed to load departments", err));
-  }, []);
-
-  const load = useCallback(async (targetPage: number, query: string) => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await api.get<Page<Employee>>("/employees", {
-        page: targetPage,
-        size: PAGE_SIZE,
-        sort: "lastName,asc",
-        ...(query ? { search: query } : {}),
-      });
-      setPage(result);
+      const result = await api.get<PayslipRecord[]>("/payroll/payslips/me");
+      setPayslips(result);
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -53,103 +44,58 @@ export default function EmployeesPage() {
   }, []);
 
   useEffect(() => {
-    load(pageIndex, searchQuery);
-  }, [load, pageIndex, searchQuery]);
+    load();
+  }, [load]);
 
-  const handleSearchChange = (val: string) => {
-    setSearchQuery(val);
-    setPageIndex(0);
-  };
-
-  const handleInspect = (emp: Employee) => {
-    const detail = {
-      id: emp.id,
-      name: `${emp.firstName} ${emp.lastName}`,
-      code: emp.employeeCode,
-      role: emp.designation || "Staff",
-      department: emp.departmentName || "General",
-      status: emp.status === "ACTIVE" ? "Active" : emp.status === "INACTIVE" ? "Inactive" : "Terminated",
-      email: emp.email,
-    };
-    window.dispatchEvent(new CustomEvent("inspect-employee", { detail }));
-  };
-
-  async function handleCreate(data: EmployeeRequest) {
-    await api.post<Employee>("/employees", data);
-    setModal(null);
-    load(pageIndex, searchQuery);
-  }
-
-  async function handleEdit(id: number, data: EmployeeRequest) {
-    await api.put<Employee>(`/employees/${id}`, data);
-    setModal(null);
-    load(pageIndex, searchQuery);
-  }
-
-  async function handleDelete(employee: Employee) {
-    if (!confirm(`Delete ${employee.firstName} ${employee.lastName}? This can't be undone.`)) {
-      return;
-    }
+  async function handleDownloadPdf(payslip: PayslipRecord) {
+    setDownloadingId(payslip.id);
     try {
-      await api.delete(`/employees/${employee.id}`);
-      load(pageIndex, searchQuery);
+      const response = await apiFetch(`/payroll/payslips/${payslip.id}/pdf`);
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new ApiError(
+          errorBody?.message ?? `Couldn't download payslip PDF (${response.status})`,
+          response.status,
+          errorBody
+        );
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `payslip-${MONTH_LABEL[payslip.periodMonth]}-${payslip.periodYear}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : "Failed to delete employee.");
+      const message =
+        err instanceof ApiError ? err.message : "Couldn't reach the server to download the PDF.";
+      showToast(message, "error");
+    } finally {
+      setDownloadingId(null);
     }
   }
 
-  const filteredEmployees = page?.content.filter((emp) => {
-    if (selectedDept !== "ALL" && emp.departmentName !== selectedDept) {
-      return false;
-    }
-    return true;
-  }) || [];
+  // Route needs its own guard since it's reachable directly by URL, same as
+  // attendance/team's page guard. The backend's GET /payroll/payslips/me is
+  // @PreAuthorize("hasRole('EMPLOYEE')") specifically (not ADMIN/HR) — see
+  // PayslipController — so this mirrors that exactly rather than allowing
+  // ADMIN/HR through here only to hit a 403 on load.
+  if (!isInitializing && role !== "EMPLOYEE") {
+    return (
+      <div className="rounded-lg border border-line bg-surface py-16 text-center text-sm text-muted">
+        This page is for employee self-service payslip access.
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Stacks on mobile, sits side-by-side from sm up */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-ink">Employees</h1>
-          <p className="text-sm text-muted">
-            {page ? `${page.totalElements} total` : "Loading…"}
-          </p>
-        </div>
-        <Button onClick={() => setModal({ mode: "create" })} className="sm:w-auto">
-          + Add employee
-        </Button>
-      </div>
-
-      {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            placeholder="Search by name or code..."
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full h-10 pl-9 pr-3 rounded-lg border border-line bg-surface text-ink text-sm outline-none focus:border-accent"
-          />
-          <div className="absolute left-3 top-3 text-muted">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
-            </svg>
-          </div>
-        </div>
-
-        <select
-          value={selectedDept}
-          onChange={(e) => setSelectedDept(e.target.value)}
-          className="h-10 px-3 rounded-lg border border-line bg-surface text-ink text-sm outline-none focus:border-accent min-w-[160px]"
-        >
-          <option value="ALL">All Departments</option>
-          {departments.map((d) => (
-            <option key={d.id} value={d.name}>
-              {d.name}
-            </option>
-          ))}
-        </select>
+      <div>
+        <h1 className="font-display text-2xl font-semibold text-ink">My Payslips</h1>
+        <p className="text-sm text-muted">View and download your payslips.</p>
       </div>
 
       {error && (
@@ -158,55 +104,98 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {loading && !page ? (
-        <EmployeeTableSkeleton />
-      ) : page ? (
+      {loading ? (
+        <div className="rounded-lg border border-line bg-surface py-16 text-center text-sm text-muted">
+          Loading…
+        </div>
+      ) : payslips.length === 0 ? (
+        <div className="rounded-lg border border-line bg-surface py-16 text-center text-sm text-muted">
+          No payslips yet.
+        </div>
+      ) : (
         <>
-          <EmployeeTable
-            employees={filteredEmployees}
-            onEdit={(emp) => setModal({ mode: "edit", employee: emp })}
-            onDelete={handleDelete}
-            onInspect={handleInspect}
-          />
+          {/* Table — md and up. Same breakpoint pattern as the admin payroll page:
+              enough columns that it doesn't fit a phone width without scrolling
+              data out of view, so cards take over below md. */}
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-line bg-surface">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-muted border-b border-line">
+                  <th className="py-3 px-4 font-medium">Period</th>
+                  <th className="py-3 px-4 font-medium">Paid days</th>
+                  <th className="py-3 px-4 font-medium">Gross</th>
+                  <th className="py-3 px-4 font-medium">Deductions</th>
+                  <th className="py-3 px-4 font-medium">Net pay</th>
+                  <th className="py-3 px-4 font-medium"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {payslips.map((p) => (
+                  <tr key={p.id} className="border-b border-line/50 text-ink">
+                    <td className="py-3 px-4">
+                      {MONTH_LABEL[p.periodMonth]} {p.periodYear}
+                    </td>
+                    <td className="py-3 px-4">{p.paidDays}</td>
+                    <td className="py-3 px-4">{formatCurrency(p.grossEarnings)}</td>
+                    <td className="py-3 px-4">{formatCurrency(p.totalDeductions)}</td>
+                    <td className="py-3 px-4 font-medium">{formatCurrency(p.netPay)}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <Button variant="secondary" onClick={() => setDetailPayslip(p)}>
+                          View
+                        </Button>
+                        <Button onClick={() => handleDownloadPdf(p)} disabled={downloadingId === p.id}>
+                          {downloadingId === p.id ? "Downloading…" : "Download PDF"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          {page.totalPages > 1 && (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <Button
-                variant="secondary"
-                disabled={page.first}
-                onClick={() => setPageIndex((p) => p - 1)}
-              >
-                Previous
-              </Button>
-              <span className="text-sm text-muted">
-                Page {page.number + 1} of {page.totalPages}
-              </span>
-              <Button
-                variant="secondary"
-                disabled={page.last}
-                onClick={() => setPageIndex((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          )}
+          {/* Cards — below md. Net pay leads each card, same as the admin page's
+              mobile layout, since that's the number someone checks first. */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {payslips.map((p) => (
+              <div key={p.id} className="rounded-lg border border-line p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted">
+                    {MONTH_LABEL[p.periodMonth]} {p.periodYear}
+                  </span>
+                  <span className="text-base font-medium text-ink">{formatCurrency(p.netPay)}</span>
+                </div>
+
+                <dl className="mt-3 grid grid-cols-2 gap-y-2 text-sm">
+                  <dt className="text-muted">Paid days</dt>
+                  <dd className="text-right text-ink">{p.paidDays}</dd>
+
+                  <dt className="text-muted">Gross</dt>
+                  <dd className="text-right text-ink">{formatCurrency(p.grossEarnings)}</dd>
+
+                  <dt className="text-muted">Deductions</dt>
+                  <dd className="text-right text-ink">{formatCurrency(p.totalDeductions)}</dd>
+                </dl>
+
+                <Button
+                  onClick={() => handleDownloadPdf(p)}
+                  disabled={downloadingId === p.id}
+                  className="mt-4 w-full"
+                >
+                  {downloadingId === p.id ? "Downloading…" : "Download PDF"}
+                </Button>
+                <Button variant="secondary" onClick={() => setDetailPayslip(p)} className="mt-2 w-full">
+                  View details
+                </Button>
+              </div>
+            ))}
+          </div>
         </>
-      ) : null}
-
-      {modal?.mode === "create" && (
-        <Modal title="Add employee" onClose={() => setModal(null)}>
-          <EmployeeForm onSubmit={handleCreate} onCancel={() => setModal(null)} />
-        </Modal>
       )}
 
-      {modal?.mode === "edit" && (
-        <Modal title="Edit employee" onClose={() => setModal(null)}>
-          <EmployeeForm
-            initial={modal.employee}
-            onSubmit={(data) => handleEdit(modal.employee.id, data)}
-            onCancel={() => setModal(null)}
-          />
-        </Modal>
+      {detailPayslip && (
+        <PayslipDetailModal payslip={detailPayslip} onClose={() => setDetailPayslip(null)} />
       )}
     </div>
   );

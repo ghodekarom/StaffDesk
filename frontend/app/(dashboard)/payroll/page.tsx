@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { PayrollRunRecord, PayslipRecord, MONTH_LABEL } from "@/types/payroll";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-notifications";
+import { PayslipDetailModal } from "@/components/payroll/payslip-detail-modal";
 
 // Runs further back than this are treated as historical review, not something
 // this screen is meant to trigger — kept narrow since a payroll run needs real
@@ -19,6 +20,10 @@ const MONTH_OPTIONS = Object.entries(MONTH_LABEL).map(([value, label]) => ({
 }));
 
 const PAGE_SIZE = 10;
+
+// Only numeric PayslipRecord fields are sortable — Employee ID doubles as a
+// reasonable proxy for "who" until 1.3 (search/sort by name) lands.
+type SortKey = "employeeId" | "workingDays" | "paidDays" | "grossEarnings" | "totalDeductions" | "netPay" | null;
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -50,13 +55,16 @@ export default function PayrollPage() {
   const [payslips, setPayslips] = useState<PayslipRecord[]>([]);
   const [loadingPayslips, setLoadingPayslips] = useState(false);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [detailPayslip, setDetailPayslip] = useState<PayslipRecord | null>(null);
 
-  // Search + pagination are client-side over the already-loaded payslips list
-  // (a single run's payslips, bounded by employee count — no backend change
-  // needed). Search matches Employee ID as a substring, e.g. "12" matches 12,
-  // 120, 512.
+  // Search + sort + pagination are all client-side over the already-loaded
+  // payslips list (a single run's payslips, bounded by employee count — no
+  // backend change needed). Search matches Employee ID as a substring, e.g.
+  // "12" matches 12, 120, 512.
   const [searchQuery, setSearchQuery] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
+  const [sortKey, setSortKey] = useState<SortKey>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const isAuthorized = role === "ADMIN" || role === "HR";
 
@@ -66,15 +74,45 @@ export default function PayrollPage() {
     return payslips.filter((p) => String(p.employeeId).includes(query));
   }, [payslips, searchQuery]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredPayslips.length / PAGE_SIZE));
-  const pagedPayslips = filteredPayslips.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE);
+  const sortedPayslips = useMemo(() => {
+    if (!sortKey) return filteredPayslips;
+    const factor = sortDirection === "asc" ? 1 : -1;
+    // All current sort keys are numeric fields on PayslipRecord — a simple
+    // numeric comparator covers every column without a switch per field.
+    return [...filteredPayslips].sort((a, b) => (a[sortKey] - b[sortKey]) * factor);
+  }, [filteredPayslips, sortKey, sortDirection]);
 
-  // Reset to page 1 whenever the search narrows/widens the result set, or a
-  // fresh payslips list comes in (new run loaded/processed) — otherwise a
-  // stale pageIndex could point past the end of a shorter filtered list.
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      // Third click on the same column clears the sort back to the
+      // original (backend/run-processing) order, rather than only ever
+      // toggling between asc/desc forever.
+      if (sortDirection === "desc") {
+        setSortKey(null);
+        return;
+      }
+      setSortDirection("desc");
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  }
+
+  function sortIndicator(key: SortKey) {
+    if (sortKey !== key) return null;
+    return <span className="ml-1 text-[10px]">{sortDirection === "asc" ? "▲" : "▼"}</span>;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(sortedPayslips.length / PAGE_SIZE));
+  const pagedPayslips = sortedPayslips.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE);
+
+  // Reset to page 1 whenever the search narrows/widens the result set, the
+  // sort changes, or a fresh payslips list comes in (new run
+  // loaded/processed) — otherwise a stale pageIndex could point past the
+  // end of a shorter/reordered list.
   useEffect(() => {
     setPageIndex(0);
-  }, [searchQuery, payslips]);
+  }, [searchQuery, payslips, sortKey, sortDirection]);
 
   const loadPayslips = useCallback(async (runId: number) => {
     setLoadingPayslips(true);
@@ -331,7 +369,7 @@ export default function PayrollPage() {
                 />
               </div>
 
-              {filteredPayslips.length === 0 ? (
+              {sortedPayslips.length === 0 ? (
                 <div className="py-10 text-center text-sm text-muted">
                   No payslips match Employee ID &quot;{searchQuery}&quot;.
                 </div>
@@ -343,12 +381,42 @@ export default function PayrollPage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-left text-muted border-b border-line">
-                          <th className="py-2 pr-4 font-medium">Employee ID</th>
-                          <th className="py-2 pr-4 font-medium">Working days</th>
-                          <th className="py-2 pr-4 font-medium">Paid days</th>
-                          <th className="py-2 pr-4 font-medium">Gross</th>
-                          <th className="py-2 pr-4 font-medium">Deductions</th>
-                          <th className="py-2 pr-4 font-medium">Net pay</th>
+                          <th
+                            className="py-2 pr-4 font-medium cursor-pointer select-none hover:text-ink"
+                            onClick={() => handleSort("employeeId")}
+                          >
+                            Employee ID{sortIndicator("employeeId")}
+                          </th>
+                          <th
+                            className="py-2 pr-4 font-medium cursor-pointer select-none hover:text-ink"
+                            onClick={() => handleSort("workingDays")}
+                          >
+                            Working days{sortIndicator("workingDays")}
+                          </th>
+                          <th
+                            className="py-2 pr-4 font-medium cursor-pointer select-none hover:text-ink"
+                            onClick={() => handleSort("paidDays")}
+                          >
+                            Paid days{sortIndicator("paidDays")}
+                          </th>
+                          <th
+                            className="py-2 pr-4 font-medium cursor-pointer select-none hover:text-ink"
+                            onClick={() => handleSort("grossEarnings")}
+                          >
+                            Gross{sortIndicator("grossEarnings")}
+                          </th>
+                          <th
+                            className="py-2 pr-4 font-medium cursor-pointer select-none hover:text-ink"
+                            onClick={() => handleSort("totalDeductions")}
+                          >
+                            Deductions{sortIndicator("totalDeductions")}
+                          </th>
+                          <th
+                            className="py-2 pr-4 font-medium cursor-pointer select-none hover:text-ink"
+                            onClick={() => handleSort("netPay")}
+                          >
+                            Net pay{sortIndicator("netPay")}
+                          </th>
                           <th className="py-2 pr-4 font-medium"></th>
                         </tr>
                       </thead>
@@ -362,12 +430,17 @@ export default function PayrollPage() {
                             <td className="py-2 pr-4">{formatCurrency(p.totalDeductions)}</td>
                             <td className="py-2 pr-4 font-medium">{formatCurrency(p.netPay)}</td>
                             <td className="py-2 pr-4">
-                              <Button
-                                onClick={() => handleDownloadPdf(p)}
-                                disabled={downloadingId === p.id}
-                              >
-                                {downloadingId === p.id ? "Downloading…" : "Download PDF"}
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                <Button variant="secondary" onClick={() => setDetailPayslip(p)}>
+                                  View
+                                </Button>
+                                <Button
+                                  onClick={() => handleDownloadPdf(p)}
+                                  disabled={downloadingId === p.id}
+                                >
+                                  {downloadingId === p.id ? "Downloading…" : "Download PDF"}
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -407,6 +480,13 @@ export default function PayrollPage() {
                         >
                           {downloadingId === p.id ? "Downloading…" : "Download PDF"}
                         </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setDetailPayslip(p)}
+                          className="mt-2 w-full"
+                        >
+                          View details
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -441,6 +521,14 @@ export default function PayrollPage() {
         <div className="rounded-lg border border-line bg-surface py-16 text-center text-sm text-muted">
           No payroll run yet for {MONTH_LABEL[month]} {year}. Click &quot;Process payroll&quot; above to generate one.
         </div>
+      )}
+
+      {detailPayslip && (
+        <PayslipDetailModal
+          payslip={detailPayslip}
+          employeeLabel={`Employee ${detailPayslip.employeeId}`}
+          onClose={() => setDetailPayslip(null)}
+        />
       )}
     </div>
   );
