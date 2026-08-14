@@ -34,6 +34,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Orchestrates a payroll run across all active employees for a given period
@@ -97,6 +98,18 @@ public class PayrollRunService {
     }
 
     /**
+     * Read-only lookup for the frontend's "does a run already exist for this
+     * period?" check on page load/tab-switch — added so the admin payroll screen
+     * can restore an already-processed run instead of only ever populating state
+     * right after a fresh "Process payroll" click. No new query needed:
+     * PayrollRunRepository already had findByPeriodMonthAndPeriodYear.
+     */
+    @Transactional(readOnly = true)
+    public Optional<PayrollRun> findRun(int periodMonth, int periodYear) {
+        return payrollRunRepository.findByPeriodMonthAndPeriodYear(periodMonth, periodYear);
+    }
+
+    /**
      * Finds-or-creates the run for periodMonth/periodYear, computes a payslip for
      * every active employee, and marks the run PROCESSED. Re-running a DRAFT or
      * PROCESSED run regenerates each employee's payslip in place (upsert on the
@@ -152,7 +165,9 @@ public class PayrollRunService {
         EmployeePayrollProfile profile = employeeDirectoryPort.findPayrollProfile(employeeId);
 
         AttendancePeriodSummary attendance = attendanceLeavePort.summarize(employeeId, periodStart, periodEnd);
-        BigDecimal prorationFactor = attendance.prorationFactor();
+        BigDecimal prorationFactor = attendance.workingDays() == 0
+                ? BigDecimal.ZERO
+                : attendance.paidDays().divide(BigDecimal.valueOf(attendance.workingDays()), 10, RoundingMode.HALF_UP);
 
         BigDecimal grossEarnings = round(salary.grossMonthly().multiply(prorationFactor));
         BigDecimal basicProrated = round(salary.basic().multiply(prorationFactor));

@@ -5,6 +5,7 @@ import com.staffdesk.ems.payroll.dto.PayrollRunResponse;
 import com.staffdesk.ems.payroll.dto.PayslipResponse;
 import com.staffdesk.ems.payroll.service.PayrollRunService;
 import com.staffdesk.ems.payroll.service.PayslipService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +32,22 @@ public class PayrollRunController {
     public PayrollRunController(PayrollRunService payrollRunService, PayslipService payslipService) {
         this.payrollRunService = payrollRunService;
         this.payslipService = payslipService;
+    }
+
+    /**
+     * Lookup-only, added so the admin payroll screen can restore an
+     * already-processed run on page load/tab-switch instead of only ever
+     * populating state right after a fresh "Process payroll" click. Returns
+     * 404 (empty body) when no run exists yet for the period — the frontend
+     * treats that as "nothing processed yet" rather than an error.
+     */
+    @GetMapping("/{year}/{month}")
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
+    public ResponseEntity<PayrollRunResponse> getRun(@PathVariable int year, @PathVariable int month) {
+        return payrollRunService.findRun(month, year)
+                .map(PayrollRunResponse::from)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/{year}/{month}/process")
