@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { PayslipRecord, MONTH_LABEL } from "@/types/payroll";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-notifications";
+import { PayslipDetailModal } from "@/components/payroll/payslip-detail-modal";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -23,6 +24,7 @@ export default function MyPayslipsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [detailPayslip, setDetailPayslip] = useState<PayslipRecord | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -138,9 +140,14 @@ export default function MyPayslipsPage() {
                     <td className="py-3 px-4">{formatCurrency(p.totalDeductions)}</td>
                     <td className="py-3 px-4 font-medium">{formatCurrency(p.netPay)}</td>
                     <td className="py-3 px-4">
-                      <Button onClick={() => handleDownloadPdf(p)} disabled={downloadingId === p.id}>
-                        {downloadingId === p.id ? "Downloading…" : "Download PDF"}
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button variant="secondary" onClick={() => setDetailPayslip(p)}>
+                          View
+                        </Button>
+                        <Button onClick={() => handleDownloadPdf(p)} disabled={downloadingId === p.id}>
+                          {downloadingId === p.id ? "Downloading…" : "Download PDF"}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -178,10 +185,17 @@ export default function MyPayslipsPage() {
                 >
                   {downloadingId === p.id ? "Downloading…" : "Download PDF"}
                 </Button>
+                <Button variant="secondary" onClick={() => setDetailPayslip(p)} className="mt-2 w-full">
+                  View details
+                </Button>
               </div>
             ))}
           </div>
         </>
+      )}
+
+      {detailPayslip && (
+        <PayslipDetailModal payslip={detailPayslip} onClose={() => setDetailPayslip(null)} />
       )}
     </div>
   );
