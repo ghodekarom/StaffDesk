@@ -5,10 +5,12 @@ import com.staffdesk.ems.payroll.entity.Payslip;
 import com.staffdesk.ems.payroll.exception.PayrollCalculationException;
 import com.staffdesk.ems.payroll.repository.PayslipRepository;
 import com.staffdesk.ems.payroll.service.port.EmployeeDirectoryPort;
+import com.staffdesk.ems.payroll.service.port.EmployeeDirectoryPort.EmployeePayrollProfile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Read side of the payroll module — JSON payslip API (step 6) plus PDF
@@ -44,16 +46,31 @@ public class PayslipService {
         this.employeeDirectoryPort = employeeDirectoryPort;
     }
 
+    /**
+     * 1.3: names are batch-resolved via findPayrollProfiles (one query for the
+     * whole run) rather than calling findPayrollProfile per payslip — that
+     * one-by-one pattern is fine for the single-PDF-render path below, where
+     * there's only ever one employee involved, but would be an N+1 query here.
+     */
     public List<PayslipResponse> getPayslipsForRun(Long payrollRunId) {
-        return payslipRepository.findByPayrollRunId(payrollRunId).stream()
-                .map(PayslipResponse::from)
+        List<Payslip> payslips = payslipRepository.findByPayrollRunId(payrollRunId);
+        Map<Long, EmployeePayrollProfile> profiles = employeeDirectoryPort.findPayrollProfiles(
+                payslips.stream().map(Payslip::getEmployeeId).distinct().toList());
+
+        return payslips.stream()
+                .map(p -> PayslipResponse.from(p, resolveEmployeeName(p.getEmployeeId(), profiles)))
                 .toList();
     }
 
-    /** Self-service history, newest first (§4.6's employee_id/generated_at index). */
+    /**
+     * Self-service history, newest first (§4.6's employee_id/generated_at index).
+     * Every row here belongs to the same caller, so one profile lookup covers the
+     * whole list — no batching needed the way getPayslipsForRun needs it.
+     */
     public List<PayslipResponse> getMyPayslips(Long employeeId) {
+        String employeeName = resolveEmployeeName(employeeId);
         return payslipRepository.findByEmployeeIdOrderByGeneratedAtDesc(employeeId).stream()
-                .map(PayslipResponse::from)
+                .map(p -> PayslipResponse.from(p, employeeName))
                 .toList();
     }
 
@@ -63,7 +80,8 @@ public class PayslipService {
      */
     public PayslipResponse getPayslip(Long payslipId, Long requesterEmployeeId) {
         Payslip payslip = findOwnedPayslip(payslipId, requesterEmployeeId);
-        return PayslipResponse.from(payslip);
+        String employeeName = resolveEmployeeName(payslip.getEmployeeId());
+        return PayslipResponse.from(payslip, employeeName);
     }
 
     /**
@@ -81,6 +99,13 @@ public class PayslipService {
     /** Same lookup + "Employee #N" fallback that PayrollRunService uses at run time. */
     private String resolveEmployeeName(Long employeeId) {
         String displayName = employeeDirectoryPort.findPayrollProfile(employeeId).displayName();
+        return displayName != null ? displayName : ("Employee #" + employeeId);
+    }
+
+    /** Batched variant — looks up the already-fetched profiles map instead of hitting the port again. */
+    private String resolveEmployeeName(Long employeeId, Map<Long, EmployeePayrollProfile> profiles) {
+        EmployeePayrollProfile profile = profiles.get(employeeId);
+        String displayName = profile != null ? profile.displayName() : null;
         return displayName != null ? displayName : ("Employee #" + employeeId);
     }
 

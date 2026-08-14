@@ -21,8 +21,8 @@ const MONTH_OPTIONS = Object.entries(MONTH_LABEL).map(([value, label]) => ({
 
 const PAGE_SIZE = 10;
 
-// Only numeric PayslipRecord fields are sortable — Employee ID doubles as a
-// reasonable proxy for "who" until 1.3 (search/sort by name) lands.
+// Only numeric PayslipRecord fields are sortable. 1.3 added search by name
+// (see filteredPayslips below); sort-by-name wasn't in that item's scope.
 type SortKey = "employeeId" | "workingDays" | "paidDays" | "grossEarnings" | "totalDeductions" | "netPay" | null;
 
 function formatCurrency(amount: number) {
@@ -61,7 +61,8 @@ export default function PayrollPage() {
   // Search + sort + pagination are all client-side over the already-loaded
   // payslips list (a single run's payslips, bounded by employee count — no
   // backend change needed). Search matches Employee ID as a substring, e.g.
-  // "12" matches 12, 120, 512.
+  // "12" matches 12, 120, 512 — and now (1.3) also matches employee name,
+  // case-insensitively, e.g. "raj" matches "Rajesh Kumar".
   const [searchQuery, setSearchQuery] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
   const [sortKey, setSortKey] = useState<SortKey>(null);
@@ -70,9 +71,11 @@ export default function PayrollPage() {
   const isAuthorized = role === "ADMIN" || role === "HR";
 
   const filteredPayslips = useMemo(() => {
-    const query = searchQuery.trim();
+    const query = searchQuery.trim().toLowerCase();
     if (!query) return payslips;
-    return payslips.filter((p) => String(p.employeeId).includes(query));
+    return payslips.filter(
+      (p) => String(p.employeeId).includes(query) || p.employeeName?.toLowerCase().includes(query)
+    );
   }, [payslips, searchQuery]);
 
   const sortedPayslips = useMemo(() => {
@@ -229,6 +232,7 @@ export default function PayrollPage() {
     // "download all" button to give you.
     const header = [
       "Employee ID",
+      "Name",
       "Working Days",
       "Paid Days",
       "Gross Earnings",
@@ -238,6 +242,7 @@ export default function PayrollPage() {
 
     const rows = payslips.map((p) => [
       p.employeeId,
+      p.employeeName,
       p.workingDays,
       p.paidDays,
       p.grossEarnings,
@@ -398,8 +403,7 @@ export default function PayrollPage() {
               <div className="mb-4">
                 <input
                   type="text"
-                  inputMode="numeric"
-                  placeholder="Search by Employee ID…"
+                  placeholder="Search by Employee ID or name…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full sm:w-64 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none"
@@ -408,7 +412,7 @@ export default function PayrollPage() {
 
               {sortedPayslips.length === 0 ? (
                 <div className="py-10 text-center text-sm text-muted">
-                  No payslips match Employee ID &quot;{searchQuery}&quot;.
+                  No payslips match &quot;{searchQuery}&quot;.
                 </div>
               ) : (
                 <>
@@ -424,6 +428,7 @@ export default function PayrollPage() {
                           >
                             Employee ID{sortIndicator("employeeId")}
                           </th>
+                          <th className="py-2 pr-4 font-medium">Name</th>
                           <th
                             className="py-2 pr-4 font-medium cursor-pointer select-none hover:text-ink"
                             onClick={() => handleSort("workingDays")}
@@ -461,6 +466,7 @@ export default function PayrollPage() {
                         {pagedPayslips.map((p) => (
                           <tr key={p.id} className="border-b border-line/50 text-ink">
                             <td className="py-2 pr-4">{p.employeeId}</td>
+                            <td className="py-2 pr-4">{p.employeeName}</td>
                             <td className="py-2 pr-4">{p.workingDays}</td>
                             <td className="py-2 pr-4">{p.paidDays}</td>
                             <td className="py-2 pr-4">{formatCurrency(p.grossEarnings)}</td>
@@ -492,7 +498,9 @@ export default function PayrollPage() {
                     {pagedPayslips.map((p) => (
                       <div key={p.id} className="rounded-lg border border-line p-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted">Employee {p.employeeId}</span>
+                          <span className="text-sm text-muted">
+                            {p.employeeName} <span className="text-muted/70">#{p.employeeId}</span>
+                          </span>
                           <span className="text-base font-medium text-ink">{formatCurrency(p.netPay)}</span>
                         </div>
 
@@ -563,7 +571,7 @@ export default function PayrollPage() {
       {detailPayslip && (
         <PayslipDetailModal
           payslip={detailPayslip}
-          employeeLabel={`Employee ${detailPayslip.employeeId}`}
+          employeeLabel={`${detailPayslip.employeeName} (#${detailPayslip.employeeId})`}
           onClose={() => setDetailPayslip(null)}
         />
       )}

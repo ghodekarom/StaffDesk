@@ -20,6 +20,7 @@ export interface PayslipRecord {
   id: number;
   payrollRunId: number;
   employeeId: number;
+  employeeName: string;
   periodMonth: number;
   periodYear: number;
   workingDays: number;

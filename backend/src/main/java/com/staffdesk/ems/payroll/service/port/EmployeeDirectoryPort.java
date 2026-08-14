@@ -2,6 +2,7 @@ package com.staffdesk.ems.payroll.service.port;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Bridges to the employee module. NOTE: workState maps to employees.work_state,
@@ -16,6 +17,15 @@ public interface EmployeeDirectoryPort {
     List<Long> findActiveEmployeeIds(LocalDate periodDate);
 
     EmployeePayrollProfile findPayrollProfile(Long employeeId);
+
+    /**
+     * Batch variant of {@link #findPayrollProfile(Long)} — added for 1.3 (search
+     * payslips by employee name) so a run's worth of payslips can be name-resolved
+     * in one round trip instead of one query per row. Missing/unknown ids are
+     * simply absent from the returned map rather than throwing, since a payslip
+     * referencing a since-deleted employee shouldn't break the whole list.
+     */
+    Map<Long, EmployeePayrollProfile> findPayrollProfiles(List<Long> employeeIds);
 
     record EmployeePayrollProfile(
             Long employeeId,

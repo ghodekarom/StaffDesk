@@ -16,6 +16,7 @@ public class PayslipResponse {
     private final Long id;
     private final Long payrollRunId;
     private final Long employeeId;
+    private final String employeeName;
     private final Integer periodMonth;
     private final Integer periodYear;
     private final Integer workingDays;
@@ -33,15 +34,17 @@ public class PayslipResponse {
     private final Instant generatedAt;
     private final List<PayslipEarningResponse> earnings;
 
-    private PayslipResponse(Long id, Long payrollRunId, Long employeeId, Integer periodMonth, Integer periodYear,
-                             Integer workingDays, BigDecimal paidDays, BigDecimal grossEarnings,
-                             BigDecimal pfEmployee, BigDecimal pfEmployer, BigDecimal esiEmployee,
-                             BigDecimal esiEmployer, BigDecimal professionalTax, BigDecimal tds,
-                             BigDecimal totalDeductions, BigDecimal netPay, boolean pdfAvailable,
-                             Instant generatedAt, List<PayslipEarningResponse> earnings) {
+    private PayslipResponse(Long id, Long payrollRunId, Long employeeId, String employeeName,
+                            Integer periodMonth, Integer periodYear,
+                            Integer workingDays, BigDecimal paidDays, BigDecimal grossEarnings,
+                            BigDecimal pfEmployee, BigDecimal pfEmployer, BigDecimal esiEmployee,
+                            BigDecimal esiEmployer, BigDecimal professionalTax, BigDecimal tds,
+                            BigDecimal totalDeductions, BigDecimal netPay, boolean pdfAvailable,
+                            Instant generatedAt, List<PayslipEarningResponse> earnings) {
         this.id = id;
         this.payrollRunId = payrollRunId;
         this.employeeId = employeeId;
+        this.employeeName = employeeName;
         this.periodMonth = periodMonth;
         this.periodYear = periodYear;
         this.workingDays = workingDays;
@@ -60,7 +63,14 @@ public class PayslipResponse {
         this.earnings = earnings;
     }
 
-    public static PayslipResponse from(Payslip p) {
+    /**
+     * @param employeeName resolved by the caller via EmployeeDirectoryPort (batched
+     *                      for list endpoints — see 1.3) — not derivable from the
+     *                      Payslip entity alone, which only stores employeeId.
+     *                      Pass "Employee #<id>" (or similar) as a fallback if the
+     *                      employee directory has no matching row.
+     */
+    public static PayslipResponse from(Payslip p, String employeeName) {
         List<PayslipEarningResponse> earnings = p.getEarnings().stream()
                 .map(PayslipEarningResponse::from)
                 .toList();
@@ -69,6 +79,7 @@ public class PayslipResponse {
                 p.getId(),
                 p.getPayrollRun().getId(),
                 p.getEmployeeId(),
+                employeeName,
                 p.getPayrollRun().getPeriodMonth(),
                 p.getPayrollRun().getPeriodYear(),
                 p.getWorkingDays(),
@@ -98,6 +109,10 @@ public class PayslipResponse {
 
     public Long getEmployeeId() {
         return employeeId;
+    }
+
+    public String getEmployeeName() {
+        return employeeName;
     }
 
     public Integer getPeriodMonth() {
