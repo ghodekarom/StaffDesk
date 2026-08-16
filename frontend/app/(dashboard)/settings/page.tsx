@@ -141,7 +141,7 @@ function ProfileSection({ employeeId }: { employeeId: number }) {
   }
 
   if (!employee) {
-    return <p className="text-sm text-muted">We couldn't load your profile. Try refreshing the page.</p>;
+    return <p className="text-sm text-muted">We couldn&apos;t load your profile. Try refreshing the page.</p>;
   }
 
   return (
@@ -370,7 +370,7 @@ function NotificationsSection() {
   }
 
   if (!prefs) {
-    return <p className="text-sm text-muted">We couldn't load your notification preferences. Try refreshing the page.</p>;
+    return <p className="text-sm text-muted">We couldn&apos;t load your notification preferences. Try refreshing the page.</p>;
   }
 
   return (
@@ -408,7 +408,7 @@ function OrganizationSection() {
       <Pill tone="accent">Coming soon</Pill>
       <ComingSoonNotice>
         Organization-wide settings — leave policies, attendance rules, and company profile —
-        aren't built yet. Department management already works today from the Departments page.
+        aren&apos;t built yet. Department management already works today from the Departments page.
       </ComingSoonNotice>
     </div>
   );
@@ -452,7 +452,7 @@ export default function SettingsPage() {
           (employeeId != null ? (
             <ProfileSection employeeId={employeeId} />
           ) : (
-            <p className="text-sm text-muted">We couldn't determine your employee record.</p>
+            <p className="text-sm text-muted">We couldn&apos;t determine your employee record.</p>
           ))}
         {activeTab === "security" && <SecuritySection />}
         {activeTab === "notifications" && <NotificationsSection />}

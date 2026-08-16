@@ -118,14 +118,14 @@ export function NotificationPanel({ isOpen, onClose, onCountChanged }: Notificat
 
               {!loading && error && (
                 <div className="px-4 py-8 text-center text-[12px] text-[#f0a3a3]">
-                  Couldn't load notifications. Try again shortly.
+                  Couldn&apos;t load notifications. Try again shortly.
                 </div>
               )}
 
               {!loading && !error && items.length === 0 && (
                 <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
                   <Bell size={20} className="text-[#4a4a5e]" />
-                  <span className="text-[12px] text-[#9d9cae]">You're all caught up</span>
+                  <span className="text-[12px] text-[#9d9cae]">You&apos;re all caught up</span>
                 </div>
               )}
 
