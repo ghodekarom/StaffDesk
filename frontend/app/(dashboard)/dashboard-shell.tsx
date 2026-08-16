@@ -161,7 +161,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const items = visibleNavItems(role);
   const roleLabel = role ? role.charAt(0) + role.slice(1).toLowerCase() : "";
 
-  const navLink = (item: (typeof items)[0], onClick?: () => void) => {
+  // `layoutId` scoped per nav instance (desktop vs. mobile drawer) — both can
+  // exist in the DOM at once (one hidden via CSS breakpoint, the other via
+  // conditional render), so sharing one id across both would fight itself.
+  const navLink = (item: (typeof items)[0], onClick?: () => void, layoutGroup: string = "desktop") => {
     const active =
       item.href === "/overview"
         ? pathname === "/overview"
@@ -171,16 +174,23 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         key={item.href}
         href={item.href}
         onClick={onClick}
-        className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-colors ${
-          active
-            ? "bg-[rgba(139,127,251,0.16)] text-[#c9c2ff]"
-            : "text-[#9d9cae] hover:text-[#e6e6ef] hover:bg-white/[0.04]"
+        className={`relative flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-colors ${
+          active ? "text-[#c9c2ff]" : "text-[#9d9cae] hover:text-[#e6e6ef] hover:bg-white/[0.04]"
         }`}
       >
-        {NAV_ICONS[item.href]}
-        <span>{item.label}</span>
+        {active && (
+          <motion.div
+            layoutId={`nav-active-pill-${layoutGroup}`}
+            className="absolute inset-0 rounded-lg bg-[rgba(139,127,251,0.16)]"
+            transition={{ type: "spring", stiffness: 500, damping: 36 }}
+          />
+        )}
+        <span className="relative z-10 flex items-center gap-2.5">
+          {NAV_ICONS[item.href]}
+          <span>{item.label}</span>
+        </span>
         {item.href === "/leave" && pendingLeaveCount !== null && pendingLeaveCount > 0 && (
-          <span className="ml-auto text-[11px] font-medium px-1.5 py-0.5 rounded-md bg-[rgba(237,161,0,0.15)] text-[#f7c98f]">
+          <span className="relative z-10 ml-auto text-[11px] font-medium px-1.5 py-0.5 rounded-md bg-[rgba(237,161,0,0.15)] text-[#f7c98f]">
             {pendingLeaveCount}
           </span>
         )}
@@ -199,7 +209,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               <span className="text-[15px] font-medium">StaffDesk</span>
             </div>
             <nav className="flex flex-col gap-0.5">
-              {items.map((item) => navLink(item))}
+              {items.map((item) => navLink(item, undefined, "desktop"))}
             </nav>
           </div>
 
@@ -329,7 +339,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                         </div>
                       </div>
                       <div className="py-1.5 px-1.5 flex flex-col gap-0.5">
-                        {items.map((item) => navLink(item, () => setMobileMenuOpen(false)))}
+                        {items.map((item) => navLink(item, () => setMobileMenuOpen(false), "mobile"))}
                       </div>
                       <div className="border-t border-[#26263a] py-1.5 px-1.5">
                         <button
