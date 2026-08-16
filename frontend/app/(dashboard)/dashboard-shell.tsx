@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState, useCallback } from "react";
+import { ReactNode, useEffect, useRef, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -38,6 +38,45 @@ const NAV_ICONS: Record<string, ReactNode> = {
 };
 function initials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+// Shakes the bell whenever `count` increases (new notification arrived)
+// rather than on every render — e.g. going from 2 to 0 (marked as read)
+// stays still.
+function NotificationBell({ count, size }: { count: number | null; size: number }) {
+  const prevCount = useRef<number | null>(null);
+  const [shake, setShake] = useState(false);
+
+  useEffect(() => {
+    if (count !== null && prevCount.current !== null && count > prevCount.current) {
+      setShake(true);
+      const t = setTimeout(() => setShake(false), 500);
+      prevCount.current = count;
+      return () => clearTimeout(t);
+    }
+    prevCount.current = count;
+  }, [count]);
+
+  return (
+    <motion.span
+      className="relative inline-flex"
+      animate={shake ? { rotate: [0, -14, 12, -8, 4, 0] } : { rotate: 0 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+    >
+      <Bell size={size} />
+      {count !== null && count > 0 && (
+        <span
+          className={`absolute rounded-full bg-[#e24b4a] font-medium text-white flex items-center justify-center ${
+            size >= 17
+              ? "-top-1.5 -right-1.5 min-w-[15px] h-[15px] px-[3px] text-[10px]"
+              : "-top-1 -right-1 min-w-[14px] h-[14px] px-[3px] text-[9px]"
+          }`}
+        >
+          {count > 9 ? "9+" : count}
+        </span>
+      )}
+    </motion.span>
+  );
 }
 
 interface LeaveRequestPage {
@@ -245,12 +284,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   title="Notifications"
                   aria-label="Notifications"
                 >
-                  <Bell size={17} />
-                  {unreadCount !== null && unreadCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-[3px] rounded-full bg-[#e24b4a] text-[10px] font-medium text-white flex items-center justify-center">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </span>
-                  )}
+                  <NotificationBell count={unreadCount} size={17} />
                 </button>
                 <NotificationPanel
                   isOpen={notifOpen}
@@ -281,12 +315,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   title="Notifications"
                   aria-label="Notifications"
                 >
-                  <Bell size={15} />
-                  {unreadCount !== null && unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-[3px] rounded-full bg-[#e24b4a] text-[9px] font-medium text-white flex items-center justify-center">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </span>
-                  )}
+                  <NotificationBell count={unreadCount} size={15} />
                 </button>
                 <NotificationPanel
                   isOpen={notifOpen}

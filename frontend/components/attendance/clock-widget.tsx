@@ -18,6 +18,34 @@ function formatTime(iso: string | null): string {
 
 const PULSE_DURATION = 1400;
 
+// Renders HH:MM steady and only re-mounts the seconds portion each tick, so
+// each second gets a small flip animation instead of the whole clock
+// re-rendering as flat text.
+function LiveClock({ time }: { time: string }) {
+  const display = time || "00:00:00";
+  const [hh, mm, ss] = display.split(":");
+
+  return (
+    <span className="inline-flex items-baseline">
+      <span>{hh}:{mm}:</span>
+      <span className="relative inline-block w-[2ch] overflow-hidden text-left">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={ss}
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -10, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="inline-block"
+          >
+            {ss}
+          </motion.span>
+        </AnimatePresence>
+      </span>
+    </span>
+  );
+}
+
 export function ClockWidget({ onChange }: { onChange?: () => void }) {
   const [today, setToday] = useState<AttendanceRecord | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,7 +146,7 @@ export function ClockWidget({ onChange }: { onChange?: () => void }) {
 
       <div className="relative z-10 flex flex-col gap-1.5">
         <div className="font-mono text-3xl md:text-4xl font-bold tracking-tight text-white flex items-center gap-2">
-          {liveTime || "00:00:00"}
+          <LiveClock time={liveTime} />
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
         </div>
         <div className="text-xs sm:text-sm text-slate-300 font-medium">

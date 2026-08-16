@@ -4,7 +4,7 @@ import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Users } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Shimmering skeleton row for loading state
 export function EmployeeTableSkeleton() {
@@ -120,46 +120,50 @@ export function EmployeeTable({
               animate="show"
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
             >
-              {employees.map((emp) => (
-                <motion.tr
-                  key={emp.id}
-                  variants={rowVariants}
-                  transition={{ duration: 0.2 }}
-                  onClick={() => onInspect?.(emp)}
-                  className="group row-clickable hover:bg-canvas cursor-pointer transition-colors"
-                >
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <Avatar firstName={emp.firstName} lastName={emp.lastName} status={emp.status} />
-                      <div>
-                        <div className="font-semibold text-ink">{emp.firstName} {emp.lastName}</div>
-                        <div className="text-xs text-muted">{emp.email}</div>
+              <AnimatePresence mode="popLayout">
+                {employees.map((emp) => (
+                  <motion.tr
+                    key={emp.id}
+                    layout
+                    variants={rowVariants}
+                    exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                    transition={{ duration: 0.2 }}
+                    onClick={() => onInspect?.(emp)}
+                    className="group row-clickable hover:bg-canvas cursor-pointer transition-colors"
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <Avatar firstName={emp.firstName} lastName={emp.lastName} status={emp.status} />
+                        <div>
+                          <div className="font-semibold text-ink">{emp.firstName} {emp.lastName}</div>
+                          <div className="text-xs text-muted">{emp.email}</div>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 font-mono text-xs font-semibold text-accent">{emp.employeeCode}</td>
-                  <td className="px-5 py-3.5 text-muted">{emp.departmentName ?? "—"}</td>
-                  <td className="px-5 py-3.5 text-muted">{emp.managerName ?? "—"}</td>
-                  <td className="px-5 py-3.5"><StatusBadge status={emp.status} /></td>
-                  <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
-                    {/* Hover-reveal floating action bar */}
-                    <div className="row-actions flex justify-end gap-1.5">
-                      <button
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-line text-ink hover:bg-canvas transition-colors"
-                        onClick={() => onEdit(emp)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-roseBg border border-rosePri/20 text-roseTxt hover:bg-rosePri/10 transition-colors"
-                        onClick={() => onDelete(emp)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
+                    </td>
+                    <td className="px-5 py-3.5 font-mono text-xs font-semibold text-accent">{emp.employeeCode}</td>
+                    <td className="px-5 py-3.5 text-muted">{emp.departmentName ?? "—"}</td>
+                    <td className="px-5 py-3.5 text-muted">{emp.managerName ?? "—"}</td>
+                    <td className="px-5 py-3.5"><StatusBadge status={emp.status} /></td>
+                    <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                      {/* Hover-reveal floating action bar */}
+                      <div className="row-actions flex justify-end gap-1.5">
+                        <button
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-line text-ink hover:bg-canvas transition-colors"
+                          onClick={() => onEdit(emp)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-roseBg border border-rosePri/20 text-roseTxt hover:bg-rosePri/10 transition-colors"
+                          onClick={() => onDelete(emp)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
             </motion.tbody>
           </table>
         </div>

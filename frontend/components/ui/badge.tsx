@@ -1,5 +1,8 @@
+"use client";
+
 import { EmployeeStatus } from "@/types/employee";
 import clsx from "clsx";
+import { AnimatePresence, motion } from "framer-motion";
 
 const styles: Record<EmployeeStatus, string> = {
   ACTIVE: "text-status-active bg-status-activeBg",
@@ -21,14 +24,21 @@ const dotStyles: Record<EmployeeStatus, string> = {
 
 export function StatusBadge({ status }: { status: EmployeeStatus }) {
   return (
-    <span
-      className={clsx(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
-        styles[status]
-      )}
-    >
-      <span className={clsx("h-1.5 w-1.5 rounded-full", dotStyles[status])} />
-      {labels[status]}
-    </span>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.span
+        key={status}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.16 }}
+        className={clsx(
+          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
+          styles[status]
+        )}
+      >
+        <span className={clsx("h-1.5 w-1.5 rounded-full", dotStyles[status])} />
+        {labels[status]}
+      </motion.span>
+    </AnimatePresence>
   );
 }

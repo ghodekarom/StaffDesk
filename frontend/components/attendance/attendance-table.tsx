@@ -3,7 +3,7 @@ import { AttendanceStatusBadge } from "./attendance-status-badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CalendarCheck2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Shimmer skeleton for loading state
 export function AttendanceTableSkeleton() {
@@ -122,30 +122,34 @@ export function AttendanceTable({ records, showEmployee = false, onEdit }: Props
             animate="show"
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
           >
-            {records.map((record) => (
-              <motion.tr
-                key={record.id}
-                variants={rowVariants}
-                transition={{ duration: 0.2 }}
-                className="hover:bg-canvas/60 transition-colors"
-              >
-                <td className="px-4 py-3 text-ink">{formatDate(record.attendanceDate)}</td>
-                {showEmployee && (
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-ink">{record.employeeName}</div>
-                    <div className="font-mono text-xs text-muted">{record.employeeCode}</div>
-                  </td>
-                )}
-                <td className="px-4 py-3 text-muted">{formatTime(record.clockIn)}</td>
-                <td className="px-4 py-3 text-muted">{formatTime(record.clockOut)}</td>
-                <td className="px-4 py-3"><AttendanceStatusBadge status={record.status} /></td>
-                {onEdit && (
-                  <td className="px-4 py-3 text-right">
-                    <Button variant="ghost" className="px-2 py-1" onClick={() => onEdit(record)}>Edit</Button>
-                  </td>
-                )}
-              </motion.tr>
-            ))}
+            <AnimatePresence mode="popLayout">
+              {records.map((record) => (
+                <motion.tr
+                  key={record.id}
+                  layout
+                  variants={rowVariants}
+                  exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                  transition={{ duration: 0.2 }}
+                  className="hover:bg-canvas/60 transition-colors"
+                >
+                  <td className="px-4 py-3 text-ink">{formatDate(record.attendanceDate)}</td>
+                  {showEmployee && (
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-ink">{record.employeeName}</div>
+                      <div className="font-mono text-xs text-muted">{record.employeeCode}</div>
+                    </td>
+                  )}
+                  <td className="px-4 py-3 text-muted">{formatTime(record.clockIn)}</td>
+                  <td className="px-4 py-3 text-muted">{formatTime(record.clockOut)}</td>
+                  <td className="px-4 py-3"><AttendanceStatusBadge status={record.status} /></td>
+                  {onEdit && (
+                    <td className="px-4 py-3 text-right">
+                      <Button variant="ghost" className="px-2 py-1" onClick={() => onEdit(record)}>Edit</Button>
+                    </td>
+                  )}
+                </motion.tr>
+              ))}
+            </AnimatePresence>
           </motion.tbody>
         </table>
       </div>

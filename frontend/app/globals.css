@@ -136,8 +136,10 @@
 /* Table row hover action bar reveal */
 .row-actions {
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transform: translateX(6px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 .group:hover .row-actions {
   opacity: 1;
+  transform: translateX(0);
 }
