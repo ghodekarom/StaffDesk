@@ -112,6 +112,12 @@ export default function OverviewPage() {
   const [recentLeave, setRecentLeave] = useState<LeaveRequestRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Separate from the summary `error` above: a failed attendance/leave call
+  // should not be indistinguishable from "no records yet." Without these,
+  // a 404/500 on either call silently rendered the calm empty state instead
+  // of telling anyone something actually broke.
+  const [attendanceError, setAttendanceError] = useState<string | null>(null);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
 
   const canReview = role === "ADMIN" || role === "HR" || role === "MANAGER";
 
@@ -127,10 +133,12 @@ export default function OverviewPage() {
     async function load() {
       setLoading(true);
       setError(null);
+      setAttendanceError(null);
+      setLeaveError(null);
       try {
         const results = await Promise.allSettled([
           api.get<DashboardSummary>("/dashboard/summary"),
-          api.get<AttendancePage>("/attendance", { size: 5, sort: "clockIn,desc" }),
+          api.get<AttendancePage>("/attendance/recent", { size: 5, sort: "attendanceDate,desc" }),
           canReview
             ? api.get<PageShape<LeaveRequestRecord>>("/leave/requests", { size: 5, sort: "createdAt,desc" })
             : api.get<PageShape<LeaveRequestRecord>>("/leave/requests/me", { size: 5, sort: "createdAt,desc" }),
@@ -150,10 +158,22 @@ export default function OverviewPage() {
 
         if (results[1].status === "fulfilled") {
           setTodayAttendance(results[1].value?.content ?? []);
+        } else {
+          setAttendanceError(
+            results[1].reason instanceof ApiError
+              ? results[1].reason.message
+              : "Couldn't load recent attendance."
+          );
         }
 
         if (results[2].status === "fulfilled") {
           setRecentLeave(results[2].value?.content ?? []);
+        } else {
+          setLeaveError(
+            results[2].reason instanceof ApiError
+              ? results[2].reason.message
+              : "Couldn't load recent leave requests."
+          );
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof ApiError ? err.message : "Couldn't reach the server.");
@@ -302,6 +322,10 @@ export default function OverviewPage() {
           </div>
           {loading ? (
             <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
+          ) : attendanceError ? (
+            <div className="px-5 py-4 text-sm text-rose-400">
+              {attendanceError} — attendance couldn't be loaded.
+            </div>
           ) : todayAttendance.length === 0 ? (
             <EmptyState
               icon={<CalendarCheck2 size={32} />}
@@ -354,6 +378,10 @@ export default function OverviewPage() {
           </div>
           {loading ? (
             <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
+          ) : leaveError ? (
+            <div className="px-5 py-4 text-sm text-rose-400">
+              {leaveError} — leave requests couldn't be loaded.
+            </div>
           ) : recentLeave.length === 0 ? (
             <EmptyState
               icon={<CalendarOff size={32} />}

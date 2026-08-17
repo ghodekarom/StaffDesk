@@ -51,6 +51,19 @@ public class AttendanceController {
                 principal.getEmployeeId(), range[0], range[1], withDefaultSort(pageable)));
     }
 
+    // ---------- Dashboard: recent activity across all employees ----------
+
+    // Backs the Overview page's "Recent Attendance Logs" widget. Distinct
+    // from /me (one user's own history) and /employees/{id} (one specific
+    // employee) — this is the cross-employee feed the dashboard actually
+    // needs, sorted however the caller asks (defaults to most recent first).
+    @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")
+    @GetMapping("/recent")
+    public ResponseEntity<Page<AttendanceResponse>> getRecentAcrossEmployees(
+            @PageableDefault(size = 5, sort = "attendanceDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(attendanceService.getRecentAcrossEmployees(pageable));
+    }
+
     // ---------- HR / Admin: view or override any employee's records ----------
 
     @PreAuthorize("hasAnyRole('ADMIN','HR')")

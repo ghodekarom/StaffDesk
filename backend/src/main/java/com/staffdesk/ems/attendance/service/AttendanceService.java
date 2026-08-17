@@ -83,6 +83,15 @@ public class AttendanceService {
         return getHistory(employeeId, from, to, pageable);
     }
 
+    // Powers the Overview dashboard's "Recent Attendance Logs" widget, which
+    // needs the latest clock-ins across every employee — not one person's
+    // history. findAll(pageable) already honors whatever sort the caller
+    // passes (e.g. "clockIn,desc"), so no custom query is needed here.
+    @Transactional(readOnly = true)
+    public Page<AttendanceResponse> getRecentAcrossEmployees(Pageable pageable) {
+        return attendanceRepository.findAll(pageable).map(AttendanceResponse::from);
+    }
+
     @Transactional(readOnly = true)
     public AttendanceResponse getRecord(Long employeeId, LocalDate date) {
         Attendance record = attendanceRepository.findByEmployeeIdAndAttendanceDate(employeeId, date)
