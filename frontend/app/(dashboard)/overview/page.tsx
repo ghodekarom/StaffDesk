@@ -324,7 +324,7 @@ export default function OverviewPage() {
             <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
           ) : attendanceError ? (
             <div className="px-5 py-4 text-sm text-rose-400">
-              {attendanceError} — attendance couldn't be loaded.
+              {attendanceError} — attendance couldn&apos;t be loaded.
             </div>
           ) : todayAttendance.length === 0 ? (
             <EmptyState
@@ -380,7 +380,7 @@ export default function OverviewPage() {
             <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
           ) : leaveError ? (
             <div className="px-5 py-4 text-sm text-rose-400">
-              {leaveError} — leave requests couldn't be loaded.
+              {leaveError} — leave requests couldn&apos;t be loaded.
             </div>
           ) : recentLeave.length === 0 ? (
             <EmptyState
