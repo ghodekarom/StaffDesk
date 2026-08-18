@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { useToast } from "@/components/ui/toast-notifications";
+import { DirectMessagePanel } from "@/components/ui/direct-message-panel";
 
 export interface EmployeeDrawerData {
   id: number;
@@ -21,7 +21,7 @@ interface EmployeeDrawerProps {
 }
 
 export function EmployeeDrawer({ data, onClose }: EmployeeDrawerProps) {
-  const { showToast } = useToast();
+  const [messagingOpen, setMessagingOpen] = useState(false);
 
   if (!data) return null;
 
@@ -105,15 +105,12 @@ export function EmployeeDrawer({ data, onClose }: EmployeeDrawerProps) {
         <div className="mt-auto pt-5 border-t border-line">
           <button
             className="w-full h-10 bg-accent hover:bg-accentHover text-white font-semibold rounded-lg text-sm transition-colors"
-            onClick={() => {
-              showToast(`Direct message channel opened for ${data.name}`);
-              onClose();
-            }}
+            onClick={() => setMessagingOpen(true)}
           >
             Send Direct Message
           </button>
-          <Link 
-            href={`/attendance/team?employeeId=${data.id}`} 
+          <Link
+            href={`/attendance/team?employeeId=${data.id}`}
             onClick={onClose}
             className="w-full h-10 mt-3 border border-line bg-surface hover:bg-line text-ink font-semibold rounded-lg text-sm flex items-center justify-center transition-colors"
           >
@@ -121,6 +118,14 @@ export function EmployeeDrawer({ data, onClose }: EmployeeDrawerProps) {
           </Link>
         </div>
       </div>
+
+      {messagingOpen && (
+        <DirectMessagePanel
+          recipientId={data.id}
+          recipientName={data.name}
+          onClose={() => setMessagingOpen(false)}
+        />
+      )}
     </div>
   );
 }
