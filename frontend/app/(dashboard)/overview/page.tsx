@@ -6,7 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { DepartmentChart, AttendanceTrendChart } from "@/components/ui/overview-charts";
+import { DepartmentChart, AttendanceTrendChart, Sparkline } from "@/components/ui/overview-charts";
 import { CalendarOff, CalendarCheck2, Clock, Users, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -241,53 +241,62 @@ export default function OverviewPage() {
               </>
             ) : (
               <>
-                <Link href="/employees" className="aspect-square sm:aspect-auto flex flex-col justify-center sm:block bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-3 sm:p-5">
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-muted">
-                    <Users className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">Active employees</span>
+                <Link href="/employees" className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-4 sm:p-5">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted">
+                    <Users className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" /> <span className="truncate">Active employees</span>
                   </div>
-                  <div className="text-xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
+                  <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
                     <CountUp value={summary?.totalEmployees ?? 0} />
                   </div>
-                  <div className="text-[10px] sm:text-[11px] text-emeraldPri mt-1">
+                  <div className="text-xs sm:text-[11px] text-emeraldPri mt-1">
                     {summary && summary.newHiresThisMonth > 0
                       ? `+${summary.newHiresThisMonth} this month`
                       : "No new hires this month"}
                   </div>
                 </Link>
 
-                <Link href="/attendance" className="aspect-square sm:aspect-auto flex flex-col justify-center sm:block bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-3 sm:p-5">
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-muted">
-                    <CalendarCheck2 className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">Present today</span>
+                <Link href="/attendance" className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-4 sm:p-5">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted">
+                    <CalendarCheck2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" /> <span className="truncate">Present today</span>
                   </div>
-                  <div className="text-xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
-                    <CountUp value={summary?.presentToday ?? 0} />
-                    <span className="text-xs sm:text-sm text-muted font-normal"> / {summary?.totalEmployees ?? 0}</span>
+                  <div>
+                    <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
+                      <CountUp value={summary?.presentToday ?? 0} />
+                      <span className="text-sm text-muted font-normal"> / {summary?.totalEmployees ?? 0}</span>
+                    </div>
+                    {/* 7-day present-count trend, from the same attendanceTrend
+                        data the full chart below already has — so a single
+                        static number doesn't hide whether attendance is
+                        climbing or sliding. */}
+                    {summary && summary.attendanceTrend.length > 1 && (
+                      <Sparkline data={summary.attendanceTrend.map((t) => t.present)} color="#34d399" />
+                    )}
                   </div>
-                  <div className="text-[10px] sm:text-[11px] text-muted mt-1">
+                  <div className="text-xs sm:text-[11px] text-muted mt-1">
                     {summary && summary.totalEmployees > 0
                       ? `${Math.round((summary.presentToday / summary.totalEmployees) * 100)}% attendance`
                       : "No attendance logged yet"}
                   </div>
                 </Link>
 
-                <div className="aspect-square sm:aspect-auto flex flex-col justify-center sm:block bg-card border border-line rounded-2xl p-3 sm:p-5">
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-muted">
-                    <Clock className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">Hours logged today</span>
+                <div className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line rounded-2xl p-4 sm:p-5">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted">
+                    <Clock className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" /> <span className="truncate">Hours logged today</span>
                   </div>
-                  <div className="text-xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
+                  <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
                     <CountUp value={summary?.hoursLoggedToday ?? 0} decimals={1} />h
                   </div>
-                  <div className="text-[10px] sm:text-[11px] text-muted mt-1">Sum of completed clock-outs</div>
+                  <div className="text-xs sm:text-[11px] text-muted mt-1">Sum of completed clock-outs</div>
                 </div>
 
-                <div className="aspect-square sm:aspect-auto flex flex-col justify-center sm:block bg-card border border-line rounded-2xl p-3 sm:p-5">
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-muted">
-                    <CalendarOff className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">Pending leave</span>
+                <div className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line rounded-2xl p-4 sm:p-5">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted">
+                    <CalendarOff className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" /> <span className="truncate">Pending leave</span>
                   </div>
-                  <div className="text-xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
+                  <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
                     <CountUp value={summary?.pendingLeaveCount ?? 0} />
                   </div>
-                  <div className="text-[10px] sm:text-[11px] mt-1">
+                  <div className="text-xs sm:text-[11px] mt-1">
                     {summary && summary.pendingLeaveCount > 0 ? (
                       <Link href={canReview ? "/leave/team" : "/leave"} className="text-amberPri hover:underline">
                         Needs review →
@@ -457,6 +466,7 @@ export default function OverviewPage() {
           )}
         </div>
       </div>
+
     </div>
   );
 }

@@ -54,3 +54,36 @@ export function AttendanceTrendChart({ data }: { data: { date: string; present: 
     </div>
   );
 }
+
+// Tiny trend line for inside a KPI card — deliberately axis-less and
+// tooltip-less (a KPI tile isn't the place to interrogate exact values,
+// just to see "climbing" vs "dropping" at a glance). Reuses the same
+// attendanceTrend data already fetched for the full chart below, so this
+// costs no extra network round trip.
+export function Sparkline({ data, color = "#38bdf8" }: { data: number[]; color?: string }) {
+  if (data.length < 2) return null;
+  const points = data.map((value, i) => ({ i, value }));
+  return (
+    <div className="h-6 w-full mt-1">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={points} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id={`spark-${color}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={color} stopOpacity={0.25} />
+              <stop offset="95%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke={color}
+            strokeWidth={1.5}
+            fillOpacity={1}
+            fill={`url(#spark-${color})`}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
