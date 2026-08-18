@@ -50,7 +50,7 @@ function SkeletonRow() {
 // fallback number (e.g. `empCount ?? 184`) during the initial fetch.
 function SkeletonCard({ className = "" }: { className?: string }) {
   return (
-    <div className={`bg-card border border-line rounded-2xl p-5 animate-pulse ${className}`}>
+    <div className={`aspect-square sm:aspect-auto flex flex-col justify-center sm:block bg-card border border-line rounded-2xl p-3 sm:p-5 animate-pulse ${className}`}>
       <div className="h-3 bg-line rounded w-1/2 mb-3" />
       <div className="h-7 bg-line rounded w-1/3" />
     </div>
@@ -231,60 +231,63 @@ export default function OverviewPage() {
       {(loading || hasEmployees) && (
         <>
           {/* ─── SECTION 1: KPI cards + real attendance-status breakdown ─────────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* 2x2 square grid on mobile (each card's own tap target, easy
+              thumb reach), settling into a single row of 4 rectangular
+              cards from sm upward where there's room to breathe. */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
             {loading ? (
               <>
                 <SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard />
               </>
             ) : (
               <>
-                <Link href="/employees" className="bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-5 block">
-                  <div className="flex items-center gap-2 text-xs font-medium text-muted">
-                    <Users className="w-3.5 h-3.5" /> Active employees
+                <Link href="/employees" className="aspect-square sm:aspect-auto flex flex-col justify-center sm:block bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-3 sm:p-5">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-muted">
+                    <Users className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">Active employees</span>
                   </div>
-                  <div className="text-2xl font-bold text-ink mt-2">
+                  <div className="text-xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
                     <CountUp value={summary?.totalEmployees ?? 0} />
                   </div>
-                  <div className="text-[11px] text-emeraldPri mt-1">
+                  <div className="text-[10px] sm:text-[11px] text-emeraldPri mt-1">
                     {summary && summary.newHiresThisMonth > 0
                       ? `+${summary.newHiresThisMonth} this month`
                       : "No new hires this month"}
                   </div>
                 </Link>
 
-                <Link href="/attendance" className="bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-5 block">
-                  <div className="flex items-center gap-2 text-xs font-medium text-muted">
-                    <CalendarCheck2 className="w-3.5 h-3.5" /> Present today
+                <Link href="/attendance" className="aspect-square sm:aspect-auto flex flex-col justify-center sm:block bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-3 sm:p-5">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-muted">
+                    <CalendarCheck2 className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">Present today</span>
                   </div>
-                  <div className="text-2xl font-bold text-ink mt-2">
+                  <div className="text-xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
                     <CountUp value={summary?.presentToday ?? 0} />
-                    <span className="text-sm text-muted font-normal"> / {summary?.totalEmployees ?? 0}</span>
+                    <span className="text-xs sm:text-sm text-muted font-normal"> / {summary?.totalEmployees ?? 0}</span>
                   </div>
-                  <div className="text-[11px] text-muted mt-1">
+                  <div className="text-[10px] sm:text-[11px] text-muted mt-1">
                     {summary && summary.totalEmployees > 0
                       ? `${Math.round((summary.presentToday / summary.totalEmployees) * 100)}% attendance`
                       : "No attendance logged yet"}
                   </div>
                 </Link>
 
-                <div className="bg-card border border-line rounded-2xl p-5">
-                  <div className="flex items-center gap-2 text-xs font-medium text-muted">
-                    <Clock className="w-3.5 h-3.5" /> Hours logged today
+                <div className="aspect-square sm:aspect-auto flex flex-col justify-center sm:block bg-card border border-line rounded-2xl p-3 sm:p-5">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-muted">
+                    <Clock className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">Hours logged today</span>
                   </div>
-                  <div className="text-2xl font-bold text-ink mt-2">
+                  <div className="text-xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
                     <CountUp value={summary?.hoursLoggedToday ?? 0} decimals={1} />h
                   </div>
-                  <div className="text-[11px] text-muted mt-1">Sum of completed clock-outs</div>
+                  <div className="text-[10px] sm:text-[11px] text-muted mt-1">Sum of completed clock-outs</div>
                 </div>
 
-                <div className="bg-card border border-line rounded-2xl p-5">
-                  <div className="flex items-center gap-2 text-xs font-medium text-muted">
-                    <CalendarOff className="w-3.5 h-3.5" /> Pending leave
+                <div className="aspect-square sm:aspect-auto flex flex-col justify-center sm:block bg-card border border-line rounded-2xl p-3 sm:p-5">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-muted">
+                    <CalendarOff className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">Pending leave</span>
                   </div>
-                  <div className="text-2xl font-bold text-ink mt-2">
+                  <div className="text-xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
                     <CountUp value={summary?.pendingLeaveCount ?? 0} />
                   </div>
-                  <div className="text-[11px] mt-1">
+                  <div className="text-[10px] sm:text-[11px] mt-1">
                     {summary && summary.pendingLeaveCount > 0 ? (
                       <Link href={canReview ? "/leave/team" : "/leave"} className="text-amberPri hover:underline">
                         Needs review →
@@ -454,7 +457,6 @@ export default function OverviewPage() {
           )}
         </div>
       </div>
-
     </div>
   );
 }
