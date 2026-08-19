@@ -15,6 +15,11 @@ export interface Employee {
   designation: string | null;
   dateOfJoining: string | null; // ISO date (LocalDate)
   status: EmployeeStatus;
+  // Whether a matching row exists in `users` -- i.e. whether this employee
+  // can actually log in. Employees and login accounts are created via two
+  // separate endpoints (POST /employees vs. POST /auth/register), so this
+  // can be false for employees who have an HR record but no way to sign in.
+  hasLoginAccount: boolean;
 }
 
 // Mirrors EmployeeRequestDto.java (fields consumed by applyRequestToEntity)

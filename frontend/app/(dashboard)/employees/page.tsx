@@ -3,14 +3,18 @@
 import { useEffect, useState, useCallback } from "react";
 import { api, ApiError } from "@/lib/api";
 import { Employee, EmployeeRequest, Page } from "@/types/employee";
+import { RegisterPayload } from "@/types/auth";
 import { EmployeeTable, EmployeeTableSkeleton } from "@/components/employees/employee-table";
 import { EmployeeForm } from "@/components/employees/employee-form";
+import { CreateLoginModal } from "@/components/employees/create-login-modal";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 
 const PAGE_SIZE = 20;
 
 export default function EmployeesPage() {
+  const { role } = useAuth();
   const [page, setPage] = useState<Page<Employee> | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -20,9 +24,9 @@ export default function EmployeesPage() {
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [departments, setDepartments] = useState<any[]>([]);
 
-  const [modal, setModal] = useState<null | { mode: "create" } | { mode: "edit"; employee: Employee }>(
-    null
-  );
+  const [modal, setModal] = useState<
+    null | { mode: "create" } | { mode: "edit"; employee: Employee } | { mode: "create-login"; employee: Employee }
+  >(null);
 
   useEffect(() => {
     api.get<{ content: any[] }>("/departments", { size: 100 })
@@ -82,6 +86,12 @@ export default function EmployeesPage() {
 
   async function handleEdit(id: number, data: EmployeeRequest) {
     await api.put<Employee>(`/employees/${id}`, data);
+    setModal(null);
+    load(pageIndex, searchQuery);
+  }
+
+  async function handleCreateLogin(data: RegisterPayload) {
+    await api.post("/auth/register", data);
     setModal(null);
     load(pageIndex, searchQuery);
   }
@@ -167,6 +177,8 @@ export default function EmployeesPage() {
             onEdit={(emp) => setModal({ mode: "edit", employee: emp })}
             onDelete={handleDelete}
             onInspect={handleInspect}
+            canCreateLogin={role === "ADMIN"}
+            onCreateLogin={(emp) => setModal({ mode: "create-login", employee: emp })}
           />
 
           {page.totalPages > 1 && (
@@ -204,6 +216,16 @@ export default function EmployeesPage() {
           <EmployeeForm
             initial={modal.employee}
             onSubmit={(data) => handleEdit(modal.employee.id, data)}
+            onCancel={() => setModal(null)}
+          />
+        </Modal>
+      )}
+
+      {modal?.mode === "create-login" && (
+        <Modal title="Create login" onClose={() => setModal(null)}>
+          <CreateLoginModal
+            employee={modal.employee}
+            onSubmit={handleCreateLogin}
             onCancel={() => setModal(null)}
           />
         </Modal>

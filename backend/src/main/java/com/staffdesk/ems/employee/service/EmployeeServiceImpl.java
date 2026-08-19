@@ -1,5 +1,6 @@
 package com.staffdesk.ems.employee.service;
 
+import com.staffdesk.ems.auth.repository.UserRepository;
 import com.staffdesk.ems.common.exception.DuplicateResourceException;
 import com.staffdesk.ems.common.exception.ResourceNotFoundException;
 import com.staffdesk.ems.department.entity.Department;
@@ -22,6 +23,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
+    private final UserRepository userRepository;
 
     @Override
     public EmployeeResponseDto create(EmployeeRequestDto request) {
@@ -36,20 +38,23 @@ public class EmployeeServiceImpl implements EmployeeService {
         applyRequestToEntity(request, employee);
 
         Employee saved = employeeRepository.save(employee);
-        return EmployeeResponseDto.fromEntity(saved);
+        // A freshly created employee can never already have a login account --
+        // that's a separate step via POST /auth/register -- so this is always false.
+        return EmployeeResponseDto.fromEntity(saved, false);
     }
 
     @Override
     @Transactional(readOnly = true)
     public EmployeeResponseDto getById(Long id) {
         Employee employee = findEmployeeOrThrow(id);
-        return EmployeeResponseDto.fromEntity(employee);
+        return EmployeeResponseDto.fromEntity(employee, userRepository.existsByEmployeeId(employee.getId()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<EmployeeResponseDto> getAll(Pageable pageable) {
-        return employeeRepository.findAll(pageable).map(EmployeeResponseDto::fromEntity);
+        return employeeRepository.findAll(pageable)
+                .map(e -> EmployeeResponseDto.fromEntity(e, userRepository.existsByEmployeeId(e.getId())));
     }
 
     @Override
@@ -61,7 +66,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository
                 .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmployeeCodeContainingIgnoreCase(
                         search, search, search, pageable)
-                .map(EmployeeResponseDto::fromEntity);
+                .map(e -> EmployeeResponseDto.fromEntity(e, userRepository.existsByEmployeeId(e.getId())));
     }
 
     @Override
@@ -74,7 +79,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         applyRequestToEntity(request, employee);
         Employee saved = employeeRepository.save(employee);
-        return EmployeeResponseDto.fromEntity(saved);
+        return EmployeeResponseDto.fromEntity(saved, userRepository.existsByEmployeeId(saved.getId()));
     }
 
     @Override

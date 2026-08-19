@@ -43,16 +43,34 @@ export function EmployeeTableSkeleton() {
   );
 }
 
+// Small "No login" indicator for employees with an HR record but no
+// matching `users` row yet. See employee-login-gap-issue.md.
+function NoLoginBadge() {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-status-terminatedBg px-2.5 py-0.5 text-xs font-medium text-status-terminated">
+      <span className="h-1.5 w-1.5 rounded-full bg-status-terminated" />
+      No login
+    </span>
+  );
+}
+
 export function EmployeeTable({
   employees,
   onEdit,
   onDelete,
   onInspect,
+  onCreateLogin,
+  canCreateLogin = false,
 }: {
   employees: Employee[];
   onEdit: (employee: Employee) => void;
   onDelete: (employee: Employee) => void;
   onInspect?: (employee: Employee) => void;
+  // ADMIN-only "Create login" action -- omit both props (or leave
+  // canCreateLogin false) to hide it for non-ADMIN viewers, since they
+  // can't call POST /auth/register anyway.
+  onCreateLogin?: (employee: Employee) => void;
+  canCreateLogin?: boolean;
 }) {
   if (employees.length === 0) {
     return (
@@ -87,11 +105,19 @@ export function EmployeeTable({
                   <div className="text-xs text-muted">{emp.departmentName || "General"}</div>
                 </div>
               </div>
-              <StatusBadge status={emp.status} />
+              <div className="flex items-center gap-1.5">
+                {!emp.hasLoginAccount && <NoLoginBadge />}
+                <StatusBadge status={emp.status} />
+              </div>
             </div>
             <div className="flex items-center justify-between text-xs text-muted border-t border-line pt-2.5">
               <span>Code: <strong className="font-mono text-accent">{emp.employeeCode}</strong></span>
               <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                {canCreateLogin && !emp.hasLoginAccount && onCreateLogin && (
+                  <Button variant="ghost" className="px-2 py-1 text-xs text-accent" onClick={() => onCreateLogin(emp)}>
+                    Create login
+                  </Button>
+                )}
                 <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => onEdit(emp)}>Edit</Button>
                 <Button variant="ghost" className="px-2 py-1 text-xs text-roseTxt" onClick={() => onDelete(emp)}>Delete</Button>
               </div>
@@ -143,10 +169,23 @@ export function EmployeeTable({
                     <td className="px-5 py-3.5 font-mono text-xs font-semibold text-accent">{emp.employeeCode}</td>
                     <td className="px-5 py-3.5 text-muted">{emp.departmentName ?? "—"}</td>
                     <td className="px-5 py-3.5 text-muted">{emp.managerName ?? "—"}</td>
-                    <td className="px-5 py-3.5"><StatusBadge status={emp.status} /></td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-1.5">
+                        {!emp.hasLoginAccount && <NoLoginBadge />}
+                        <StatusBadge status={emp.status} />
+                      </div>
+                    </td>
                     <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                       {/* Hover-reveal floating action bar */}
                       <div className="row-actions flex justify-end gap-1.5">
+                        {canCreateLogin && !emp.hasLoginAccount && onCreateLogin && (
+                          <button
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-accent/10 border border-accent/20 text-accent hover:bg-accent/20 transition-colors"
+                            onClick={() => onCreateLogin(emp)}
+                          >
+                            Create login
+                          </button>
+                        )}
                         <button
                           className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-line text-ink hover:bg-canvas transition-colors"
                           onClick={() => onEdit(emp)}
