@@ -26,6 +26,14 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     long countByRecipientEmployeeIdAndSenderEmployeeIdAndReadFalse(Long recipientEmployeeId, Long senderEmployeeId);
 
+    // Backs the inbox list: newest-first messages where this employee is
+    // either side of the conversation. The service groups these by "other
+    // party" in memory, keeping the first (most recent) per partner — that
+    // avoids a GROUP BY/window-function query for what's a modest table at
+    // this app's scale, and keeps the logic readable in Java rather than JPQL.
+    Page<Message> findBySenderEmployeeIdOrRecipientEmployeeIdOrderByCreatedAtDesc(
+            Long senderEmployeeId, Long recipientEmployeeId, Pageable pageable);
+
     // Bulk mark-as-read for one side of a thread — called whenever the
     // recipient opens or polls the conversation, so the unread badge on the
     // other person's messages clears without a round trip per message.

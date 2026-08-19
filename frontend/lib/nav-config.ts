@@ -12,6 +12,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/departments", label: "Departments", roles: ["ADMIN", "HR", "MANAGER"] },
   { href: "/attendance", label: "Attendance", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/leave", label: "Leave", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
+  { href: "/messages", label: "Messages", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/payroll", label: "Payroll", roles: ["ADMIN", "HR"] },
   // Employee self-service payslip list — separate route from /payroll since
   // that one is ADMIN/HR's run-trigger + all-employees view. Backend's

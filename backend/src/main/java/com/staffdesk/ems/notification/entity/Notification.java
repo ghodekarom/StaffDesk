@@ -103,6 +103,7 @@ public class Notification {
         LEAVE_REQUEST_APPROVED,
         LEAVE_REQUEST_REJECTED,
         ATTENDANCE_REMINDER,
+        MESSAGE,
         GENERAL
     }
 }

@@ -83,7 +83,7 @@ public class NotificationService {
             case LEAVE_REQUEST_SUBMITTED -> preference.isNewLeaveRequestEnabled();
             case LEAVE_REQUEST_APPROVED, LEAVE_REQUEST_REJECTED -> preference.isLeaveDecisionEnabled();
             case ATTENDANCE_REMINDER -> preference.isAttendanceReminderEnabled();
-            case GENERAL -> true;
+            case MESSAGE, GENERAL -> true;
         };
     }
 }

@@ -20,6 +20,7 @@ import {
   Building2,
   Clock,
   CalendarOff,
+  MessageSquare,
   Wallet,
   Settings,
   Bell,
@@ -32,6 +33,7 @@ const NAV_ICONS: Record<string, ReactNode> = {
   "/departments": <Building2 size={16} />,
   "/attendance": <Clock size={16} />,
   "/leave": <CalendarOff size={16} />,
+  "/messages": <MessageSquare size={16} />,
   "/payroll": <Wallet size={16} />,
   "/payroll/payslips": <Wallet size={16} />,
   "/settings": <Settings size={16} />,
@@ -82,6 +84,9 @@ function NotificationBell({ count, size }: { count: number | null; size: number 
 interface LeaveRequestPage {
   totalElements: number;
 }
+interface UnreadMessageCountResponse {
+  count: number;
+}
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const { isAuthenticated, isInitializing, role, employeeId, logout } = useAuth();
@@ -95,6 +100,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState<number | null>(null);
+  const [unreadMessageCount, setUnreadMessageCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (employeeId) {
@@ -156,6 +162,36 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     const interval = setInterval(refreshUnreadCount, 60_000);
     return () => clearInterval(interval);
   }, [isAuthenticated, refreshUnreadCount]);
+
+  const refreshUnreadMessageCount = useCallback(async () => {
+    try {
+      const data = await api.get<UnreadMessageCountResponse>("/messages/unread-count", undefined, {
+        fresh: true,
+      });
+      setUnreadMessageCount(data?.count ?? null);
+    } catch {
+      setUnreadMessageCount(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    refreshUnreadMessageCount();
+    // Same rationale as notifications: another employee sending a DM isn't
+    // triggered by this user's own navigation, so this needs its own poll
+    // rather than only refreshing when the route changes. The sidebar badge
+    // is the one place this count is visible outside the /messages page
+    // itself (which polls its own list independently, faster, while open).
+    const interval = setInterval(refreshUnreadMessageCount, 60_000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, refreshUnreadMessageCount]);
+
+  useEffect(() => {
+    // Reading a thread marks it read server-side immediately, but the
+    // 60s poll above wouldn't reflect that promptly — refreshing on every
+    // route change means leaving /messages/[id] clears the badge right away.
+    if (isAuthenticated) refreshUnreadMessageCount();
+  }, [isAuthenticated, pathname, refreshUnreadMessageCount]);
 
   useEffect(() => {
     if (!isInitializing && !isAuthenticated) {
@@ -231,6 +267,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {item.href === "/leave" && pendingLeaveCount !== null && pendingLeaveCount > 0 && (
           <span className="relative z-10 ml-auto text-[11px] font-medium px-1.5 py-0.5 rounded-md bg-[rgba(237,161,0,0.15)] text-[#f7c98f]">
             {pendingLeaveCount}
+          </span>
+        )}
+        {item.href === "/messages" && unreadMessageCount !== null && unreadMessageCount > 0 && (
+          <span className="relative z-10 ml-auto text-[11px] font-medium px-1.5 py-0.5 rounded-md bg-[rgba(139,127,251,0.16)] text-[#c9c2ff]">
+            {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
           </span>
         )}
       </Link>

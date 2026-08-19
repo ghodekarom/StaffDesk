@@ -3,6 +3,7 @@ package com.staffdesk.ems.messaging.controller;
 import com.staffdesk.ems.auth.security.UserPrincipal;
 import com.staffdesk.ems.messaging.dto.MessageResponse;
 import com.staffdesk.ems.messaging.dto.SendMessageRequest;
+import com.staffdesk.ems.messaging.dto.ThreadSummaryResponse;
 import com.staffdesk.ems.messaging.dto.UnreadMessageCountResponse;
 import com.staffdesk.ems.messaging.service.MessageService;
 import jakarta.validation.Valid;
@@ -15,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/messages")
 public class MessageController {
@@ -23,6 +26,16 @@ public class MessageController {
 
     public MessageController(MessageService messageService) {
         this.messageService = messageService;
+    }
+
+    // The inbox list — one row per conversation partner. Deliberately
+    // declared before /thread/{employeeId} isn't a routing concern here
+    // since Spring matches literal segments before path variables, but kept
+    // as a distinct top-level path so it reads clearly as "all threads"
+    // rather than "a thread belonging to some id".
+    @GetMapping("/threads")
+    public ResponseEntity<List<ThreadSummaryResponse>> threads(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(messageService.listThreads(principal.getEmployeeId()));
     }
 
     @PostMapping
