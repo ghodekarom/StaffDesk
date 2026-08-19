@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { api, ApiError } from "@/lib/api";
-import { Employee, EmployeeRequest, Page } from "@/types/employee";
+import { Employee, Page } from "@/types/employee";
 import { RegisterPayload } from "@/types/auth";
 import { EmployeeTable, EmployeeTableSkeleton } from "@/components/employees/employee-table";
-import { EmployeeForm } from "@/components/employees/employee-form";
+import { EmployeeForm, EmployeeFormSubmitData } from "@/components/employees/employee-form";
 import { CreateLoginModal } from "@/components/employees/create-login-modal";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -78,14 +78,35 @@ export default function EmployeesPage() {
     window.dispatchEvent(new CustomEvent("inspect-employee", { detail }));
   };
 
-  async function handleCreate(data: EmployeeRequest) {
-    await api.post<Employee>("/employees", data);
+  async function handleCreate({ employee, login }: EmployeeFormSubmitData) {
+    const created = await api.post<Employee>("/employees", employee);
+
+    if (login) {
+      try {
+        await api.post("/auth/register", { employeeId: created.id, ...login });
+      } catch (err) {
+        // The employee record was created successfully -- don't lose that
+        // by throwing here (which would leave the modal open and imply
+        // nothing happened). Surface the login failure separately; the
+        // row will just show "No login" and can be retried from its
+        // per-row "Create login" action.
+        setModal(null);
+        load(pageIndex, searchQuery);
+        alert(
+          `${employee.firstName} ${employee.lastName} was added, but creating their login failed: ` +
+            (err instanceof ApiError ? err.message : "Something went wrong.") +
+            ` Use "Create login" on their row to try again.`
+        );
+        return;
+      }
+    }
+
     setModal(null);
     load(pageIndex, searchQuery);
   }
 
-  async function handleEdit(id: number, data: EmployeeRequest) {
-    await api.put<Employee>(`/employees/${id}`, data);
+  async function handleEdit(id: number, { employee }: EmployeeFormSubmitData) {
+    await api.put<Employee>(`/employees/${id}`, employee);
     setModal(null);
     load(pageIndex, searchQuery);
   }
@@ -207,7 +228,11 @@ export default function EmployeesPage() {
 
       {modal?.mode === "create" && (
         <Modal title="Add employee" onClose={() => setModal(null)}>
-          <EmployeeForm onSubmit={handleCreate} onCancel={() => setModal(null)} />
+          <EmployeeForm
+            onSubmit={handleCreate}
+            onCancel={() => setModal(null)}
+            allowInlineLogin={role === "ADMIN"}
+          />
         </Modal>
       )}
 

@@ -47,7 +47,7 @@ export function EmployeeTableSkeleton() {
 // matching `users` row yet. See employee-login-gap-issue.md.
 function NoLoginBadge() {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-status-terminatedBg px-2.5 py-0.5 text-xs font-medium text-status-terminated">
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-status-terminatedBg px-2.5 py-0.5 text-xs font-medium text-status-terminated">
       <span className="h-1.5 w-1.5 rounded-full bg-status-terminated" />
       No login
     </span>
@@ -105,7 +105,7 @@ export function EmployeeTable({
                   <div className="text-xs text-muted">{emp.departmentName || "General"}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-nowrap items-center gap-1.5">
                 {!emp.hasLoginAccount && <NoLoginBadge />}
                 <StatusBadge status={emp.status} />
               </div>
@@ -136,8 +136,8 @@ export function EmployeeTable({
                 <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line">Code</th>
                 <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line">Department</th>
                 <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line">Manager</th>
-                <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line">Status</th>
-                <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line text-right">Actions</th>
+                <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line min-w-[190px]">Status</th>
+                <th className="px-5 py-3 font-semibold text-[11px] uppercase tracking-wider text-muted bg-canvas border-b border-line text-right min-w-[260px]">Actions</th>
               </tr>
             </thead>
             <motion.tbody
@@ -169,31 +169,31 @@ export function EmployeeTable({
                     <td className="px-5 py-3.5 font-mono text-xs font-semibold text-accent">{emp.employeeCode}</td>
                     <td className="px-5 py-3.5 text-muted">{emp.departmentName ?? "—"}</td>
                     <td className="px-5 py-3.5 text-muted">{emp.managerName ?? "—"}</td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-1.5">
+                    <td className="px-5 py-3.5 min-w-[190px]">
+                      <div className="flex flex-nowrap items-center gap-1.5">
                         {!emp.hasLoginAccount && <NoLoginBadge />}
                         <StatusBadge status={emp.status} />
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-5 py-3.5 text-right min-w-[260px]" onClick={(e) => e.stopPropagation()}>
                       {/* Hover-reveal floating action bar */}
-                      <div className="row-actions flex justify-end gap-1.5">
+                      <div className="row-actions flex flex-nowrap justify-end gap-1.5">
                         {canCreateLogin && !emp.hasLoginAccount && onCreateLogin && (
                           <button
-                            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-accent/10 border border-accent/20 text-accent hover:bg-accent/20 transition-colors"
+                            className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium bg-accent/10 border border-accent/20 text-accent hover:bg-accent/20 transition-colors"
                             onClick={() => onCreateLogin(emp)}
                           >
                             Create login
                           </button>
                         )}
                         <button
-                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-line text-ink hover:bg-canvas transition-colors"
+                          className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-line text-ink hover:bg-canvas transition-colors"
                           onClick={() => onEdit(emp)}
                         >
                           Edit
                         </button>
                         <button
-                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-roseBg border border-rosePri/20 text-roseTxt hover:bg-rosePri/10 transition-colors"
+                          className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium bg-roseBg border border-rosePri/20 text-roseTxt hover:bg-rosePri/10 transition-colors"
                           onClick={() => onDelete(emp)}
                         >
                           Delete
