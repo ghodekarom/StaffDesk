@@ -13,6 +13,15 @@ export interface LoginPayload {
   password: string;
 }
 
+// Mirrors com.staffdesk.ems.auth.dto.RegisterRequest. Used by the
+// ADMIN-only "Create login" action on the Employees page.
+export interface RegisterPayload {
+  employeeId: number;
+  email: string;
+  password: string;
+  role: Role;
+}
+
 // What our BFF route (/api/auth/login) returns to the browser.
 // accessToken lives in JS memory only; refreshToken is set as an
 // httpOnly cookie server-side and never included in this response body.
