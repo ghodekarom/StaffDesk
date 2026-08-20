@@ -6,8 +6,8 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { DepartmentChart, AttendanceTrendChart, Sparkline } from "@/components/ui/overview-charts";
-import { CalendarOff, CalendarCheck2, Clock, Users, RefreshCw } from "lucide-react";
+import { DepartmentChart, AttendanceTrendChart, CompactAttendanceTrendChart, Sparkline } from "@/components/ui/overview-charts";
+import { CalendarOff, CalendarCheck2, Clock, Users, RefreshCw, AlertTriangle, UserX, CalendarClock, HelpCircle, ArrowUp, ArrowDown } from "lucide-react";
 import { motion } from "framer-motion";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -123,6 +123,10 @@ export default function OverviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
   const [leaveError, setLeaveError] = useState<string | null>(null);
+  // Which list the mobile "Recent Activity" tabs are showing — purely a
+  // view toggle over the same todayAttendance/recentLeave state already
+  // fetched below, not a separate data source.
+  const [activityTab, setActivityTab] = useState<"attendance" | "leave">("attendance");
 
   const canReview = role === "ADMIN" || role === "HR" || role === "MANAGER";
 
@@ -132,6 +136,22 @@ export default function OverviewPage() {
     name: d.name,
     value: d.employeeCount,
   }));
+
+  // Percentage view of the same attendanceTrend the full chart uses, for the
+  // compact mobile chart — derived here (present / current headcount), not
+  // fetched separately or hardcoded. Only rendered when the underlying trend
+  // data actually exists.
+  const pctTrendData =
+    summary && summary.totalEmployees > 0
+      ? summary.attendanceTrend.map((t) => ({
+          date: t.date,
+          pct: (t.present / summary.totalEmployees) * 100,
+        }))
+      : [];
+  const todayPct = pctTrendData.length > 0 ? pctTrendData[pctTrendData.length - 1].pct : null;
+  const priorPct = pctTrendData.length > 1 ? pctTrendData.slice(0, -1) : [];
+  const priorAvgPct = priorPct.length > 0 ? priorPct.reduce((sum, d) => sum + d.pct, 0) / priorPct.length : null;
+  const pctDelta = todayPct !== null && priorAvgPct !== null ? todayPct - priorAvgPct : null;
 
   async function fetchSummary() {
     setError(null);
@@ -310,12 +330,95 @@ export default function OverviewPage() {
             )}
           </div>
 
+          {/* ─── Mobile-only: Needs Attention ───────────────────────────────────
+              Same four counts as the desktop breakdown bar below (absent,
+              late, pending leave, not-yet-recorded), condensed into one
+              compact card so mobile doesn't need the full breakdown bar +
+              two-chart section to see what needs review. */}
+          {!loading && summary && summary.totalEmployees > 0 && (
+            <div className="lg:hidden bg-card border border-line rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-sm font-bold text-ink">
+                  <AlertTriangle className="w-4 h-4 text-amberPri" />
+                  Needs Attention
+                </div>
+                <Link href="/attendance" className="text-xs text-accent hover:underline shrink-0">
+                  Review all →
+                </Link>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-9 h-9 rounded-full bg-roseBg flex items-center justify-center mb-1.5">
+                    <UserX className="w-4 h-4 text-roseTxt" />
+                  </div>
+                  <div className="text-base font-bold text-ink"><CountUp value={summary.absentToday} /></div>
+                  <div className="text-[10px] text-muted">Absent</div>
+                </div>
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-9 h-9 rounded-full bg-amberBg flex items-center justify-center mb-1.5">
+                    <Clock className="w-4 h-4 text-amberTxt" />
+                  </div>
+                  <div className="text-base font-bold text-ink"><CountUp value={summary.lateToday} /></div>
+                  <div className="text-[10px] text-muted">Late</div>
+                </div>
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-9 h-9 rounded-full bg-orange-500/10 flex items-center justify-center mb-1.5">
+                    <CalendarClock className="w-4 h-4 text-orange-500" />
+                  </div>
+                  <div className="text-base font-bold text-ink"><CountUp value={summary.pendingLeaveCount} /></div>
+                  <div className="text-[10px] text-muted">Leave pending</div>
+                </div>
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-9 h-9 rounded-full bg-violet-500/10 flex items-center justify-center mb-1.5">
+                    <HelpCircle className="w-4 h-4 text-violet-500" />
+                  </div>
+                  <div className="text-base font-bold text-ink"><CountUp value={notYetRecorded} /></div>
+                  <div className="text-[10px] text-muted">Not recorded</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Mobile-only: compact Attendance Trend ──────────────────────────
+              Percentages derived above from the same attendanceTrend the
+              desktop chart uses. Today's % and the vs-last-7-days comparison
+              only render when that derived data exists (2+ days of trend). */}
+          {!loading && summary && pctTrendData.length > 0 && (
+            <div className="lg:hidden bg-card border border-line rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="font-bold text-sm text-ink">Attendance Trend (Last 7 Days)</h2>
+              </div>
+              <CompactAttendanceTrendChart data={pctTrendData} />
+              {todayPct !== null && (
+                <div className="flex items-center border-t border-line mt-1 pt-3">
+                  <div className="flex-1 text-center">
+                    <div className="text-lg font-bold text-sky-500">{Math.round(todayPct)}%</div>
+                    <div className="text-[11px] text-muted">Today</div>
+                  </div>
+                  {pctDelta !== null && (
+                    <>
+                      <div className="w-px h-8 bg-line" />
+                      <div className="flex-1 text-center">
+                        <div className={`text-lg font-bold flex items-center justify-center gap-1 ${pctDelta < 0 ? "text-roseTxt" : pctDelta > 0 ? "text-emeraldPri" : "text-muted"}`}>
+                          {pctDelta < 0 ? <ArrowDown className="w-4 h-4" /> : pctDelta > 0 ? <ArrowUp className="w-4 h-4" /> : null}
+                          {Math.abs(pctDelta).toFixed(1)}%
+                        </div>
+                        <div className="text-[11px] text-muted">vs last 7 days</div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Today's attendance status split — real counts from /dashboard/summary,
               not a decorative gauge with a hardcoded percentage. Includes an
               explicit "not yet recorded" segment so the bar always sums to
-              100% of totalEmployees instead of leaving an unexplained gap. */}
+              100% of totalEmployees instead of leaving an unexplained gap.
+              Desktop-only: condensed into "Needs Attention" above on mobile. */}
           {!loading && summary && summary.totalEmployees > 0 && (
-            <div className="bg-card border border-line rounded-2xl p-6">
+            <div className="hidden lg:block bg-card border border-line rounded-2xl p-6">
               <div className="text-[15px] font-bold text-ink mb-4">Today&apos;s attendance breakdown</div>
               <div className="flex h-3 rounded-full overflow-hidden bg-canvas">
                 {summary.presentToday > 0 && (
@@ -342,8 +445,10 @@ export default function OverviewPage() {
             </div>
           )}
 
-          {/* ─── SECTION 2: Dynamic Charts from API ─────────────────────────────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
+          {/* ─── SECTION 2: Dynamic Charts from API ─────────────────────────────
+              Desktop-only: mobile shows just the compact trend chart above,
+              without the large Department Distribution pie. */}
+          <div className="hidden lg:grid lg:grid-cols-2 gap-5 mt-6">
             <div className="bg-card border border-line rounded-2xl p-6 shadow-sm overflow-hidden">
               <h2 className="font-bold text-sm text-ink mb-4">Department Distribution</h2>
               {!loading && deptChartData.length === 0 ? (
@@ -365,7 +470,116 @@ export default function OverviewPage() {
       )}
 
       {/* ─── SECTION 3: Live API Attendance & Leave Tables ───────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+      {/* Mobile-only: Recent Attendance + Recent Leave combined into one
+          tabbed card, reusing the exact same todayAttendance/recentLeave
+          state, loading flags and per-section errors fetched above — just a
+          different shell so mobile shows one compact list instead of two
+          full-width cards. */}
+      <div className="lg:hidden bg-card border border-line rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+          <h2 className="font-bold text-sm text-ink">Recent Activity</h2>
+          <Link
+            href={activityTab === "attendance" ? "/attendance" : canReview ? "/leave/team" : "/leave"}
+            className="text-xs text-accent hover:underline shrink-0"
+          >
+            View all →
+          </Link>
+        </div>
+        <div className="px-4 pb-3 flex items-center gap-2">
+          <button
+            onClick={() => setActivityTab("attendance")}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              activityTab === "attendance" ? "bg-accent text-white" : "border border-line text-muted"
+            }`}
+          >
+            Attendance
+          </button>
+          <button
+            onClick={() => setActivityTab("leave")}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              activityTab === "leave" ? "bg-accent text-white" : "border border-line text-muted"
+            }`}
+          >
+            Leave
+          </button>
+        </div>
+
+        {activityTab === "attendance" ? (
+          loading ? (
+            <div>{[...Array(3)].map((_, i) => <SkeletonRow key={i} />)}</div>
+          ) : attendanceError ? (
+            <ErrorState message={attendanceError} onRetry={fetchAttendance} />
+          ) : todayAttendance.length === 0 ? (
+            <EmptyState
+              icon={<CalendarCheck2 size={32} />}
+              title="All Caught Up!"
+              description="No attendance records have been logged yet today."
+            />
+          ) : (
+            <ul>
+              {todayAttendance.slice(0, 3).map((rec, i) => {
+                const name = rec.employeeName ?? rec.employeeCode ?? "Employee";
+                const time = rec.clockIn
+                  ? new Date(rec.clockIn).toLocaleTimeString("en-IN", {
+                      hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata",
+                    })
+                  : "—";
+                return (
+                  <li
+                    key={rec.id ?? i}
+                    className="flex items-center gap-3 px-4 py-3 border-t border-line hover:bg-canvas transition-colors"
+                  >
+                    <div className={`w-8 h-8 rounded-full ${avatarColor(name)} text-white text-xs font-bold flex items-center justify-center shrink-0`}>
+                      {initials(name)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-ink truncate">{name}</div>
+                      <div className="text-xs text-muted font-mono">{time}</div>
+                    </div>
+                    <StatusBadge status={rec.status ?? "PRESENT"} />
+                  </li>
+                );
+              })}
+            </ul>
+          )
+        ) : loading ? (
+          <div>{[...Array(3)].map((_, i) => <SkeletonRow key={i} />)}</div>
+        ) : leaveError ? (
+          <ErrorState message={leaveError} onRetry={fetchLeave} />
+        ) : recentLeave.length === 0 ? (
+          <EmptyState
+            icon={<CalendarOff size={32} />}
+            title="No Leave Requests"
+            description="Looks like everyone is geared up and ready for work!"
+          />
+        ) : (
+          <ul>
+            {recentLeave.slice(0, 3).map((req, i) => {
+              const name = req.employeeName ?? "Me";
+              const range = `${new Date(req.startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${new Date(req.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+              return (
+                <li
+                  key={req.id ?? i}
+                  className="flex items-center gap-3 px-4 py-3 border-t border-line hover:bg-canvas transition-colors"
+                >
+                  <div className={`w-8 h-8 rounded-full ${avatarColor(name)} text-white text-xs font-bold flex items-center justify-center shrink-0`}>
+                    {initials(name)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-ink truncate">{name}</div>
+                    <div className="text-xs text-muted capitalize">{req.leaveType?.toLowerCase().replace("_", " ")} · {range}</div>
+                  </div>
+                  <StatusBadge status={req.status} />
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      {/* Desktop-only: the original side-by-side full lists. */}
+      <div className="hidden lg:grid lg:grid-cols-2 gap-5">
         {/* Recent Attendance */}
         <div className="bg-card border border-line rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-line flex items-center justify-between">

@@ -55,6 +55,56 @@ export function AttendanceTrendChart({ data }: { data: { date: string; present: 
   );
 }
 
+// Point label for the compact trend chart — draws the day's value above the
+// dot, matching the mobile reference design. Purely presentational; the
+// percentage it renders comes straight from the `pct` field already
+// computed (from real attendanceTrend counts) by the caller.
+function TrendPoint(props: { cx?: number; cy?: number; value?: number }) {
+  const { cx, cy, value } = props;
+  if (cx == null || cy == null || value == null) return null;
+  return (
+    <g>
+      <text x={cx} y={cy - 10} textAnchor="middle" fontSize={11} fontWeight={600} fill="var(--color-ink)">
+        {Math.round(value)}%
+      </text>
+      <circle cx={cx} cy={cy} r={4} fill="#38bdf8" stroke="var(--color-card)" strokeWidth={2} />
+    </g>
+  );
+}
+
+// Compact version of the attendance trend chart for the mobile Overview —
+// same shape of input as the full chart (derived, not re-fetched), just
+// rendered smaller with the day's % labelled directly on each point instead
+// of relying on a hover tooltip, since mobile has no hover state.
+export function CompactAttendanceTrendChart({ data }: { data: { date: string; pct: number }[] }) {
+  return (
+    <div className="h-36 w-full text-xs">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 22, right: 10, left: 10, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorPresentCompact" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <XAxis dataKey="date" stroke="var(--color-muted)" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} />
+          <YAxis hide domain={[0, 100]} />
+          <Area
+            type="monotone"
+            dataKey="pct"
+            stroke="#38bdf8"
+            strokeWidth={2}
+            fillOpacity={1}
+            fill="url(#colorPresentCompact)"
+            dot={<TrendPoint />}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 // Tiny trend line for inside a KPI card — deliberately axis-less and
 // tooltip-less (a KPI tile isn't the place to interrogate exact values,
 // just to see "climbing" vs "dropping" at a glance). Reuses the same
