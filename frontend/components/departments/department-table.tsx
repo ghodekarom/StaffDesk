@@ -9,10 +9,15 @@ import {
   Code2,
   Wallet,
   Users,
-  Server,
+  Cpu,
   Scale,
   Megaphone,
   Settings2,
+  ShoppingCart,
+  Package,
+  ShieldCheck,
+  FlaskConical,
+  TrendingUp,
   Building2,
   MoreVertical,
   Pencil,
@@ -26,20 +31,30 @@ interface Props {
 }
 
 // Icon + color are chosen from what the department actually is (by keyword
-// match on its name), not from the row's id. This keeps the same department
-// showing the same icon every time, instead of shuffling on every reorder.
-const DEPARTMENT_STYLES: { match: RegExp; icon: typeof Building2; bg: string; text: string }[] = [
-  { match: /support|customer/i, icon: Headphones, bg: "bg-sky-500/10", text: "text-sky-500" },
-  { match: /engineer|develop|tech/i, icon: Code2, bg: "bg-indigo-500/10", text: "text-indigo-500" },
-  { match: /financ|account/i, icon: Wallet, bg: "bg-amberBg", text: "text-amberTxt" },
-  { match: /human resource|^hr$|\bhr\b/i, icon: Users, bg: "bg-emeraldBg", text: "text-emeraldTxt" },
-  { match: /information technology|\bit\b/i, icon: Server, bg: "bg-violet-500/10", text: "text-violet-500" },
-  { match: /legal/i, icon: Scale, bg: "bg-roseBg", text: "text-roseTxt" },
-  { match: /marketing/i, icon: Megaphone, bg: "bg-teal-500/10", text: "text-teal-500" },
-  { match: /operations?/i, icon: Settings2, bg: "bg-orange-500/10", text: "text-orange-500" },
+// match on its name), not from the row's id — so the same department always
+// shows the same, unique icon instead of shuffling or colliding with others.
+// Badge background is intentionally transparent for every department; only
+// the icon color differs, so cards stay visually distinct without tinted
+// tiles. Order matters: more specific matches (e.g. "Information Technology",
+// "Research & Development") are listed before broader ones (e.g. "engineer")
+// that could otherwise also match their words.
+const DEPARTMENT_STYLES: { match: RegExp; icon: typeof Building2; text: string }[] = [
+  { match: /support|customer/i, icon: Headphones, text: "text-sky-500" },
+  { match: /information technology|\bit\b/i, icon: Cpu, text: "text-violet-500" },
+  { match: /research\s*&?\s*development|\br&?d\b/i, icon: FlaskConical, text: "text-purple-500" },
+  { match: /engineer/i, icon: Code2, text: "text-indigo-500" },
+  { match: /financ|account/i, icon: Wallet, text: "text-amber-500" },
+  { match: /human resource|^hr$|\bhr\b/i, icon: Users, text: "text-emerald-500" },
+  { match: /legal/i, icon: Scale, text: "text-rose-500" },
+  { match: /marketing/i, icon: Megaphone, text: "text-teal-500" },
+  { match: /operations?/i, icon: Settings2, text: "text-orange-500" },
+  { match: /procurement/i, icon: ShoppingCart, text: "text-cyan-500" },
+  { match: /product/i, icon: Package, text: "text-fuchsia-500" },
+  { match: /quality assurance|\bqa\b/i, icon: ShieldCheck, text: "text-lime-500" },
+  { match: /sales/i, icon: TrendingUp, text: "text-pink-500" },
 ];
 
-const FALLBACK_STYLE = { icon: Building2, bg: "bg-slate-500/10", text: "text-slate-500" };
+const FALLBACK_STYLE = { icon: Building2, text: "text-slate-500" };
 
 function getDepartmentStyle(name: string) {
   return DEPARTMENT_STYLES.find((entry) => entry.match.test(name)) ?? FALLBACK_STYLE;
@@ -136,9 +151,9 @@ export function DepartmentTable({ departments, onEdit, onDelete }: Props) {
               {/* Mobile-only actions menu */}
               <DepartmentActionsMenu onEdit={() => onEdit(dept)} onDelete={() => onDelete(dept)} />
 
-              {/* Badge Icon */}
-              <div className={`w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-xl ${style.bg} flex items-center justify-center transition-transform group-hover:scale-105`}>
-                <Icon size={18} className={style.text} strokeWidth={2} />
+              {/* Badge Icon — transparent background, icon color carries the identity */}
+              <div className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-xl bg-transparent border border-line flex items-center justify-center transition-transform group-hover:scale-105">
+                <Icon size={20} className={style.text} strokeWidth={2} />
               </div>
 
               {/* Info */}
