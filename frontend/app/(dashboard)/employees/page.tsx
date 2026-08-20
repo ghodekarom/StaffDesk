@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { api, ApiError } from "@/lib/api";
-import { Employee, Page } from "@/types/employee";
+import { Employee, EmployeeStatus, Page } from "@/types/employee";
 import { RegisterPayload } from "@/types/auth";
 import { EmployeeTable, EmployeeTableSkeleton } from "@/components/employees/employee-table";
 import { EmployeeForm, EmployeeFormSubmitData } from "@/components/employees/employee-form";
@@ -117,15 +117,24 @@ export default function EmployeesPage() {
     load(pageIndex, searchQuery);
   }
 
-  async function handleDelete(employee: Employee) {
-    if (!confirm(`Delete ${employee.firstName} ${employee.lastName}? This can't be undone.`)) {
+  async function handleChangeStatus(employee: Employee, status: EmployeeStatus) {
+    // PATCH /employees/{id}/status: broader than the old delete-only
+    // "Deactivate" action -- covers reactivating someone (INACTIVE ->
+    // ACTIVE) and marking them terminated, not just deactivating.
+    const label = status.charAt(0) + status.slice(1).toLowerCase();
+    const confirmText =
+      status === "TERMINATED"
+        ? `Mark ${employee.firstName} ${employee.lastName} as Terminated? Their records are kept, but this should usually be a final, considered step.`
+        : `Change ${employee.firstName} ${employee.lastName}'s status to ${label}?`;
+
+    if (!confirm(confirmText)) {
       return;
     }
     try {
-      await api.delete(`/employees/${employee.id}`);
+      await api.patch(`/employees/${employee.id}/status`, { status });
       load(pageIndex, searchQuery);
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : "Failed to delete employee.");
+      alert(err instanceof ApiError ? err.message : "Failed to update employee status.");
     }
   }
 
@@ -195,8 +204,15 @@ export default function EmployeesPage() {
         <>
           <EmployeeTable
             employees={filteredEmployees}
-            onEdit={(emp) => setModal({ mode: "edit", employee: emp })}
-            onDelete={handleDelete}
+            // Backend allows PUT and PATCH .../status to ADMIN/HR (see
+            // EmployeeController) -- match that here so the controls don't
+            // render for roles that would just get a 403 on submit.
+            onEdit={
+              role === "ADMIN" || role === "HR"
+                ? (emp) => setModal({ mode: "edit", employee: emp })
+                : undefined
+            }
+            onChangeStatus={role === "ADMIN" || role === "HR" ? handleChangeStatus : undefined}
             onInspect={handleInspect}
             canCreateLogin={role === "ADMIN"}
             onCreateLogin={(emp) => setModal({ mode: "create-login", employee: emp })}

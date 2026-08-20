@@ -84,8 +84,28 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public void delete(Long id) {
+        // Deactivation, not a hard delete: employees have FK-referenced history
+        // (attendance, leave, payroll, messages, ...) that a real DELETE would
+        // either cascade-destroy or crash on with a FK violation. Setting
+        // status to INACTIVE preserves that history and removes the employee
+        // from active views (dashboards, directories, "who's working today")
+        // without destroying data. See employee-delete-safety-issue.md.
         Employee employee = findEmployeeOrThrow(id);
-        employeeRepository.delete(employee);
+
+        if (employee.getStatus() == Employee.EmployeeStatus.INACTIVE) {
+            throw new IllegalArgumentException("Employee " + id + " is already inactive");
+        }
+
+        employee.setStatus(Employee.EmployeeStatus.INACTIVE);
+        employeeRepository.save(employee);
+    }
+
+    @Override
+    public EmployeeResponseDto updateStatus(Long id, Employee.EmployeeStatus status) {
+        Employee employee = findEmployeeOrThrow(id);
+        employee.setStatus(status);
+        Employee saved = employeeRepository.save(employee);
+        return EmployeeResponseDto.fromEntity(saved, userRepository.existsByEmployeeId(saved.getId()));
     }
 
     private Employee findEmployeeOrThrow(Long id) {

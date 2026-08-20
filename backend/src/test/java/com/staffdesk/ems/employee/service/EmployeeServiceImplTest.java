@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -122,5 +123,84 @@ class EmployeeServiceImplTest {
         EmployeeResponseDto result = employeeService.getById(2L);
 
         assertThat(result.hasLoginAccount()).isTrue();
+    }
+
+    @Test
+    void delete_deactivatesEmployee_insteadOfHardDeleting() {
+        Employee employee = new Employee();
+        employee.setId(3L);
+        employee.setStatus(Employee.EmployeeStatus.ACTIVE);
+        when(employeeRepository.findById(3L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        employeeService.delete(3L);
+
+        assertThat(employee.getStatus()).isEqualTo(Employee.EmployeeStatus.INACTIVE);
+        verify(employeeRepository).save(employee);
+        verify(employeeRepository, never()).delete(any());
+        verify(employeeRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void delete_throwsResourceNotFoundException_whenEmployeeDoesNotExist() {
+        when(employeeRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> employeeService.delete(99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("99");
+
+        verify(employeeRepository, never()).save(any());
+    }
+
+    @Test
+    void delete_throwsIllegalArgumentException_whenEmployeeAlreadyInactive() {
+        Employee employee = new Employee();
+        employee.setId(4L);
+        employee.setStatus(Employee.EmployeeStatus.INACTIVE);
+        when(employeeRepository.findById(4L)).thenReturn(Optional.of(employee));
+
+        assertThatThrownBy(() -> employeeService.delete(4L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("4");
+
+        verify(employeeRepository, never()).save(any());
+    }
+
+    @Test
+    void updateStatus_reactivatesEmployee() {
+        Employee employee = new Employee();
+        employee.setId(5L);
+        employee.setStatus(Employee.EmployeeStatus.INACTIVE);
+        when(employeeRepository.findById(5L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.existsByEmployeeId(5L)).thenReturn(false);
+
+        EmployeeResponseDto result = employeeService.updateStatus(5L, Employee.EmployeeStatus.ACTIVE);
+
+        assertThat(employee.getStatus()).isEqualTo(Employee.EmployeeStatus.ACTIVE);
+        assertThat(result.status()).isEqualTo(Employee.EmployeeStatus.ACTIVE);
+    }
+
+    @Test
+    void updateStatus_isIdempotent_whenStatusUnchanged() {
+        Employee employee = new Employee();
+        employee.setId(6L);
+        employee.setStatus(Employee.EmployeeStatus.ACTIVE);
+        when(employeeRepository.findById(6L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.existsByEmployeeId(6L)).thenReturn(false);
+
+        assertThatCode(() -> employeeService.updateStatus(6L, Employee.EmployeeStatus.ACTIVE))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void updateStatus_throwsResourceNotFoundException_whenEmployeeDoesNotExist() {
+        when(employeeRepository.findById(100L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> employeeService.updateStatus(100L, Employee.EmployeeStatus.TERMINATED))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(employeeRepository, never()).save(any());
     }
 }

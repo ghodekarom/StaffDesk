@@ -2,6 +2,7 @@ package com.staffdesk.ems.employee.controller;
 
 import com.staffdesk.ems.employee.dto.EmployeeRequestDto;
 import com.staffdesk.ems.employee.dto.EmployeeResponseDto;
+import com.staffdesk.ems.employee.dto.EmployeeStatusUpdateRequest;
 import com.staffdesk.ems.employee.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -55,9 +56,24 @@ public class EmployeeController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Delete an employee")
+    @Operation(summary = "Deactivate an employee",
+            description = "Route kept as DELETE for API compatibility, but this deactivates " +
+                    "the employee (status -> INACTIVE) rather than removing the record, so " +
+                    "related history (attendance, leave, payroll, messages) is preserved.")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         employeeService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    @Operation(summary = "Change an employee's status",
+            description = "Sets status to ACTIVE, INACTIVE, or TERMINATED. Broader than " +
+                    "DELETE /{id} (which only ever deactivates): this also covers " +
+                    "reactivating someone and marking them terminated. Open to ADMIN and " +
+                    "HR, matching their existing PUT /{id} access to the rest of the record.")
+    public ResponseEntity<EmployeeResponseDto> updateStatus(
+            @PathVariable Long id, @Valid @RequestBody EmployeeStatusUpdateRequest request) {
+        return ResponseEntity.ok(employeeService.updateStatus(id, request.status()));
     }
 }

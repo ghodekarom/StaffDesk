@@ -1,4 +1,4 @@
-import { Employee } from "@/types/employee";
+import { Employee, EmployeeStatus } from "@/types/employee";
 import { Avatar } from "./avatar";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,17 +54,62 @@ function NoLoginBadge() {
   );
 }
 
+const STATUS_OPTIONS: EmployeeStatus[] = ["ACTIVE", "INACTIVE", "TERMINATED"];
+
+// Plain <select> rather than a button per status: three mutually exclusive
+// states plus "no change" fits a select better than three buttons, and it
+// always shows the employee's current status as the selected value.
+function StatusSelect({
+  employee,
+  onChangeStatus,
+  className,
+}: {
+  employee: Employee;
+  onChangeStatus: (employee: Employee, status: EmployeeStatus) => void;
+  className?: string;
+}) {
+  return (
+    <select
+      value={employee.status}
+      onClick={(e) => e.stopPropagation()}
+      onChange={(e) => {
+        const next = e.target.value as EmployeeStatus;
+        if (next !== employee.status) {
+          onChangeStatus(employee, next);
+        }
+      }}
+      className={
+        className ??
+        "rounded-lg border border-line bg-surface px-2 py-1.5 text-xs font-medium text-ink hover:bg-canvas transition-colors"
+      }
+    >
+      {STATUS_OPTIONS.map((s) => (
+        <option key={s} value={s}>
+          {s.charAt(0) + s.slice(1).toLowerCase()}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function EmployeeTable({
   employees,
   onEdit,
-  onDelete,
+  onChangeStatus,
   onInspect,
   onCreateLogin,
   canCreateLogin = false,
 }: {
   employees: Employee[];
-  onEdit: (employee: Employee) => void;
-  onDelete: (employee: Employee) => void;
+  // ADMIN/HR-only "Edit" action -- omit the prop (leave it undefined) to
+  // hide the button for viewers who can't call PUT /employees/{id} anyway,
+  // rather than showing it and letting the backend reject it with a
+  // silent 403 on submit.
+  onEdit?: (employee: Employee) => void;
+  // ADMIN/HR-only status control (Active/Inactive/Terminated), backed by
+  // PATCH /employees/{id}/status. Omit to hide it for viewers who can't
+  // call that endpoint.
+  onChangeStatus?: (employee: Employee, status: EmployeeStatus) => void;
   onInspect?: (employee: Employee) => void;
   // ADMIN-only "Create login" action -- omit both props (or leave
   // canCreateLogin false) to hide it for non-ADMIN viewers, since they
@@ -118,8 +163,16 @@ export function EmployeeTable({
                     Create login
                   </Button>
                 )}
-                <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => onEdit(emp)}>Edit</Button>
-                <Button variant="ghost" className="px-2 py-1 text-xs text-roseTxt" onClick={() => onDelete(emp)}>Delete</Button>
+                {onEdit && (
+                  <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => onEdit(emp)}>Edit</Button>
+                )}
+                {onChangeStatus && (
+                  <StatusSelect
+                    employee={emp}
+                    onChangeStatus={onChangeStatus}
+                    className="rounded-lg border border-line bg-surface px-1.5 py-1 text-xs font-medium text-ink"
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -186,18 +239,15 @@ export function EmployeeTable({
                             Create login
                           </button>
                         )}
-                        <button
-                          className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-line text-ink hover:bg-canvas transition-colors"
-                          onClick={() => onEdit(emp)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium bg-roseBg border border-rosePri/20 text-roseTxt hover:bg-rosePri/10 transition-colors"
-                          onClick={() => onDelete(emp)}
-                        >
-                          Delete
-                        </button>
+                        {onEdit && (
+                          <button
+                            className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-line text-ink hover:bg-canvas transition-colors"
+                            onClick={() => onEdit(emp)}
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {onChangeStatus && <StatusSelect employee={emp} onChangeStatus={onChangeStatus} />}
                       </div>
                     </td>
                   </motion.tr>
