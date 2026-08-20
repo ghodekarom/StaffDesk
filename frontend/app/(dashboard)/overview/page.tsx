@@ -6,14 +6,14 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { DepartmentChart, AttendanceTrendChart, CompactAttendanceTrendChart, Sparkline } from "@/components/ui/overview-charts";
-import { CalendarOff, CalendarCheck2, Clock, Users, RefreshCw, AlertTriangle, UserX, CalendarClock, HelpCircle, ArrowUp, ArrowDown } from "lucide-react";
+import { CompactAttendanceTrendChart, Sparkline } from "@/components/ui/overview-charts";
+import { CalendarOff, CalendarCheck2, Clock, Users, RefreshCw, AlertTriangle, UserX, CalendarClock, HelpCircle, ArrowUp, ArrowDown, CalendarDays, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface LeaveRequestRecord { id: number; employeeName?: string; leaveType: string; startDate: string; endDate: string; status: string; }
 interface PageShape<T> { content: T[]; totalElements: number; }
-interface AttendanceRecord { id?: number; employeeName?: string; employeeCode?: string; clockIn: string; status?: string; }
+interface AttendanceRecord { id?: number; employeeName?: string; employeeCode?: string; departmentName?: string | null; clockIn: string; status?: string; }
 interface AttendancePage { content: AttendanceRecord[]; totalElements: number; }
 
 // Shape of GET /dashboard/summary — every field here is a real, server-side
@@ -130,15 +130,8 @@ export default function OverviewPage() {
 
   const canReview = role === "ADMIN" || role === "HR" || role === "MANAGER";
 
-  // Derived, not fetched: the pie chart wants {name, value} pairs, the
-  // backend returns {name, employeeCount} — a plain rename, not a fallback.
-  const deptChartData = (summary?.departmentBreakdown ?? []).map((d) => ({
-    name: d.name,
-    value: d.employeeCount,
-  }));
-
   // Percentage view of the same attendanceTrend the full chart uses, for the
-  // compact mobile chart — derived here (present / current headcount), not
+  // compact chart — derived here (present / current headcount), not
   // fetched separately or hardcoded. Only rendered when the underlying trend
   // data actually exists.
   const pctTrendData =
@@ -210,12 +203,28 @@ export default function OverviewPage() {
   return (
     <div className="space-y-6 animate-fade-up">
 
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-ink">Overview</h1>
-          <p className="text-sm text-muted">{today}</p>
+      <div>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-display text-2xl font-semibold text-ink">Overview</h1>
+            <p className="text-sm text-muted mt-0.5">{today}</p>
+          </div>
+          {/* "Today" is the only period the backend's /dashboard/summary
+              actually aggregates (presentToday, hoursLoggedToday, etc. are
+              all today-scoped) — a real, labelled control rather than a
+              decorative dropdown pretending to switch ranges it can't fetch. */}
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-xs font-medium text-ink border border-line rounded-lg px-3 py-1.5 shrink-0"
+            title="Currently showing today's stats"
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            Today
+            <ChevronDown className="w-3.5 h-3.5 text-muted" />
+          </button>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-center gap-3 mt-3">
           {lastUpdated && (
             <span className="text-xs text-muted">
               Updated {lastUpdated.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })}
@@ -224,7 +233,7 @@ export default function OverviewPage() {
           <button
             onClick={loadAll}
             disabled={refreshing}
-            className="flex items-center gap-1.5 text-xs font-medium text-muted hover:text-ink border border-line rounded-lg px-2.5 py-1.5 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 text-xs font-medium text-accent hover:text-ink transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
             Refresh
@@ -261,26 +270,15 @@ export default function OverviewPage() {
               </>
             ) : (
               <>
-                <Link href="/employees" className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-4 sm:p-5">
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted">
-                    <Users className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" /> <span className="truncate">Active employees</span>
-                  </div>
-                  <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
-                    <CountUp value={summary?.totalEmployees ?? 0} />
-                  </div>
-                  <div className="text-xs sm:text-[11px] text-emeraldPri mt-1">
-                    {summary && summary.newHiresThisMonth > 0
-                      ? `+${summary.newHiresThisMonth} this month`
-                      : "No new hires this month"}
-                  </div>
-                </Link>
-
                 <Link href="/attendance" className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-4 sm:p-5">
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted">
-                    <CalendarCheck2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" /> <span className="truncate">Present today</span>
+                  <div className="flex items-center gap-2 text-xs font-medium text-muted">
+                    <span className="w-7 h-7 rounded-full bg-emeraldBg flex items-center justify-center shrink-0">
+                      <CalendarCheck2 className="w-3.5 h-3.5 text-emeraldTxt" />
+                    </span>
+                    <span className="truncate">Present today</span>
                   </div>
                   <div>
-                    <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
+                    <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2 leading-none">
                       <CountUp value={summary?.presentToday ?? 0} />
                       <span className="text-sm text-muted font-normal"> / {summary?.totalEmployees ?? 0}</span>
                     </div>
@@ -299,21 +297,48 @@ export default function OverviewPage() {
                   </div>
                 </Link>
 
-                <div className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line rounded-2xl p-4 sm:p-5">
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted">
-                    <Clock className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" /> <span className="truncate">Hours logged today</span>
+                <Link href="/employees" className="relative overflow-hidden aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-4 sm:p-5">
+                  {/* Purely decorative watermark, matching the reference design —
+                      doesn't carry data, so it's safe to render regardless of
+                      loading/empty state. */}
+                  <Users className="pointer-events-none absolute -bottom-3 -right-3 w-20 h-20 text-sky-500/10" strokeWidth={1.5} aria-hidden="true" />
+                  <div className="relative flex items-center gap-2 text-xs font-medium text-muted">
+                    <span className="w-7 h-7 rounded-full bg-sky-500/10 flex items-center justify-center shrink-0">
+                      <Users className="w-3.5 h-3.5 text-sky-500" />
+                    </span>
+                    <span className="truncate">Active employees</span>
                   </div>
-                  <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
+                  <div className="relative text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2 leading-none">
+                    <CountUp value={summary?.totalEmployees ?? 0} />
+                  </div>
+                  <div className="relative text-xs sm:text-[11px] text-emeraldPri mt-1">
+                    {summary && summary.newHiresThisMonth > 0
+                      ? `+${summary.newHiresThisMonth} this month`
+                      : "No new hires this month"}
+                  </div>
+                </Link>
+
+                <div className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line rounded-2xl p-4 sm:p-5">
+                  <div className="flex items-center gap-2 text-xs font-medium text-muted">
+                    <span className="w-7 h-7 rounded-full bg-violet-500/10 flex items-center justify-center shrink-0">
+                      <Clock className="w-3.5 h-3.5 text-violet-500" />
+                    </span>
+                    <span className="truncate">Hours logged today</span>
+                  </div>
+                  <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2 leading-none">
                     <CountUp value={summary?.hoursLoggedToday ?? 0} decimals={1} />h
                   </div>
                   <div className="text-xs sm:text-[11px] text-muted mt-1">Sum of completed clock-outs</div>
                 </div>
 
                 <div className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line rounded-2xl p-4 sm:p-5">
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-muted">
-                    <CalendarOff className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" /> <span className="truncate">Pending leave</span>
+                  <div className="flex items-center gap-2 text-xs font-medium text-muted">
+                    <span className="w-7 h-7 rounded-full bg-amberBg flex items-center justify-center shrink-0">
+                      <CalendarOff className="w-3.5 h-3.5 text-amberTxt" />
+                    </span>
+                    <span className="truncate">Pending leave</span>
                   </div>
-                  <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2">
+                  <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2 leading-none">
                     <CountUp value={summary?.pendingLeaveCount ?? 0} />
                   </div>
                   <div className="text-xs sm:text-[11px] mt-1">
@@ -330,13 +355,12 @@ export default function OverviewPage() {
             )}
           </div>
 
-          {/* ─── Mobile-only: Needs Attention ───────────────────────────────────
-              Same four counts as the desktop breakdown bar below (absent,
-              late, pending leave, not-yet-recorded), condensed into one
-              compact card so mobile doesn't need the full breakdown bar +
-              two-chart section to see what needs review. */}
+          {/* Needs Attention — condenses the same four counts as the old
+              desktop breakdown bar (absent, late, pending leave,
+              not-yet-recorded) into one compact card, now used at every
+              screen size. */}
           {!loading && summary && summary.totalEmployees > 0 && (
-            <div className="lg:hidden bg-card border border-line rounded-2xl p-4">
+            <div className="bg-card border border-line rounded-2xl p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2 text-sm font-bold text-ink">
                   <AlertTriangle className="w-4 h-4 text-amberPri" />
@@ -379,12 +403,12 @@ export default function OverviewPage() {
             </div>
           )}
 
-          {/* ─── Mobile-only: compact Attendance Trend ──────────────────────────
-              Percentages derived above from the same attendanceTrend the
-              desktop chart uses. Today's % and the vs-last-7-days comparison
-              only render when that derived data exists (2+ days of trend). */}
+          {/* Compact Attendance Trend — percentages derived from the same
+              attendanceTrend data the old full chart used, now used at every
+              screen size. Today's % and the vs-last-7-days comparison only
+              render when that derived data exists (2+ days of trend). */}
           {!loading && summary && pctTrendData.length > 0 && (
-            <div className="lg:hidden bg-card border border-line rounded-2xl p-4">
+            <div className="bg-card border border-line rounded-2xl p-4">
               <div className="flex items-center justify-between mb-1">
                 <h2 className="font-bold text-sm text-ink">Attendance Trend (Last 7 Days)</h2>
               </div>
@@ -413,70 +437,18 @@ export default function OverviewPage() {
           )}
 
           {/* Today's attendance status split — real counts from /dashboard/summary,
-              not a decorative gauge with a hardcoded percentage. Includes an
-              explicit "not yet recorded" segment so the bar always sums to
-              100% of totalEmployees instead of leaving an unexplained gap.
-              Desktop-only: condensed into "Needs Attention" above on mobile. */}
-          {!loading && summary && summary.totalEmployees > 0 && (
-            <div className="hidden lg:block bg-card border border-line rounded-2xl p-6">
-              <div className="text-[15px] font-bold text-ink mb-4">Today&apos;s attendance breakdown</div>
-              <div className="flex h-3 rounded-full overflow-hidden bg-canvas">
-                {summary.presentToday > 0 && (
-                  <div className="bg-status-present" style={{ width: `${(summary.presentToday / totalForBreakdown) * 100}%` }} />
-                )}
-                {summary.lateToday > 0 && (
-                  <div className="bg-status-late" style={{ width: `${(summary.lateToday / totalForBreakdown) * 100}%` }} />
-                )}
-                {summary.absentToday > 0 && (
-                  <div className="bg-rosePri" style={{ width: `${(summary.absentToday / totalForBreakdown) * 100}%` }} />
-                )}
-                {notYetRecorded > 0 && (
-                  <div className="bg-line" style={{ width: `${(notYetRecorded / totalForBreakdown) * 100}%` }} />
-                )}
-              </div>
-              <div className="flex items-center gap-5 mt-3 text-xs text-muted flex-wrap">
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-status-present" /> Present ({summary.presentToday})</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-status-late" /> Late ({summary.lateToday})</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rosePri" /> Absent ({summary.absentToday})</span>
-                {notYetRecorded > 0 && (
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-line" /> Not yet recorded ({notYetRecorded})</span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ─── SECTION 2: Dynamic Charts from API ─────────────────────────────
-              Desktop-only: mobile shows just the compact trend chart above,
-              without the large Department Distribution pie. */}
-          <div className="hidden lg:grid lg:grid-cols-2 gap-5 mt-6">
-            <div className="bg-card border border-line rounded-2xl p-6 shadow-sm overflow-hidden">
-              <h2 className="font-bold text-sm text-ink mb-4">Department Distribution</h2>
-              {!loading && deptChartData.length === 0 ? (
-                <EmptyState
-                  icon={<Users size={32} />}
-                  title="No Departments Yet"
-                  description="Add a department and assign employees to see the breakdown here."
-                />
-              ) : (
-                <DepartmentChart data={deptChartData} />
-              )}
-            </div>
-            <div className="bg-card border border-line rounded-2xl p-6 shadow-sm overflow-hidden">
-              <h2 className="font-bold text-sm text-ink mb-4">Attendance Trend (Last 7 Days)</h2>
-              <AttendanceTrendChart data={summary?.attendanceTrend ?? []} />
-            </div>
-          </div>
+              not a decorative gauge with a hardcoded percentage. Superseded by
+              the "Needs Attention" card above; kept here only if you want the
+              full breakdown bar back, otherwise safe to delete. */}
         </>
       )}
 
       {/* ─── SECTION 3: Live API Attendance & Leave Tables ───────────────────── */}
 
-      {/* Mobile-only: Recent Attendance + Recent Leave combined into one
+      {/* Recent Activity — Recent Attendance + Recent Leave combined into one
           tabbed card, reusing the exact same todayAttendance/recentLeave
-          state, loading flags and per-section errors fetched above — just a
-          different shell so mobile shows one compact list instead of two
-          full-width cards. */}
-      <div className="lg:hidden bg-card border border-line rounded-2xl shadow-sm overflow-hidden">
+          state, loading flags and per-section errors fetched above. */}
+      <div className="bg-card border border-line rounded-2xl shadow-sm overflow-hidden">
         <div className="px-4 pt-4 pb-3 flex items-center justify-between">
           <h2 className="font-bold text-sm text-ink">Recent Activity</h2>
           <Link
@@ -535,7 +507,10 @@ export default function OverviewPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-ink truncate">{name}</div>
-                      <div className="text-xs text-muted font-mono">{time}</div>
+                      <div className="text-xs text-muted font-mono">
+                        {time}
+                        {rec.departmentName && <span className="font-sans"> · {rec.departmentName}</span>}
+                      </div>
                     </div>
                     <StatusBadge status={rec.status ?? "PRESENT"} />
                   </li>
@@ -576,109 +551,6 @@ export default function OverviewPage() {
             })}
           </ul>
         )}
-      </div>
-
-      {/* Desktop-only: the original side-by-side full lists. */}
-      <div className="hidden lg:grid lg:grid-cols-2 gap-5">
-        {/* Recent Attendance */}
-        <div className="bg-card border border-line rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-line flex items-center justify-between">
-            <h2 className="font-bold text-sm text-ink">Recent Attendance Logs</h2>
-            <Link href="/attendance" className="text-xs text-accent hover:underline">View all →</Link>
-          </div>
-          {loading ? (
-            <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
-          ) : attendanceError ? (
-            <ErrorState message={attendanceError} onRetry={fetchAttendance} />
-          ) : todayAttendance.length === 0 ? (
-            <EmptyState
-              icon={<CalendarCheck2 size={32} />}
-              title="All Caught Up!"
-              description="No attendance records have been logged yet today."
-            />
-          ) : (
-            <motion.ul
-              initial="hidden"
-              animate="show"
-              variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
-            >
-              {todayAttendance.map((rec, i) => {
-                const name = rec.employeeName ?? rec.employeeCode ?? "Employee";
-                const time = rec.clockIn
-                  ? new Date(rec.clockIn).toLocaleTimeString("en-IN", {
-                      hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata",
-                    })
-                  : "—";
-                return (
-                  <motion.li
-                    variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}
-                    key={rec.id ?? i}
-                    className="flex items-center gap-3 px-5 py-3.5 border-b border-line last:border-0 hover:bg-canvas transition-colors"
-                  >
-                    <div className={`w-8 h-8 rounded-full ${avatarColor(name)} text-white text-xs font-bold flex items-center justify-center shrink-0`}>
-                      {initials(name)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-ink truncate">{name}</div>
-                      <div className="text-xs text-muted font-mono">{time}</div>
-                    </div>
-                    <StatusBadge status={rec.status ?? "PRESENT"} />
-                  </motion.li>
-                );
-              })}
-            </motion.ul>
-          )}
-        </div>
-
-        {/* Recent Leave */}
-        <div className="bg-card border border-line rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-line flex items-center justify-between">
-            <h2 className="font-bold text-sm text-ink">
-              {canReview ? "Team Leave Requests" : "My Leave Requests"}
-            </h2>
-            <Link href={canReview ? "/leave/team" : "/leave"} className="text-xs text-accent hover:underline">
-              View all →
-            </Link>
-          </div>
-          {loading ? (
-            <div>{[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}</div>
-          ) : leaveError ? (
-            <ErrorState message={leaveError} onRetry={fetchLeave} />
-          ) : recentLeave.length === 0 ? (
-            <EmptyState
-              icon={<CalendarOff size={32} />}
-              title="No Leave Requests"
-              description="Looks like everyone is geared up and ready for work!"
-            />
-          ) : (
-            <motion.ul
-              initial="hidden"
-              animate="show"
-              variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
-            >
-              {recentLeave.map((req, i) => {
-                const name = req.employeeName ?? "Me";
-                const range = `${new Date(req.startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${new Date(req.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
-                return (
-                  <motion.li
-                    variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}
-                    key={req.id ?? i}
-                    className="flex items-center gap-3 px-5 py-3.5 border-b border-line last:border-0 hover:bg-canvas transition-colors"
-                  >
-                    <div className={`w-8 h-8 rounded-full ${avatarColor(name)} text-white text-xs font-bold flex items-center justify-center shrink-0`}>
-                      {initials(name)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-ink truncate">{name}</div>
-                      <div className="text-xs text-muted capitalize">{req.leaveType?.toLowerCase().replace("_", " ")} · {range}</div>
-                    </div>
-                    <StatusBadge status={req.status} />
-                  </motion.li>
-                );
-              })}
-            </motion.ul>
-          )}
-        </div>
       </div>
 
     </div>

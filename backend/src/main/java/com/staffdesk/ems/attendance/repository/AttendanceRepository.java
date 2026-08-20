@@ -3,6 +3,7 @@ package com.staffdesk.ems.attendance.repository;
 import com.staffdesk.ems.attendance.entity.Attendance;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,15 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     Page<Attendance> findByEmployeeIdAndAttendanceDateBetween(
             Long employeeId, LocalDate from, LocalDate to, Pageable pageable);
+
+    // Overrides the inherited findAll(Pageable) to eagerly fetch each row's
+    // employee + department in the same query, instead of one lazy-load
+    // round trip per row when AttendanceResponse.from() reads
+    // employee.getDepartment() — avoids N+1 on the Overview page's
+    // "Recent Attendance Logs" list.
+    @Override
+    @EntityGraph(attributePaths = {"employee", "employee.department"})
+    Page<Attendance> findAll(Pageable pageable);
 
     long countByAttendanceDateAndStatus(LocalDate attendanceDate, Attendance.Status status);
 

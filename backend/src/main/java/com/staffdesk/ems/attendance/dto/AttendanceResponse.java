@@ -10,6 +10,7 @@ public record AttendanceResponse(
         Long employeeId,
         String employeeCode,
         String employeeName,
+        String departmentName,
         LocalDate attendanceDate,
         Instant clockIn,
         Instant clockOut,
@@ -18,11 +19,13 @@ public record AttendanceResponse(
 ) {
     public static AttendanceResponse from(Attendance attendance) {
         var employee = attendance.getEmployee();
+        var department = employee.getDepartment();
         return new AttendanceResponse(
                 attendance.getId(),
                 employee.getId(),
                 employee.getEmployeeCode(),
                 employee.getFirstName() + " " + employee.getLastName(),
+                department != null ? department.getName() : null,
                 attendance.getAttendanceDate(),
                 attendance.getClockIn(),
                 attendance.getClockOut(),

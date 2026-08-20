@@ -8,6 +8,7 @@ export interface AttendanceRecord {
   employeeId: number;
   employeeCode: string;
   employeeName: string;
+  departmentName: string | null;
   attendanceDate: string; // ISO date, e.g. "2026-07-25"
   clockIn: string | null; // ISO instant, e.g. "2026-07-25T09:03:12Z"
   clockOut: string | null;
