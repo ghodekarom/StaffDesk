@@ -9,12 +9,15 @@ import com.staffdesk.ems.employee.dto.EmployeeRequestDto;
 import com.staffdesk.ems.employee.dto.EmployeeResponseDto;
 import com.staffdesk.ems.employee.entity.Employee;
 import com.staffdesk.ems.employee.repository.EmployeeRepository;
+import com.staffdesk.ems.leave.service.LeaveBalanceProvisioningService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.time.Year;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
+    private final LeaveBalanceProvisioningService leaveBalanceProvisioningService;
 
     @Override
     public EmployeeResponseDto create(EmployeeRequestDto request) {
@@ -38,6 +42,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         applyRequestToEntity(request, employee);
 
         Employee saved = employeeRepository.save(employee);
+
+        // Without this, a new hire has no leave_balances row at all, and
+        // GET /leave/balances/me comes back empty while POST /leave/requests
+        // fails with InsufficientLeaveBalanceException on every leave type --
+        // see leave-balance-provisioning-issue.md (#9). Defaults match
+        // V2__seed_data.sql exactly.
+        leaveBalanceProvisioningService.ensureBalancesExist(saved, Year.now().getValue());
+
         // A freshly created employee can never already have a login account --
         // that's a separate step via POST /auth/register -- so this is always false.
         return EmployeeResponseDto.fromEntity(saved, false);

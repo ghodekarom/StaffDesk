@@ -8,9 +8,11 @@ import com.staffdesk.ems.employee.dto.EmployeeRequestDto;
 import com.staffdesk.ems.employee.dto.EmployeeResponseDto;
 import com.staffdesk.ems.employee.entity.Employee;
 import com.staffdesk.ems.employee.repository.EmployeeRepository;
+import com.staffdesk.ems.leave.service.LeaveBalanceProvisioningService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,6 +37,9 @@ class EmployeeServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private LeaveBalanceProvisioningService leaveBalanceProvisioningService;
 
     @InjectMocks
     private EmployeeServiceImpl employeeService;
@@ -75,6 +80,28 @@ class EmployeeServiceImplTest {
         assertThat(result.hasLoginAccount()).isFalse();
         verify(employeeRepository).save(any(Employee.class));
         verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void create_provisionsDefaultLeaveBalances_forTheNewEmployee() {
+        // Regression test for #9: creating an employee used to leave them
+        // with zero leave_balances rows, breaking both balance display and
+        // leave request submission.
+        when(employeeRepository.existsByEmail(validRequest.email())).thenReturn(false);
+        when(employeeRepository.existsByEmployeeCode(validRequest.employeeCode())).thenReturn(false);
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> {
+            Employee e = invocation.getArgument(0);
+            e.setId(7L);
+            return e;
+        });
+
+        employeeService.create(validRequest);
+
+        ArgumentCaptor<Employee> employeeCaptor = ArgumentCaptor.forClass(Employee.class);
+        ArgumentCaptor<Integer> yearCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(leaveBalanceProvisioningService).ensureBalancesExist(employeeCaptor.capture(), yearCaptor.capture());
+        assertThat(employeeCaptor.getValue().getId()).isEqualTo(7L);
+        assertThat(yearCaptor.getValue()).isEqualTo(java.time.Year.now().getValue());
     }
 
     @Test

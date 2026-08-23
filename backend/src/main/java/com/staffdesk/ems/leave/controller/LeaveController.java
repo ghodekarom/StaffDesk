@@ -6,6 +6,7 @@ import com.staffdesk.ems.leave.dto.LeaveDecisionRequest;
 import com.staffdesk.ems.leave.dto.LeaveRequestCreateRequest;
 import com.staffdesk.ems.leave.dto.LeaveRequestResponse;
 import com.staffdesk.ems.leave.entity.LeaveRequest;
+import com.staffdesk.ems.leave.service.LeaveBalanceProvisioningService;
 import com.staffdesk.ems.leave.service.LeaveService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -18,16 +19,22 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/leave")
 public class LeaveController {
 
     private final LeaveService leaveService;
+    private final LeaveBalanceProvisioningService leaveBalanceProvisioningService;
 
-    public LeaveController(LeaveService leaveService) {
+    public LeaveController(LeaveService leaveService,
+                           LeaveBalanceProvisioningService leaveBalanceProvisioningService) {
         this.leaveService = leaveService;
+        this.leaveBalanceProvisioningService = leaveBalanceProvisioningService;
     }
 
     // ---------- Self-service (any authenticated employee) ----------
@@ -98,6 +105,26 @@ public class LeaveController {
             @PathVariable Long id,
             @RequestBody(required = false) LeaveDecisionRequest decision) {
         return ResponseEntity.ok(leaveService.reject(id, principal.getEmployeeId(), decision));
+    }
+
+    // ---------- Admin: manual balance rollover ----------
+
+    // Manual counterpart to LeaveBalanceRolloverScheduler's automatic Dec 1
+    // run -- lets an ADMIN provision a year's balances on demand (e.g. the
+    // scheduled run was missed, or balances are needed early for an org
+    // restructure). Defaults to next calendar year, matching what the
+    // scheduled job would provision if run today. See #13.
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/balances/rollover")
+    public ResponseEntity<Map<String, Object>> rolloverBalances(
+            @RequestParam(required = false) Integer year) {
+        int targetYear = year != null ? year : LocalDate.now().getYear() + 1;
+        int created = leaveBalanceProvisioningService.provisionForAllActiveEmployees(targetYear);
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("year", targetYear);
+        body.put("balancesCreated", created);
+        return ResponseEntity.ok(body);
     }
 
     // ---------- Helpers ----------
