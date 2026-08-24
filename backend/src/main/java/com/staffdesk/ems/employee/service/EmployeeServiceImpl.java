@@ -150,20 +150,24 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.setManager(null);
         }
     }
+
     // Issue #1: EMPLOYEE-role scoped equivalents of getById/search, used by
     // EmployeeController when the caller has no ADMIN/HR/MANAGER role.
-    // Implement in EmployeeServiceImpl using
-    // EmployeeRepository#findByIdAndDepartmentId / #searchByDepartment
-    // (added to EmployeeRepository), e.g.:
+    // Mirrors getById()/search() above -- same ResourceNotFoundException and
+    // EmployeeResponseDto.fromEntity(employee, hasLogin) pattern, just
+    // pre-filtered to one department via the new repository methods.
+    @Override
+    @Transactional(readOnly = true)
+    public EmployeeResponseDto getByIdScoped(Long id, Long departmentId) {
+        Employee employee = employeeRepository.findByIdAndDepartmentId(id, departmentId)
+                .orElseThrow(() -> ResourceNotFoundException.forEntity("Employee", id));
+        return EmployeeResponseDto.fromEntity(employee, userRepository.existsByEmployeeId(employee.getId()));
+    }
 
-       public EmployeeResponseDto getByIdScoped(Long id, Long departmentId) {
-           Employee employee = employeeRepository.findByIdAndDepartmentId(id, departmentId)
-                   .orElseThrow(() -> new EmployeeNotFoundException(id));
-           return EmployeeResponseDto.from(employee);
-       }
-
-       public Page<EmployeeResponseDto> searchInDepartment(String search, Long departmentId, Pageable pageable) {
-           return employeeRepository.searchByDepartment(departmentId, search, pageable)
-                   .map(EmployeeResponseDto::from);
-       }
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EmployeeResponseDto> searchInDepartment(String search, Long departmentId, Pageable pageable) {
+        return employeeRepository.searchByDepartment(departmentId, search, pageable)
+                .map(e -> EmployeeResponseDto.fromEntity(e, userRepository.existsByEmployeeId(e.getId())));
+    }
 }

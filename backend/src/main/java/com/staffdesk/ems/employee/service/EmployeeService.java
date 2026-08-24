@@ -31,20 +31,11 @@ public interface EmployeeService {
 
     // Issue #1: EMPLOYEE-role scoped equivalents of getById/search, used by
     // EmployeeController when the caller has no ADMIN/HR/MANAGER role.
-    // Implement in EmployeeServiceImpl using
-    // EmployeeRepository#findByIdAndDepartmentId / #searchByDepartment
-    // (added to EmployeeRepository), e.g.:
-    //
-    //   public EmployeeResponseDto getByIdScoped(Long id, Long departmentId) {
-    //       Employee employee = employeeRepository.findByIdAndDepartmentId(id, departmentId)
-    //               .orElseThrow(() -> new EmployeeNotFoundException(id));
-    //       return EmployeeResponseDto.from(employee);
-    //   }
-    //
-    //   public Page<EmployeeResponseDto> searchInDepartment(String search, Long departmentId, Pageable pageable) {
-    //       return employeeRepository.searchByDepartment(departmentId, search, pageable)
-    //               .map(EmployeeResponseDto::from);
-    //   }
+    // Implemented in EmployeeServiceImpl, mirroring getById()/search():
+    // ResourceNotFoundException.forEntity("Employee", id) and
+    // EmployeeResponseDto.fromEntity(employee, hasLoginAccount), just
+    // pre-filtered to one department via EmployeeRepository's new
+    // findByIdAndDepartmentId / searchByDepartment.
     EmployeeResponseDto getByIdScoped(Long id, Long departmentId);
 
     Page<EmployeeResponseDto> searchInDepartment(String search, Long departmentId, Pageable pageable);
