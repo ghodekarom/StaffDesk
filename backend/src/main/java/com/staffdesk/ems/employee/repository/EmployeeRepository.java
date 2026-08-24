@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -50,4 +51,26 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     Page<Employee> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmployeeCodeContainingIgnoreCase(
             String firstName, String lastName, String employeeCode, Pageable pageable);
+
+    // --- Issue #1: EMPLOYEE-role scoping for the directory endpoints ---
+    // GET /employees/{id} for an EMPLOYEE caller: only resolves if the
+    // target is in the caller's own department; otherwise behaves like a
+    // 404, same as any other not-found id, rather than leaking that the
+    // record exists in a different department.
+    Optional<Employee> findByIdAndDepartmentId(Long id, Long departmentId);
+
+    // GET /employees for an EMPLOYEE caller: same search behavior as
+    // EmployeeService#search, just pre-filtered to one department instead
+    // of company-wide.
+    @Query("""
+            SELECT e FROM Employee e
+            WHERE e.department.id = :departmentId
+              AND (:search IS NULL OR :search = ''
+                   OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(e.employeeCode) LIKE LOWER(CONCAT('%', :search, '%')))
+            """)
+    Page<Employee> searchByDepartment(@Param("departmentId") Long departmentId,
+                                      @Param("search") String search,
+                                      Pageable pageable);
 }

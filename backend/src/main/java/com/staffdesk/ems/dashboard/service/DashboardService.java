@@ -48,6 +48,29 @@ public class DashboardService {
         LocalDate firstOfMonth = today.withDayOfMonth(1);
         LocalDate trendStart = today.minusDays(TREND_DAYS - 1);
 
+        long pendingLeaveCount = canReviewTeam
+                ? leaveRequestRepository.findByStatus(LeaveRequest.LeaveStatus.PENDING, PageRequest.of(0, 1))
+                .getTotalElements()
+                : leaveRequestRepository.findByEmployeeIdAndStatus(
+                        currentEmployeeId, LeaveRequest.LeaveStatus.PENDING, PageRequest.of(0, 1))
+                .getTotalElements();
+
+        // Issue #15: everything below used to run unconditionally, so an
+        // EMPLOYEE saw the exact same company-wide numbers as ADMIN/HR/MANAGER
+        // (headcount, department breakdown, attendance trend, etc). Only
+        // canReviewTeam callers get those org-wide aggregates now; EMPLOYEE
+        // gets zeroed/empty values here, the same way pendingLeaveCount
+        // already branched. Which (if any) of these should stay visible to
+        // EMPLOYEE at an individual-safe level (e.g. a general "present
+        // today" count) is a product decision noted in the issue -- swap the
+        // relevant zero below for a real scoped query if/when that's decided.
+        if (!canReviewTeam) {
+            return new DashboardSummaryResponse(
+                    0L, 0L, 0L,
+                    0L, 0L, 0L, 0.0,
+                    pendingLeaveCount, List.of(), List.of());
+        }
+
         long totalEmployees = employeeRepository.countByStatus(Employee.EmployeeStatus.ACTIVE);
         long newHires = employeeRepository.countByStatusAndDateOfJoiningGreaterThanEqual(
                 Employee.EmployeeStatus.ACTIVE, firstOfMonth);
@@ -59,13 +82,6 @@ public class DashboardService {
 
         Double workedSeconds = attendanceRepository.sumWorkedSecondsForDate(today);
         double hoursLoggedToday = Math.round((workedSeconds != null ? workedSeconds : 0.0) / 3600.0 * 10.0) / 10.0;
-
-        long pendingLeaveCount = canReviewTeam
-                ? leaveRequestRepository.findByStatus(LeaveRequest.LeaveStatus.PENDING, PageRequest.of(0, 1))
-                .getTotalElements()
-                : leaveRequestRepository.findByEmployeeIdAndStatus(
-                        currentEmployeeId, LeaveRequest.LeaveStatus.PENDING, PageRequest.of(0, 1))
-                .getTotalElements();
 
         List<DashboardSummaryResponse.DepartmentHeadcountDto> departmentBreakdown =
                 employeeRepository.countActiveGroupedByDepartment().stream()

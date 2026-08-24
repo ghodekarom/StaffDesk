@@ -32,6 +32,15 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     long countByAttendanceDate(LocalDate attendanceDate);
 
+    // Issue #4: MANAGER-scoped equivalent of findAll(Pageable) above, used
+    // by AttendanceService#getRecentAcrossEmployees when the caller is a
+    // MANAGER (not ADMIN/HR) -- restricts the "Recent Attendance Logs" feed
+    // to that manager's direct reports (Attendance.employee.manager.id)
+    // instead of every employee. Same eager-fetch as findAll to avoid N+1
+    // when AttendanceResponse.from() reads employee.getDepartment().
+    @EntityGraph(attributePaths = {"employee", "employee.department"})
+    Page<Attendance> findByEmployeeManagerId(Long managerId, Pageable pageable);
+
     // Powers the Overview page's "Attendance Trend" chart — one row per
     // calendar day in the range, with a present/absent/late/half-day
     // breakdown, computed server-side instead of guessed on the client.

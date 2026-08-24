@@ -18,6 +18,14 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
 
     Page<LeaveRequest> findByEmployeeIdAndStatus(Long employeeId, LeaveRequest.LeaveStatus status, Pageable pageable);
 
+    // Issue #4: MANAGER-scoped equivalents of findByStatus/findAll, used by
+    // LeaveService#getAllRequests when the caller is a MANAGER (not ADMIN/HR)
+    // -- restricts the review list to that manager's direct reports
+    // (LeaveRequest.employee.manager.id) instead of every employee's requests.
+    Page<LeaveRequest> findByEmployeeManagerId(Long managerId, Pageable pageable);
+
+    Page<LeaveRequest> findByEmployeeManagerIdAndStatus(Long managerId, LeaveRequest.LeaveStatus status, Pageable pageable);
+
     // Overlap check: any existing request for this employee whose [start, end] range
     // intersects the requested range. Used to reject double-booked leave on create.
     @Query("""

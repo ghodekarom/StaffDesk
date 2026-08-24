@@ -75,20 +75,41 @@ public class AttendanceService {
                 .map(AttendanceResponse::from);
     }
 
+    // Issue #4: `managerScopeId` is null for ADMIN/HR (unrestricted,
+    // unchanged) and the caller's own employee id for MANAGER -- if the
+    // target employee isn't one of their direct reports, this behaves like
+    // the employee doesn't exist, matching AttendanceService's existing
+    // EmployeeNotFoundException usage elsewhere. Controller needs updating
+    // to pass `role == MANAGER ? currentEmployeeId : null`.
     @Transactional(readOnly = true)
-    public Page<AttendanceResponse> getHistoryForEmployee(Long employeeId, LocalDate from, LocalDate to, Pageable pageable) {
-        if (!employeeRepository.existsById(employeeId)) {
-            throw new AttendanceExceptions.EmployeeNotFoundException(employeeId);
+    public Page<AttendanceResponse> getHistoryForEmployee(Long employeeId, Long managerScopeId, LocalDate from, LocalDate to, Pageable pageable) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new AttendanceExceptions.EmployeeNotFoundException(employeeId));
+        if (managerScopeId != null) {
+            Employee manager = employee.getManager();
+            if (manager == null || !manager.getId().equals(managerScopeId)) {
+                throw new AttendanceExceptions.EmployeeNotFoundException(employeeId);
+            }
         }
         return getHistory(employeeId, from, to, pageable);
     }
 
     // Powers the Overview dashboard's "Recent Attendance Logs" widget, which
-    // needs the latest clock-ins across every employee — not one person's
+    // needs the latest clock-ins across every employee -- not one person's
     // history. findAll(pageable) already honors whatever sort the caller
-    // passes (e.g. "clockIn,desc"), so no custom query is needed here.
+    // passes (e.g. "clockIn,desc"), so no custom query is needed for the
+    // ADMIN/HR (company-wide) case.
+    //
+    // Issue #4: when managerScopeId is non-null (caller is MANAGER), scope
+    // to their direct reports only instead of every employee. Requires a
+    // new method on AttendanceRepository (not included in this handoff --
+    // add if not already present):
+    //   Page<Attendance> findByEmployeeManagerId(Long managerId, Pageable pageable);
     @Transactional(readOnly = true)
-    public Page<AttendanceResponse> getRecentAcrossEmployees(Pageable pageable) {
+    public Page<AttendanceResponse> getRecentAcrossEmployees(Long managerScopeId, Pageable pageable) {
+        if (managerScopeId != null) {
+            return attendanceRepository.findByEmployeeManagerId(managerScopeId, pageable).map(AttendanceResponse::from);
+        }
         return attendanceRepository.findAll(pageable).map(AttendanceResponse::from);
     }
 

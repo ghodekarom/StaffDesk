@@ -150,4 +150,20 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.setManager(null);
         }
     }
+    // Issue #1: EMPLOYEE-role scoped equivalents of getById/search, used by
+    // EmployeeController when the caller has no ADMIN/HR/MANAGER role.
+    // Implement in EmployeeServiceImpl using
+    // EmployeeRepository#findByIdAndDepartmentId / #searchByDepartment
+    // (added to EmployeeRepository), e.g.:
+
+       public EmployeeResponseDto getByIdScoped(Long id, Long departmentId) {
+           Employee employee = employeeRepository.findByIdAndDepartmentId(id, departmentId)
+                   .orElseThrow(() -> new EmployeeNotFoundException(id));
+           return EmployeeResponseDto.from(employee);
+       }
+
+       public Page<EmployeeResponseDto> searchInDepartment(String search, Long departmentId, Pageable pageable) {
+           return employeeRepository.searchByDepartment(departmentId, search, pageable)
+                   .map(EmployeeResponseDto::from);
+       }
 }

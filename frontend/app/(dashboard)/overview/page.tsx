@@ -159,6 +159,20 @@ export default function OverviewPage() {
   }
 
   async function fetchAttendance() {
+    // Issue #16: the backend restricts GET /attendance/recent to
+    // ADMIN/HR/MANAGER (@PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")
+    // in AttendanceController). Previously this was called unconditionally,
+    // so an EMPLOYEE always hit a 403 here and saw a generic "Couldn't load
+    // this" error. Branch by role the same way fetchLeave() already does:
+    // reviewers get the org-wide feed, everyone else gets an empty list
+    // instead of a failed call. (There's no confirmed EMPLOYEE-scoped
+    // equivalent like /attendance/me yet -- swap this branch to call that
+    // if/when one exists, instead of just skipping the fetch.)
+    if (!canReview) {
+      setAttendanceError(null);
+      setTodayAttendance([]);
+      return;
+    }
     setAttendanceError(null);
     try {
       const data = await api.get<AttendancePage>("/attendance/recent", { size: 5, sort: "attendanceDate,desc" });
@@ -452,21 +466,26 @@ export default function OverviewPage() {
         <div className="px-4 pt-4 pb-3 flex items-center justify-between">
           <h2 className="font-bold text-sm text-ink">Recent Activity</h2>
           <Link
-            href={activityTab === "attendance" ? "/attendance" : canReview ? "/leave/team" : "/leave"}
+            href={canReview && activityTab === "attendance" ? "/attendance" : canReview ? "/leave/team" : "/leave"}
             className="text-xs text-accent hover:underline shrink-0"
           >
             View all →
           </Link>
         </div>
         <div className="px-4 pb-3 flex items-center gap-2">
-          <button
-            onClick={() => setActivityTab("attendance")}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              activityTab === "attendance" ? "bg-accent text-white" : "border border-line text-muted"
-            }`}
-          >
-            Attendance
-          </button>
+          {/* Issue #16: EMPLOYEE has no /attendance/recent access at all
+              (backend 403s), so there's nothing for this tab to show them --
+              hide it rather than let them pick a tab that always fails. */}
+          {canReview && (
+            <button
+              onClick={() => setActivityTab("attendance")}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                activityTab === "attendance" ? "bg-accent text-white" : "border border-line text-muted"
+              }`}
+            >
+              Attendance
+            </button>
+          )}
           <button
             onClick={() => setActivityTab("leave")}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
@@ -477,7 +496,7 @@ export default function OverviewPage() {
           </button>
         </div>
 
-        {activityTab === "attendance" ? (
+        {canReview && activityTab === "attendance" ? (
           loading ? (
             <div>{[...Array(3)].map((_, i) => <SkeletonRow key={i} />)}</div>
           ) : attendanceError ? (

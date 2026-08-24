@@ -12,6 +12,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -60,8 +61,10 @@ public class AttendanceController {
     @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")
     @GetMapping("/recent")
     public ResponseEntity<Page<AttendanceResponse>> getRecentAcrossEmployees(
+            @AuthenticationPrincipal UserPrincipal principal,
             @PageableDefault(size = 5, sort = "attendanceDate", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(attendanceService.getRecentAcrossEmployees(pageable));
+        Long managerScopeId = isManagerOnly(principal) ? principal.getEmployeeId() : null;
+        return ResponseEntity.ok(attendanceService.getRecentAcrossEmployees(managerScopeId, pageable));
     }
 
     // ---------- HR / Admin: view or override any employee's records ----------
@@ -74,9 +77,13 @@ public class AttendanceController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @PageableDefault(size = 20) Pageable pageable) {
 
+        // ADMIN/HR only (no MANAGER on this route), so there's no manager
+        // scope to enforce here -- pass null, same as AttendanceService's
+        // ADMIN/HR path elsewhere (issue #4 only affects MANAGER-accessible
+        // routes, i.e. /recent below).
         LocalDate[] range = resolveRange(from, to);
         return ResponseEntity.ok(attendanceService.getHistoryForEmployee(
-                employeeId, range[0], range[1], withDefaultSort(pageable)));
+                employeeId, null, range[0], range[1], withDefaultSort(pageable)));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','HR')")
@@ -97,6 +104,23 @@ public class AttendanceController {
     }
 
     // ---------- Helpers ----------
+
+    // Issue #4: true only when the caller's sole review-capable role is
+    // MANAGER. ADMIN or HR (even if also MANAGER) keep unrestricted
+    // company-wide access on /recent above.
+    private boolean isManagerOnly(UserPrincipal principal) {
+        boolean isManager = false;
+        for (GrantedAuthority authority : principal.getAuthorities()) {
+            String role = authority.getAuthority();
+            if (role.equals("ROLE_ADMIN") || role.equals("ROLE_HR")) {
+                return false;
+            }
+            if (role.equals("ROLE_MANAGER")) {
+                isManager = true;
+            }
+        }
+        return isManager;
+    }
 
     private LocalDate[] resolveRange(LocalDate from, LocalDate to) {
         LocalDate resolvedTo = to != null ? to : LocalDate.now();

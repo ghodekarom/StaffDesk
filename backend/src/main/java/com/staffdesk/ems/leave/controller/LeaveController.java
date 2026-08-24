@@ -16,6 +16,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -75,18 +76,23 @@ public class LeaveController {
     @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")
     @GetMapping("/requests")
     public ResponseEntity<Page<LeaveRequestResponse>> getAllRequests(
+            @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(required = false) LeaveRequest.LeaveStatus status,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(leaveService.getAllRequests(status, withDefaultSort(pageable)));
+        Long managerId = isManagerOnly(principal) ? principal.getEmployeeId() : null;
+        return ResponseEntity.ok(leaveService.getAllRequests(managerId, status, withDefaultSort(pageable)));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")
     @GetMapping("/requests/employees/{employeeId}")
     public ResponseEntity<Page<LeaveRequestResponse>> getRequestsForEmployee(
+            @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long employeeId,
             @RequestParam(required = false) LeaveRequest.LeaveStatus status,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(leaveService.getRequestsForEmployee(employeeId, status, withDefaultSort(pageable)));
+        Long managerScopeId = isManagerOnly(principal) ? principal.getEmployeeId() : null;
+        return ResponseEntity.ok(leaveService.getRequestsForEmployee(
+                employeeId, managerScopeId, status, withDefaultSort(pageable)));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")
@@ -95,7 +101,8 @@ public class LeaveController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long id,
             @RequestBody(required = false) LeaveDecisionRequest decision) {
-        return ResponseEntity.ok(leaveService.approve(id, principal.getEmployeeId(), decision));
+        Long managerScopeId = isManagerOnly(principal) ? principal.getEmployeeId() : null;
+        return ResponseEntity.ok(leaveService.approve(id, principal.getEmployeeId(), managerScopeId, decision));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")
@@ -104,7 +111,8 @@ public class LeaveController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long id,
             @RequestBody(required = false) LeaveDecisionRequest decision) {
-        return ResponseEntity.ok(leaveService.reject(id, principal.getEmployeeId(), decision));
+        Long managerScopeId = isManagerOnly(principal) ? principal.getEmployeeId() : null;
+        return ResponseEntity.ok(leaveService.reject(id, principal.getEmployeeId(), managerScopeId, decision));
     }
 
     // ---------- Admin: manual balance rollover ----------
@@ -128,6 +136,23 @@ public class LeaveController {
     }
 
     // ---------- Helpers ----------
+
+    // Issue #4: true only when the caller's sole review-capable role is
+    // MANAGER. ADMIN or HR (even if also MANAGER) keep unrestricted
+    // company-wide access to the review endpoints above.
+    private boolean isManagerOnly(UserPrincipal principal) {
+        boolean isManager = false;
+        for (GrantedAuthority authority : principal.getAuthorities()) {
+            String role = authority.getAuthority();
+            if (role.equals("ROLE_ADMIN") || role.equals("ROLE_HR")) {
+                return false;
+            }
+            if (role.equals("ROLE_MANAGER")) {
+                isManager = true;
+            }
+        }
+        return isManager;
+    }
 
     private Pageable withDefaultSort(Pageable pageable) {
         if (pageable.getSort().isSorted()) {

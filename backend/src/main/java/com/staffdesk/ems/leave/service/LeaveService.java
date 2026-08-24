@@ -139,26 +139,58 @@ public class LeaveService {
 
     // ---------- HR / Admin / Manager: approval workflow ----------
 
+    // Issue #4: `managerId` is null for ADMIN/HR (company-wide, unchanged
+    // behavior) and set to the caller's own employee id for MANAGER, who
+    // should only see their direct reports' requests instead of everyone's.
+    // Requires two new methods on LeaveRequestRepository (not included in
+    // this handoff -- add if not already present):
+    //   Page<LeaveRequest> findByEmployeeManagerIdAndStatus(Long managerId, LeaveStatus status, Pageable pageable);
+    //   Page<LeaveRequest> findByEmployeeManagerId(Long managerId, Pageable pageable);
+    // LeaveController's team-review endpoint also needs updating to pass
+    // `role == MANAGER ? currentEmployeeId : null` as managerId.
     @Transactional(readOnly = true)
-    public Page<LeaveRequestResponse> getAllRequests(LeaveRequest.LeaveStatus status, Pageable pageable) {
-        Page<LeaveRequest> page = status != null
-                ? leaveRequestRepository.findByStatus(status, pageable)
-                : leaveRequestRepository.findAll(pageable);
+    public Page<LeaveRequestResponse> getAllRequests(Long managerId, LeaveRequest.LeaveStatus status, Pageable pageable) {
+        Page<LeaveRequest> page;
+        if (managerId != null) {
+            page = status != null
+                    ? leaveRequestRepository.findByEmployeeManagerIdAndStatus(managerId, status, pageable)
+                    : leaveRequestRepository.findByEmployeeManagerId(managerId, pageable);
+        } else {
+            page = status != null
+                    ? leaveRequestRepository.findByStatus(status, pageable)
+                    : leaveRequestRepository.findAll(pageable);
+        }
         return page.map(LeaveRequestResponse::from);
     }
 
+    // Issue #4: same MANAGER scoping as approve()/reject() -- if a MANAGER
+    // looks up an employee outside their own reports, this behaves like the
+    // employee doesn't exist rather than exposing their leave history.
     @Transactional(readOnly = true)
-    public Page<LeaveRequestResponse> getRequestsForEmployee(Long employeeId, LeaveRequest.LeaveStatus status, Pageable pageable) {
-        if (!employeeRepository.existsById(employeeId)) {
-            throw new EmployeeNotFoundForLeaveException(employeeId);
+    public Page<LeaveRequestResponse> getRequestsForEmployee(Long employeeId, Long managerScopeId, LeaveRequest.LeaveStatus status, Pageable pageable) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundForLeaveException(employeeId));
+        if (managerScopeId != null) {
+            Employee manager = employee.getManager();
+            if (manager == null || !manager.getId().equals(managerScopeId)) {
+                throw new EmployeeNotFoundForLeaveException(employeeId);
+            }
         }
         return getMyRequests(employeeId, status, pageable);
     }
 
+    // Issue #4: `managerScopeId` is null for ADMIN/HR (unrestricted, unchanged
+    // behavior) and the caller's own employee id for MANAGER -- if the
+    // request doesn't belong to one of their direct reports, this reuses
+    // "not found" (see assertManagerScope), the same pattern cancel() already
+    // uses to avoid confirming another employee's request exists. Controller
+    // needs updating to pass `role == MANAGER ? currentEmployeeId : null`.
     @Transactional
-    public LeaveRequestResponse approve(Long requestId, Long approverEmployeeId, LeaveDecisionRequest decision) {
+    public LeaveRequestResponse approve(Long requestId, Long approverEmployeeId, Long managerScopeId, LeaveDecisionRequest decision) {
         LeaveRequest leaveRequest = leaveRequestRepository.findById(requestId)
                 .orElseThrow(() -> new LeaveRequestNotFoundException(requestId));
+
+        assertManagerScope(leaveRequest, managerScopeId);
 
         if (leaveRequest.getStatus() != LeaveRequest.LeaveStatus.PENDING) {
             throw new LeaveAlreadyDecidedException(leaveRequest.getStatus());
@@ -202,10 +234,13 @@ public class LeaveService {
         return LeaveRequestResponse.from(saved);
     }
 
+    // Issue #4: same MANAGER scoping as approve() above.
     @Transactional
-    public LeaveRequestResponse reject(Long requestId, Long approverEmployeeId, LeaveDecisionRequest decision) {
+    public LeaveRequestResponse reject(Long requestId, Long approverEmployeeId, Long managerScopeId, LeaveDecisionRequest decision) {
         LeaveRequest leaveRequest = leaveRequestRepository.findById(requestId)
                 .orElseThrow(() -> new LeaveRequestNotFoundException(requestId));
+
+        assertManagerScope(leaveRequest, managerScopeId);
 
         if (leaveRequest.getStatus() != LeaveRequest.LeaveStatus.PENDING) {
             throw new LeaveAlreadyDecidedException(leaveRequest.getStatus());
@@ -232,6 +267,21 @@ public class LeaveService {
         );
 
         return LeaveRequestResponse.from(saved);
+    }
+
+    // Issue #4: when managerScopeId is non-null (caller is MANAGER), only
+    // requests from that manager's direct reports (employee.manager) are
+    // visible/actionable. ADMIN/HR pass null and keep unrestricted access.
+    // Throws "not found" rather than a 403 to match cancel()'s existing
+    // choice not to confirm another employee's request id exists.
+    private void assertManagerScope(LeaveRequest leaveRequest, Long managerScopeId) {
+        if (managerScopeId == null) {
+            return;
+        }
+        Employee manager = leaveRequest.getEmployee().getManager();
+        if (manager == null || !manager.getId().equals(managerScopeId)) {
+            throw new LeaveRequestNotFoundException(leaveRequest.getId());
+        }
     }
 
     private String appendNote(String existingReason, String note) {
