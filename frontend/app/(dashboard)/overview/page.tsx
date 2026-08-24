@@ -102,7 +102,7 @@ function avatarColor(name: string) {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function OverviewPage() {
-  const { role } = useAuth();
+  const { role, isInitializing } = useAuth();
   const today = new Date().toLocaleDateString("en-IN", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
     timeZone: "Asia/Kolkata",
@@ -202,10 +202,21 @@ export default function OverviewPage() {
     setLoading(false);
   }
 
+  // Root cause of the "401 on every load" bug: this effect is a child of
+  // AuthProvider, and React fires child effects before parent effects on
+  // mount. Without the isInitializing guard, loadAll() would fire before
+  // AuthProvider's own effect has registered the real token getter or
+  // finished silently refreshing the access token from the httpOnly
+  // cookie -- so the very first request always went out with no
+  // Authorization header at all, regardless of whether the session was
+  // actually valid. Waiting for isInitializing to clear (AuthProvider
+  // exposes it for exactly this) ensures a real token exists before the
+  // first fetch fires.
   useEffect(() => {
+    if (isInitializing) return;
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canReview]);
+  }, [canReview, isInitializing]);
 
   const hasEmployees = !!summary && summary.totalEmployees > 0;
   const totalForBreakdown = summary?.totalEmployees ?? 0;
