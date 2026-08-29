@@ -18,6 +18,8 @@ pre-build planning doc if you want the history.
 | [`DATABASE_SCHEMA.md`](./DATABASE_SCHEMA.md) | Tables, relationships, and the Flyway migration history that built them |
 | [`SETUP_GUIDE.md`](./SETUP_GUIDE.md) | Local dev setup, environment variables, Docker, running tests |
 | [`STATUS_AND_ROADMAP.md`](./STATUS_AND_ROADMAP.md) | What's built, what's partial, what's not started, known gaps |
+| [`PROGRESS.md`](./PROGRESS.md) | Living feature checklist — per-module status across all phases |
+| [`TECHNICAL_DEBT.md`](./TECHNICAL_DEBT.md) | Catalogued debt items with severity, root cause, and fix guidance |
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Coding conventions actually used in the codebase, PR workflow |
 | [`archive/`](./archive) | Superseded planning docs, kept for reference |
 
