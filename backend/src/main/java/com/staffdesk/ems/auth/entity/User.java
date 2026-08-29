@@ -60,6 +60,12 @@ public class User {
     }
 
     public enum Role {
-        ADMIN, HR, MANAGER, EMPLOYEE
+        ADMIN, HR, MANAGER, EMPLOYEE;
+
+        public static final java.util.Set<Role> REVIEW_ROLES = java.util.Set.of(ADMIN, HR, MANAGER);
+
+        public boolean isReviewer() {
+            return REVIEW_ROLES.contains(this);
+        }
     }
 }

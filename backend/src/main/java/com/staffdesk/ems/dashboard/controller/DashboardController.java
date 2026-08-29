@@ -16,11 +16,6 @@ import java.util.Set;
 @RequestMapping("/api/v1/dashboard")
 public class DashboardController {
 
-    // Same review-scope rule the Overview page already applies to
-    // /leave/requests vs /leave/requests/me — kept in sync with
-    // LeaveController's @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')").
-    private static final Set<User.Role> REVIEW_ROLES = Set.of(User.Role.ADMIN, User.Role.HR, User.Role.MANAGER);
-
     private final DashboardService dashboardService;
 
     public DashboardController(DashboardService dashboardService) {
@@ -35,7 +30,8 @@ public class DashboardController {
     public DashboardSummaryResponse getSummary(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(name = "range", defaultValue = "today") String range) {
-        boolean canReviewTeam = REVIEW_ROLES.contains(principal.getRole());
+        // Issue #6: uses shared User.Role.REVIEW_ROLES definition
+        boolean canReviewTeam = principal.getRole().isReviewer();
         return dashboardService.getSummary(principal.getEmployeeId(), canReviewTeam, range);
     }
 }

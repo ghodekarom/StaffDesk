@@ -41,11 +41,10 @@ Last updated: 2026-08-29
 - **Impact:** Any authenticated user, regardless of role, has full access to messaging and notifications.
 - **Suggested fix:** Explicitly document as open internal comms by design, or add team/manager scoping if desired.
 
-### 6. Dashboard role logic duplicated instead of shared
-- **Status:** 🔲 **OPEN** (Code cleanup)
-- **Location:** `DashboardController.REVIEW_ROLES` vs. `LeaveController` `@PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")`
-- **Impact:** Maintenance overhead.
-- **Suggested fix:** Extract a shared `Roles.REVIEW_ROLES` constant.
+### 6. Dashboard role logic duplicated instead of shared — [DONE]
+- **Status:** ✅ **DONE** (Implemented in `User.Role.REVIEW_ROLES` and `DashboardController`)
+- **Location:** `User.Role`, `DashboardController`
+- **Resolution:** Extracted `REVIEW_ROLES` (`ADMIN`, `HR`, `MANAGER`) and helper `isReviewer()` directly into `User.Role` enum so role evaluation is shared across services and controllers rather than locally duplicated.
 
 ### 7. Payroll role model documented as unresolved
 - **Status:** 🔲 **OPEN** (Pending confirmation)
@@ -145,7 +144,7 @@ Last updated: 2026-08-29
 | 3 | Access Control | Create-login gating not enforced at component level | Low | ✅ **Done** |
 | 4 | Access Control | MANAGER not scoped to own team | High | ✅ **Done** |
 | 5 | Access Control | Messaging/Notifications fully open, undocumented | Medium | 🔲 Open |
-| 6 | Access Control | Dashboard role logic duplicated, not shared | Low | 🔲 Open |
+| 6 | Access Control | Dashboard role logic duplicated, not shared | Low | ✅ **Done** |
 | 7 | Access Control | Payroll role model unresolved (documented) | Medium | 🔲 Open |
 | 8 | Access Control | HR system role vs. HR job title mismatch | Info | 🔲 Open |
 | 9 | Leave Module | No leave balances created for new employees | Critical | ✅ **Done** |
