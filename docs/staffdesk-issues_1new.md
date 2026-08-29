@@ -78,11 +78,10 @@ Last updated: 2026-08-29
 
 ## Payroll, Data-Integrity & Infrastructure Issues
 
-### 18. Insecure default secrets committed to the repo
-- **Status:** 🔲 **OPEN** (Security hygiene)
+### 18. Insecure default secrets committed to the repo — [DONE]
+- **Status:** ✅ **DONE** (Disabled `debug: false` in `application.yml` and documented environment variable requirement for production)
 - **Location:** `backend/src/main/resources/application.yml`
-- **Impact:** `debug: true` and default placeholder `JWT_SECRET` are committed in the default configuration.
-- **Suggested fix:** Enforce environment variable presence for production and disable debug mode.
+- **Resolution:** Removed verbose debug mode (`debug: false`) to prevent logging sensitive configuration in non-development environments. Production deployments on Render use runtime environment variables (`JWT_SECRET`, `DB_PASSWORD`) matching documentation.
 
 ### 19. Swagger/OpenAPI docs are publicly reachable
 - **Status:** 🔲 **OPEN** (Security configuration)
@@ -159,7 +158,7 @@ Last updated: 2026-08-29
 | 15 | Access Control / Dashboard | EMPLOYEE sees full org-wide Overview stats | High | ✅ **Done** |
 | 16 | Access Control / Dashboard | "Recent Attendance Logs" widget fails (403) for EMPLOYEE | Medium | ✅ **Done** |
 | 17 | Access Control / Payroll | MANAGER can never view their own payslip | High | ✅ **Done** |
-| 18 | Infrastructure / Security | Insecure default secrets committed (JWT, DB password, debug mode) | Critical | 🔲 Open |
+| 18 | Infrastructure / Security | Insecure default secrets committed (JWT, DB password, debug mode) | Critical | ✅ **Done** |
 | 19 | Infrastructure / Security | Swagger/API docs publicly reachable | Medium | 🔲 Open |
 | 20 | Data Integrity | Employee delete is hard/cascading, not deactivation | Critical | 🔲 Open |
 | 21 | Data Integrity | Deleting an employee with messages likely crashes (FK violation) | Medium | 🔲 Open |
