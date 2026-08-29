@@ -32,6 +32,8 @@ through the Spring Boot REST API at `/api/v1/**`.
   support via a `data-theme` attribute (no `dark:` prefixes needed)
 - Framer Motion for animation, Recharts for the dashboard charts, Lucide React
   for icons
+- `@ducanh2912/next-pwa` for Workbox-powered Progressive Web App (PWA) support,
+  Service Worker caching, offline fallback page (`/offline`), and installability
 - No global state library — auth state lives in a React context
   (`lib/auth-context.tsx`); everything else is fetched per-page
 

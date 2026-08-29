@@ -6,8 +6,8 @@ generated from the actual `@*Mapping` / `@PreAuthorize` annotations in
 `backend/src/main/java/com/staffdesk/ems/**/controller/`, not from a spec —
 if code and doc ever drift, trust the code and update this file.
 
-Interactive docs (Swagger UI) are always the live source of truth once the
-backend is running: `http://localhost:8080/swagger-ui.html`.
+Interactive docs (Swagger UI) require authentication once the backend is running:
+`http://localhost:8080/swagger-ui.html` (or schema at `/api-docs`).
 
 **Roles:** `ADMIN`, `HR`, `MANAGER`, `EMPLOYEE`. "Any authenticated user" means
 no `@PreAuthorize` role restriction beyond having a valid token.
@@ -110,8 +110,8 @@ all calculated server-side from versioned statutory settings — see
 | Method | Path | Role | Notes |
 |---|---|---|---|
 | GET | `/{payslipId}` | ADMIN, HR | Get one payslip |
-| GET | `/me` | EMPLOYEE | Caller's own payslips |
-| GET | `/{payslipId}/pdf` | ADMIN, HR, EMPLOYEE | Download payslip as PDF |
+| GET | `/me` | EMPLOYEE, MANAGER | Caller's own payslips |
+| GET | `/{payslipId}/pdf` | ADMIN, HR, EMPLOYEE, MANAGER | Download payslip as PDF |
 
 ## Messaging — `/api/v1/messages`
 
@@ -145,12 +145,12 @@ read/write rather than at user creation.
 
 | Method | Path | Role | Notes |
 |---|---|---|---|
-| GET | `/summary` | ADMIN, HR, MANAGER | Aggregated Overview page data |
+| GET | `/summary?range=today\|week\|month` | Any authenticated user | Aggregated Overview page data (role-scoped) |
 
 Returns total employees, new hires this month, total departments,
-present/absent/late-today counts, hours logged today, pending leave count, a
-department headcount breakdown, and an attendance trend series — all computed
-server-side in one round trip so the frontend never fabricates chart data.
+present/absent/late counts, hours logged, pending leave count, a
+department headcount breakdown, and an attendance trend series. Non-reviewer
+callers (EMPLOYEE) receive zeroed/safe org stats while maintaining pending leave.
 
 ## Error format
 

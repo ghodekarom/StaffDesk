@@ -1,7 +1,7 @@
 # StaffDesk — Progress Tracker
 
 > Last updated: 2026-08-29
-> Branch: `master` · Latest commit: `75ff2c9`
+> Branch: `master`
 
 ---
 
@@ -23,22 +23,22 @@
 | Module | Status | Notes |
 |---|---|---|
 | Auth (JWT login / refresh / register / change-password) | ✅ | BFF pattern, httpOnly refresh cookie |
-| Employee CRUD + status transitions | ✅ | `ACTIVE / INACTIVE / TERMINATED` |
+| Employee CRUD + status transitions | ✅ | `ACTIVE / INACTIVE / TERMINATED`, dept-scoped for Employee |
 | Department CRUD + head assignment | ✅ | Circular FK bootstrap handled in migrations |
-| Attendance (clock-in/out, personal + team views, manual override) | ✅ | Reminder scheduler included |
-| Leave (requests, balances, approve/reject, team view) | ✅ | Overlap + balance validation at service layer |
-| Payroll (salary structures, runs, payslips + PDF) | 🔶 | India-specific; several statutory gaps — see debt tracker |
+| Attendance (clock-in/out, personal + team views, manual override) | ✅ | Reminder scheduler + manager team scoping included |
+| Leave (requests, balances, approve/reject, team view) | ✅ | Overlap + balance validation + provisioning + rollover + manager scoping |
+| Payroll (salary structures, runs, payslips + PDF) | 🔶 | India-specific; manager/employee self-service active; statutory gaps pending |
 | Messaging (direct messages, threads, unread counts) | ✅ | Flat schema, no separate threads table |
 | Notifications (in-app, preferences, unread badge) | ✅ | Lazily created preference rows |
-| Dashboard (aggregated summary endpoint) | ✅ | Real DB queries, no fake fallback data |
+| Dashboard (aggregated summary endpoint) | ✅ | Real DB queries, role-gated metrics, period range support |
 
 ### Frontend pages
 
 | Route | Status | Notes |
 |---|---|---|
 | `/login` | ✅ | |
-| `/overview` | ✅ | Charts via Recharts, real API data |
-| `/employees` | ✅ | Paginated list, create/edit, status changes |
+| `/overview` | ✅ | Charts via Recharts, real API data, range selector, skeleton cards |
+| `/employees` | ✅ | Paginated list, create/edit, status changes, role-gated actions |
 | `/departments` | ✅ | CRUD + head assignment |
 | `/attendance` | ✅ | Clock widget, personal history |
 | `/attendance/team` | ✅ | Team view (ADMIN/HR/MANAGER) |
@@ -47,7 +47,7 @@
 | `/messages` | ✅ | Thread list + conversation view |
 | `/messages/[employeeId]` | ✅ | Direct conversation (dynamic route) |
 | `/payroll` | ✅ | Salary structures + payroll runs |
-| `/payroll/payslips` | ✅ | Payslip list + PDF download |
+| `/payroll/payslips` | ✅ | Payslip list + PDF download (Employee & Manager) |
 | `/settings` | ✅ | Notification preferences |
 | `/offline` | ✅ | PWA offline fallback page *(added 2026-08-29)* |
 
@@ -55,7 +55,7 @@
 
 | Item | Status | Notes |
 |---|---|---|
-| PostgreSQL schema (Flyway V1–V13) | ✅ | `ddl-auto: validate` — migrations are the source of truth |
+| PostgreSQL schema (Flyway V1–V14) | ✅ | `ddl-auto: validate` — migrations are the source of truth |
 | Seed data (V4) | ✅ | 15 depts, 150 employees, ~122 users, shared password |
 | JWT auth + Spring Security `@PreAuthorize` | ✅ | 4 roles: `ADMIN / HR / MANAGER / EMPLOYEE` |
 | Backend Docker build (multi-stage, non-root) | ✅ | Render-compatible `$PORT` |
