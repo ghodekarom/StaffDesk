@@ -83,10 +83,10 @@ export default function MyPayslipsPage() {
   // @PreAuthorize("hasRole('EMPLOYEE')") specifically (not ADMIN/HR) — see
   // PayslipController — so this mirrors that exactly rather than allowing
   // ADMIN/HR through here only to hit a 403 on load.
-  if (!isInitializing && role !== "EMPLOYEE") {
+  if (!isInitializing && role !== "EMPLOYEE" && role !== "MANAGER") {
     return (
       <div className="rounded-lg border border-line bg-surface py-16 text-center text-sm text-muted">
-        This page is for employee self-service payslip access.
+        This page is for employee and manager self-service payslip access.
       </div>
     );
   }

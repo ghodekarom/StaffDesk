@@ -14,11 +14,9 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/leave", label: "Leave", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/messages", label: "Messages", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
   { href: "/payroll", label: "Payroll", roles: ["ADMIN", "HR"] },
-  // Employee self-service payslip list — separate route from /payroll since
-  // that one is ADMIN/HR's run-trigger + all-employees view. Backend's
-  // GET /payroll/payslips/me is @PreAuthorize("hasRole('EMPLOYEE')") only
-  // (see PayslipController), so this item is EMPLOYEE-only to match.
-  { href: "/payroll/payslips", label: "My Payslips", roles: ["EMPLOYEE"] },
+  // Self-service payslip list — separate route from /payroll since
+  // that one is ADMIN/HR's run-trigger + all-employees view.
+  { href: "/payroll/payslips", label: "My Payslips", roles: ["EMPLOYEE", "MANAGER"] },
   { href: "/settings", label: "Settings", roles: ["ADMIN", "HR", "MANAGER", "EMPLOYEE"] },
 ];
 

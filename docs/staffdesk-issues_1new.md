@@ -69,11 +69,10 @@ Last updated: 2026-08-29
 - **Location:** `app/(dashboard)/overview/page.tsx` — `fetchAttendance()`
 - **Resolution:** `fetchAttendance()` now checks `canReview` before calling `/attendance/recent`, preventing 403 errors for `EMPLOYEE` users.
 
-### 17. MANAGER can never view even their own payslip
-- **Status:** 🔲 **OPEN** (Actionable fix)
+### 17. MANAGER can never view even their own payslip — [DONE]
+- **Status:** ✅ **DONE** (Implemented in `PayslipController.java`, `nav-config.ts`, and `app/(dashboard)/payroll/payslips/page.tsx`)
 - **Location:** `PayslipController`
-- **Impact:** `@PreAuthorize("hasRole('EMPLOYEE')")` on `/api/v1/payroll/payslips/me` prevents `MANAGER` from seeing their own payslip.
-- **Suggested fix:** Update `@PreAuthorize` on `/me` and `/{payslipId}/pdf` to include `MANAGER`.
+- **Resolution:** Updated `@PreAuthorize` on `/api/v1/payroll/payslips/me` to `"hasAnyRole('EMPLOYEE', 'MANAGER')"` and `/{payslipId}/pdf` to `"hasAnyRole('ADMIN','HR','EMPLOYEE','MANAGER')"`. Added `"MANAGER"` to `nav-config.ts` and the frontend page guard.
 
 ---
 
@@ -159,7 +158,7 @@ Last updated: 2026-08-29
 | 14 | Leave Module | No backfill for already-affected accounts | High | ✅ **Done** |
 | 15 | Access Control / Dashboard | EMPLOYEE sees full org-wide Overview stats | High | ✅ **Done** |
 | 16 | Access Control / Dashboard | "Recent Attendance Logs" widget fails (403) for EMPLOYEE | Medium | ✅ **Done** |
-| 17 | Access Control / Payroll | MANAGER can never view their own payslip | High | 🔲 Open |
+| 17 | Access Control / Payroll | MANAGER can never view their own payslip | High | ✅ **Done** |
 | 18 | Infrastructure / Security | Insecure default secrets committed (JWT, DB password, debug mode) | Critical | 🔲 Open |
 | 19 | Infrastructure / Security | Swagger/API docs publicly reachable | Medium | 🔲 Open |
 | 20 | Data Integrity | Employee delete is hard/cascading, not deactivation | Critical | 🔲 Open |

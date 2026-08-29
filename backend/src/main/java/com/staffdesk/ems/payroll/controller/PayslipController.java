@@ -35,13 +35,11 @@ public class PayslipController {
     }
 
     /**
-     * EMPLOYEE self-service — own payslips only, read-only, per §7.4.
-     * NOTE: intentionally hasRole('EMPLOYEE') only, matching the original scoping —
-     * ADMIN/HR callers will get a 403 here, same as the frontend guard on this route.
-     * Revisit if ADMIN/HR should also see their own payslips through this endpoint.
+     * Self-service — own payslips only, read-only.
+     * Issue #17: Allows EMPLOYEE and MANAGER roles to view their own payslip.
      */
     @GetMapping("/me")
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER')")
     public List<PayslipResponse> getMyPayslips(@AuthenticationPrincipal UserPrincipal principal) {
         return payslipService.getMyPayslips(principal.getEmployeeId());
     }
@@ -52,7 +50,7 @@ public class PayslipController {
      * payslip's PDF; anyone else can only fetch their own.
      */
     @GetMapping("/{payslipId}/pdf")
-    @PreAuthorize("hasAnyRole('ADMIN','HR','EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN','HR','EMPLOYEE','MANAGER')")
     public ResponseEntity<byte[]> downloadPdf(@PathVariable Long payslipId,
                                               Authentication authentication,
                                               @AuthenticationPrincipal UserPrincipal principal) {
