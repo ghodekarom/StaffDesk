@@ -83,14 +83,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth
-                        // Only login/refresh are open to unauthenticated callers. /register
-                        // now requires ADMIN (enforced via @PreAuthorize on the controller
-                        // method) -- the first ADMIN account is seeded via Flyway
-                        // (V2__seed_data.sql / V4__phase1_schema.sql), so the bootstrap
-                        // chicken-and-egg problem this used to work around no longer applies.
+                        // Only login/refresh and health check are open to unauthenticated callers.
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
+                        // Issue #19: Swagger/OpenAPI docs now require authentication to prevent public reconnaissance
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

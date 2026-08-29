@@ -83,11 +83,10 @@ Last updated: 2026-08-29
 - **Location:** `backend/src/main/resources/application.yml`
 - **Resolution:** Removed verbose debug mode (`debug: false`) to prevent logging sensitive configuration in non-development environments. Production deployments on Render use runtime environment variables (`JWT_SECRET`, `DB_PASSWORD`) matching documentation.
 
-### 19. Swagger/OpenAPI docs are publicly reachable
-- **Status:** 🔲 **OPEN** (Security configuration)
-- **Location:** `SecurityConfig` — `/swagger-ui/**` and `/api-docs/**` in `permitAll()`
-- **Impact:** API documentation exposed without authentication.
-- **Suggested fix:** Restrict to authenticated `ADMIN` users or gate by Spring profile.
+### 19. Swagger/OpenAPI docs are publicly reachable — [DONE]
+- **Status:** ✅ **DONE** (Implemented in `SecurityConfig.java`)
+- **Location:** `SecurityConfig`
+- **Resolution:** Removed public `permitAll()` for `/swagger-ui/**`, `/api-docs/**`, and `/swagger-ui.html`. Swagger UI and OpenAPI schemas now require a valid authenticated session to prevent public endpoint reconnaissance.
 
 ### 20. Employee delete is a hard, cascading delete — not deactivation
 - **Status:** 🔲 **PARTIAL / OPEN** (Actionable backend update)
@@ -159,7 +158,7 @@ Last updated: 2026-08-29
 | 16 | Access Control / Dashboard | "Recent Attendance Logs" widget fails (403) for EMPLOYEE | Medium | ✅ **Done** |
 | 17 | Access Control / Payroll | MANAGER can never view their own payslip | High | ✅ **Done** |
 | 18 | Infrastructure / Security | Insecure default secrets committed (JWT, DB password, debug mode) | Critical | ✅ **Done** |
-| 19 | Infrastructure / Security | Swagger/API docs publicly reachable | Medium | 🔲 Open |
+| 19 | Infrastructure / Security | Swagger/API docs publicly reachable | Medium | ✅ **Done** |
 | 20 | Data Integrity | Employee delete is hard/cascading, not deactivation | Critical | 🔲 Open |
 | 21 | Data Integrity | Deleting an employee with messages likely crashes (FK violation) | Medium | 🔲 Open |
 
