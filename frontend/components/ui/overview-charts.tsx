@@ -59,9 +59,14 @@ export function AttendanceTrendChart({ data }: { data: { date: string; present: 
 // dot, matching the mobile reference design. Purely presentational; the
 // percentage it renders comes straight from the `pct` field already
 // computed (from real attendanceTrend counts) by the caller.
-function TrendPoint(props: { cx?: number; cy?: number; value?: number }) {
-  const { cx, cy, value } = props;
-  if (cx == null || cy == null || value == null) return null;
+function TrendPoint(props: { cx?: number; cy?: number; payload?: { pct?: number } }) {
+  const { cx, cy, payload } = props;
+  // Recharts' Area dot render prop passes `value` as the stack range array
+  // (e.g. [0, 62]) rather than a plain number — Math.round() on that array
+  // is what produced "NaN%" on every point. `payload` still carries the
+  // original data object untouched, so read the real number from there.
+  const value = payload?.pct;
+  if (cx == null || cy == null || value == null || Number.isNaN(value)) return null;
   return (
     <g>
       <text x={cx} y={cy - 10} textAnchor="middle" fontSize={11} fontWeight={600} fill="var(--color-ink)">
@@ -114,7 +119,7 @@ export function Sparkline({ data, color = "#38bdf8" }: { data: number[]; color?:
   if (data.length < 2) return null;
   const points = data.map((value, i) => ({ i, value }));
   return (
-    <div className="h-6 w-full mt-1">
+    <div className="h-5 w-full mt-1">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={points} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
           <defs>

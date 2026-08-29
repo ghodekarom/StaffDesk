@@ -22,12 +22,18 @@ public class DashboardSummaryResponse {
     private final long pendingLeaveCount;
     private final List<DepartmentHeadcountDto> departmentBreakdown;
     private final List<DailyAttendanceDto> attendanceTrend;
+    // Which of "today" / "week" / "month" the fields above were actually
+    // computed over, after the service normalized the request's `range`
+    // param. The frontend uses this to label the cards correctly (e.g.
+    // "Present this week") rather than assuming its own request echoed back.
+    private final String appliedRange;
 
     public DashboardSummaryResponse(long totalEmployees, long newHiresThisMonth, long totalDepartments,
                                     long presentToday, long absentToday, long lateToday,
                                     double hoursLoggedToday, long pendingLeaveCount,
                                     List<DepartmentHeadcountDto> departmentBreakdown,
-                                    List<DailyAttendanceDto> attendanceTrend) {
+                                    List<DailyAttendanceDto> attendanceTrend,
+                                    String appliedRange) {
         this.totalEmployees = totalEmployees;
         this.newHiresThisMonth = newHiresThisMonth;
         this.totalDepartments = totalDepartments;
@@ -38,6 +44,7 @@ public class DashboardSummaryResponse {
         this.pendingLeaveCount = pendingLeaveCount;
         this.departmentBreakdown = departmentBreakdown;
         this.attendanceTrend = attendanceTrend;
+        this.appliedRange = appliedRange;
     }
 
     public long getTotalEmployees() {
@@ -78,6 +85,10 @@ public class DashboardSummaryResponse {
 
     public List<DailyAttendanceDto> getAttendanceTrend() {
         return attendanceTrend;
+    }
+
+    public String getAppliedRange() {
+        return appliedRange;
     }
 
     public record DepartmentHeadcountDto(String name, long employeeCount) {

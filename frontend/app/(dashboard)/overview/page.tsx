@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -31,6 +31,10 @@ interface DashboardSummary {
   pendingLeaveCount: number;
   departmentBreakdown: { name: string; employeeCount: number }[];
   attendanceTrend: { date: string; present: number; absent: number; late: number; halfDay: number }[];
+  // Which range the backend actually computed this response over — set
+  // authoritatively by DashboardService, not just an echo of what the
+  // frontend asked for.
+  appliedRange: "today" | "week" | "month";
 }
 
 function SkeletonRow() {
@@ -128,6 +132,30 @@ export default function OverviewPage() {
   // fetched below, not a separate data source.
   const [activityTab, setActivityTab] = useState<"attendance" | "leave">("attendance");
 
+  // Period selector for the header dropdown. /dashboard/summary accepts a
+  // `range` query param (today/week/month — see DashboardController +
+  // DashboardService) and returns the matching aggregates plus
+  // `appliedRange` confirming what it actually computed.
+  const PERIOD_OPTIONS = [
+    { value: "today", label: "Today" },
+    { value: "week", label: "This Week" },
+    { value: "month", label: "This Month" },
+  ] as const;
+  type Period = (typeof PERIOD_OPTIONS)[number]["value"];
+  const [period, setPeriod] = useState<Period>("today");
+  const [periodOpen, setPeriodOpen] = useState(false);
+  const periodRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (periodRef.current && !periodRef.current.contains(e.target as Node)) {
+        setPeriodOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
   const canReview = role === "ADMIN" || role === "HR" || role === "MANAGER";
 
   // Percentage view of the same attendanceTrend the full chart uses, for the
@@ -149,7 +177,7 @@ export default function OverviewPage() {
   async function fetchSummary() {
     setError(null);
     try {
-      const data = await api.get<DashboardSummary>("/dashboard/summary");
+      const data = await api.get<DashboardSummary>("/dashboard/summary", { range: period }, { fresh: true });
       setSummary(data);
     } catch (err) {
       // User-facing wording only — no mention of the backend server, which
@@ -216,7 +244,7 @@ export default function OverviewPage() {
     if (isInitializing) return;
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canReview, isInitializing]);
+  }, [canReview, isInitializing, period]);
 
   const hasEmployees = !!summary && summary.totalEmployees > 0;
   const totalForBreakdown = summary?.totalEmployees ?? 0;
@@ -224,6 +252,15 @@ export default function OverviewPage() {
     ? summary.presentToday + summary.lateToday + summary.absentToday
     : 0;
   const notYetRecorded = Math.max(0, totalForBreakdown - accountedFor);
+
+  // Human-readable phrase for the currently applied range, used in card
+  // captions ("Present today" / "Present this week" / "Present this
+  // month"). Reads `summary.appliedRange` (what the backend actually
+  // computed) rather than the local `period` state, so a card never
+  // claims a period the response didn't confirm.
+  const appliedRange = summary?.appliedRange ?? period;
+  const periodLabel = appliedRange === "week" ? "this week" : appliedRange === "month" ? "this month" : "today";
+
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -234,19 +271,48 @@ export default function OverviewPage() {
             <h1 className="font-display text-2xl font-semibold text-ink">Overview</h1>
             <p className="text-sm text-muted mt-0.5">{today}</p>
           </div>
-          {/* "Today" is the only period the backend's /dashboard/summary
-              actually aggregates (presentToday, hoursLoggedToday, etc. are
-              all today-scoped) — a real, labelled control rather than a
-              decorative dropdown pretending to switch ranges it can't fetch. */}
-          <button
-            type="button"
-            className="flex items-center gap-1.5 text-xs font-medium text-ink border border-line rounded-lg px-3 py-1.5 shrink-0"
-            title="Currently showing today's stats"
-          >
-            <CalendarDays className="w-3.5 h-3.5" />
-            Today
-            <ChevronDown className="w-3.5 h-3.5 text-muted" />
-          </button>
+          {/* Real dropdown: opens a menu, tracks selection in state, and
+              refetches /dashboard/summary with the chosen range on every
+              change (see the `period` dependency on the effect above). */}
+          <div className="relative shrink-0" ref={periodRef}>
+            <button
+              type="button"
+              onClick={() => setPeriodOpen((o) => !o)}
+              className="flex items-center gap-1.5 text-xs font-medium text-ink border border-line rounded-lg px-3 py-1.5"
+              aria-haspopup="listbox"
+              aria-expanded={periodOpen}
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              {PERIOD_OPTIONS.find((p) => p.value === period)?.label}
+              <ChevronDown className={`w-3.5 h-3.5 text-muted transition-transform ${periodOpen ? "rotate-180" : ""}`} />
+            </button>
+            {periodOpen && (
+              <div
+                role="listbox"
+                className="absolute right-0 mt-1.5 w-40 bg-card border border-line rounded-lg shadow-lg overflow-hidden z-10"
+              >
+                {PERIOD_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="option"
+                    aria-selected={period === opt.value}
+                    onClick={() => {
+                      setPeriod(opt.value);
+                      setPeriodOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors ${
+                      period === opt.value
+                        ? "bg-accent/10 text-accent font-medium"
+                        : "text-ink hover:bg-canvas"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3 mt-3">
@@ -295,12 +361,10 @@ export default function OverviewPage() {
               </>
             ) : (
               <>
-                <Link href="/attendance" className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-4 sm:p-5">
+                <Link href="/attendance" className="aspect-square sm:aspect-auto flex flex-col justify-start gap-1.5 sm:block bg-card border border-line hover:border-lineHover hover:-translate-y-0.5 transition rounded-2xl p-4 sm:p-5">
                   <div className="flex items-center gap-2 text-xs font-medium text-muted">
-                    <span className="w-7 h-7 rounded-full bg-emeraldBg flex items-center justify-center shrink-0">
-                      <CalendarCheck2 className="w-3.5 h-3.5 text-emeraldTxt" />
-                    </span>
-                    <span className="truncate">Present today</span>
+                    <CalendarCheck2 className="w-4 h-4 text-emeraldTxt shrink-0" strokeWidth={2} />
+                    <span className="truncate">Present {periodLabel}</span>
                   </div>
                   <div>
                     <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2 leading-none">
@@ -315,7 +379,7 @@ export default function OverviewPage() {
                       <Sparkline data={summary.attendanceTrend.map((t) => t.present)} color="#34d399" />
                     )}
                   </div>
-                  <div className="text-xs sm:text-[11px] text-muted mt-1">
+                  <div className="text-xs sm:text-[11px] text-muted">
                     {summary && summary.totalEmployees > 0
                       ? `${Math.round((summary.presentToday / summary.totalEmployees) * 100)}% attendance`
                       : "No attendance logged yet"}
@@ -328,9 +392,7 @@ export default function OverviewPage() {
                       loading/empty state. */}
                   <Users className="pointer-events-none absolute -bottom-3 -right-3 w-20 h-20 text-sky-500/10" strokeWidth={1.5} aria-hidden="true" />
                   <div className="relative flex items-center gap-2 text-xs font-medium text-muted">
-                    <span className="w-7 h-7 rounded-full bg-sky-500/10 flex items-center justify-center shrink-0">
-                      <Users className="w-3.5 h-3.5 text-sky-500" />
-                    </span>
+                    <Users className="w-4 h-4 text-sky-500 shrink-0" strokeWidth={2} />
                     <span className="truncate">Active employees</span>
                   </div>
                   <div className="relative text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2 leading-none">
@@ -345,10 +407,8 @@ export default function OverviewPage() {
 
                 <div className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line rounded-2xl p-4 sm:p-5">
                   <div className="flex items-center gap-2 text-xs font-medium text-muted">
-                    <span className="w-7 h-7 rounded-full bg-violet-500/10 flex items-center justify-center shrink-0">
-                      <Clock className="w-3.5 h-3.5 text-violet-500" />
-                    </span>
-                    <span className="truncate">Hours logged today</span>
+                    <Clock className="w-4 h-4 text-violet-500 shrink-0" strokeWidth={2} />
+                    <span className="truncate">Hours logged {periodLabel}</span>
                   </div>
                   <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2 leading-none">
                     <CountUp value={summary?.hoursLoggedToday ?? 0} decimals={1} />h
@@ -358,9 +418,7 @@ export default function OverviewPage() {
 
                 <div className="aspect-square sm:aspect-auto flex flex-col justify-between sm:block bg-card border border-line rounded-2xl p-4 sm:p-5">
                   <div className="flex items-center gap-2 text-xs font-medium text-muted">
-                    <span className="w-7 h-7 rounded-full bg-amberBg flex items-center justify-center shrink-0">
-                      <CalendarOff className="w-3.5 h-3.5 text-amberTxt" />
-                    </span>
+                    <CalendarOff className="w-4 h-4 text-amberTxt shrink-0" strokeWidth={2} />
                     <span className="truncate">Pending leave</span>
                   </div>
                   <div className="text-3xl sm:text-2xl font-bold text-ink mt-1.5 sm:mt-2 leading-none">
@@ -397,30 +455,22 @@ export default function OverviewPage() {
               </div>
               <div className="grid grid-cols-4 gap-2">
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-9 h-9 rounded-full bg-roseBg flex items-center justify-center mb-1.5">
-                    <UserX className="w-4 h-4 text-roseTxt" />
-                  </div>
+                  <UserX className="w-5 h-5 text-roseTxt mb-1.5" strokeWidth={2} />
                   <div className="text-base font-bold text-ink"><CountUp value={summary.absentToday} /></div>
                   <div className="text-[10px] text-muted">Absent</div>
                 </div>
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-9 h-9 rounded-full bg-amberBg flex items-center justify-center mb-1.5">
-                    <Clock className="w-4 h-4 text-amberTxt" />
-                  </div>
+                  <Clock className="w-5 h-5 text-amberTxt mb-1.5" strokeWidth={2} />
                   <div className="text-base font-bold text-ink"><CountUp value={summary.lateToday} /></div>
                   <div className="text-[10px] text-muted">Late</div>
                 </div>
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-9 h-9 rounded-full bg-orange-500/10 flex items-center justify-center mb-1.5">
-                    <CalendarClock className="w-4 h-4 text-orange-500" />
-                  </div>
+                  <CalendarClock className="w-5 h-5 text-orange-500 mb-1.5" strokeWidth={2} />
                   <div className="text-base font-bold text-ink"><CountUp value={summary.pendingLeaveCount} /></div>
                   <div className="text-[10px] text-muted">Leave pending</div>
                 </div>
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-9 h-9 rounded-full bg-violet-500/10 flex items-center justify-center mb-1.5">
-                    <HelpCircle className="w-4 h-4 text-violet-500" />
-                  </div>
+                  <HelpCircle className="w-5 h-5 text-violet-500 mb-1.5" strokeWidth={2} />
                   <div className="text-base font-bold text-ink"><CountUp value={notYetRecorded} /></div>
                   <div className="text-[10px] text-muted">Not recorded</div>
                 </div>

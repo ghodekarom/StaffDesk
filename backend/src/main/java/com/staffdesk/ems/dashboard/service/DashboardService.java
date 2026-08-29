@@ -43,10 +43,20 @@ public class DashboardService {
     }
 
     @Transactional(readOnly = true)
-    public DashboardSummaryResponse getSummary(Long currentEmployeeId, boolean canReviewTeam) {
+    public DashboardSummaryResponse getSummary(Long currentEmployeeId, boolean canReviewTeam, String range) {
         LocalDate today = LocalDate.now();
         LocalDate firstOfMonth = today.withDayOfMonth(1);
         LocalDate trendStart = today.minusDays(TREND_DAYS - 1);
+
+        // Resolve the requested period into a concrete [periodStart, today]
+        // window. Unknown/missing values fall back to "today" rather than
+        // erroring — a bad range param shouldn't break the dashboard.
+        String normalizedRange = normalizeRange(range);
+        LocalDate periodStart = switch (normalizedRange) {
+            case "week" -> today.minusDays(6);
+            case "month" -> firstOfMonth;
+            default -> today;
+        };
 
         long pendingLeaveCount = canReviewTeam
                 ? leaveRequestRepository.findByStatus(LeaveRequest.LeaveStatus.PENDING, PageRequest.of(0, 1))
@@ -64,11 +74,15 @@ public class DashboardService {
         // EMPLOYEE at an individual-safe level (e.g. a general "present
         // today" count) is a product decision noted in the issue -- swap the
         // relevant zero below for a real scoped query if/when that's decided.
+        // normalizedRange is still returned here (not "today" unconditionally)
+        // so the frontend's period dropdown stays in sync with what the
+        // caller asked for even on this zeroed branch.
         if (!canReviewTeam) {
             return new DashboardSummaryResponse(
                     0L, 0L, 0L,
                     0L, 0L, 0L, 0.0,
-                    pendingLeaveCount, List.of(), List.of());
+                    pendingLeaveCount, List.of(), List.of(),
+                    normalizedRange);
         }
 
         long totalEmployees = employeeRepository.countByStatus(Employee.EmployeeStatus.ACTIVE);
@@ -76,25 +90,45 @@ public class DashboardService {
                 Employee.EmployeeStatus.ACTIVE, firstOfMonth);
         long totalDepartments = departmentRepository.count();
 
-        long presentToday = attendanceRepository.countByAttendanceDateAndStatus(today, Attendance.Status.PRESENT);
-        long absentToday = attendanceRepository.countByAttendanceDateAndStatus(today, Attendance.Status.ABSENT);
-        long lateToday = attendanceRepository.countByAttendanceDateAndStatus(today, Attendance.Status.LATE);
+        // Today/Week/Month all read the same BETWEEN query — for "today"
+        // periodStart == today, so this returns the identical number the
+        // old exact-date query did.
+        long presentCount = attendanceRepository.countByAttendanceDateBetweenAndStatus(
+                periodStart, today, Attendance.Status.PRESENT);
+        long absentCount = attendanceRepository.countByAttendanceDateBetweenAndStatus(
+                periodStart, today, Attendance.Status.ABSENT);
+        long lateCount = attendanceRepository.countByAttendanceDateBetweenAndStatus(
+                periodStart, today, Attendance.Status.LATE);
 
-        Double workedSeconds = attendanceRepository.sumWorkedSecondsForDate(today);
-        double hoursLoggedToday = Math.round((workedSeconds != null ? workedSeconds : 0.0) / 3600.0 * 10.0) / 10.0;
+        Double workedSeconds = attendanceRepository.sumWorkedSecondsBetween(periodStart, today);
+        double hoursLogged = Math.round((workedSeconds != null ? workedSeconds : 0.0) / 3600.0 * 10.0) / 10.0;
 
         List<DashboardSummaryResponse.DepartmentHeadcountDto> departmentBreakdown =
                 employeeRepository.countActiveGroupedByDepartment().stream()
                         .map(row -> new DashboardSummaryResponse.DepartmentHeadcountDto(row.getName(), row.getTotal()))
                         .collect(Collectors.toList());
 
+        // The 7-day trend chart is intentionally independent of the period
+        // dropdown — it always shows the last 7 calendar days regardless of
+        // whether "Today"/"This Week"/"This Month" is selected, since it's
+        // a fixed-window chart, not a period-scoped stat.
         List<DashboardSummaryResponse.DailyAttendanceDto> attendanceTrend =
                 buildAttendanceTrend(trendStart, today);
 
         return new DashboardSummaryResponse(
                 totalEmployees, newHires, totalDepartments,
-                presentToday, absentToday, lateToday, hoursLoggedToday,
-                pendingLeaveCount, departmentBreakdown, attendanceTrend);
+                presentCount, absentCount, lateCount, hoursLogged,
+                pendingLeaveCount, departmentBreakdown, attendanceTrend,
+                normalizedRange);
+    }
+
+    private String normalizeRange(String range) {
+        if (range == null) return "today";
+        return switch (range.trim().toLowerCase(Locale.ROOT)) {
+            case "week" -> "week";
+            case "month" -> "month";
+            default -> "today";
+        };
     }
 
     // The repository query only returns rows for (date, status) pairs that

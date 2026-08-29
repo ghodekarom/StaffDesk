@@ -32,6 +32,14 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     long countByAttendanceDate(LocalDate attendanceDate);
 
+    // Range versions of the two counters above, added for the Overview
+    // page's period dropdown (Today / This Week / This Month). When the
+    // range collapses to a single day (from == to == today) this returns
+    // the exact same number countByAttendanceDateAndStatus would.
+    long countByAttendanceDateBetweenAndStatus(LocalDate from, LocalDate to, Attendance.Status status);
+
+    long countByAttendanceDateBetween(LocalDate from, LocalDate to);
+
     // Issue #4: MANAGER-scoped equivalent of findAll(Pageable) above, used
     // by AttendanceService#getRecentAcrossEmployees when the caller is a
     // MANAGER (not ADMIN/HR) -- restricts the "Recent Attendance Logs" feed
@@ -69,6 +77,15 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
             WHERE attendance_date = :date AND clock_out IS NOT NULL
             """, nativeQuery = true)
     Double sumWorkedSecondsForDate(@Param("date") LocalDate date);
+
+    // Range version for the period dropdown (This Week / This Month) — same
+    // query shape, just BETWEEN instead of an exact-date match.
+    @Query(value = """
+            SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (clock_out - clock_in))), 0)
+            FROM attendance
+            WHERE attendance_date BETWEEN :from AND :to AND clock_out IS NOT NULL
+            """, nativeQuery = true)
+    Double sumWorkedSecondsBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
     interface DailyStatusCount {
         LocalDate getAttendanceDate();
