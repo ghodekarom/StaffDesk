@@ -72,10 +72,11 @@
         - run: cd backend && ./mvnw test
   ```
 
-### 🟡 `application.yml` has `debug: true` at top level
-- **Where:** `backend/src/main/resources/application.yml`
-- **Problem:** Spring Boot debug mode logs significantly more output and may expose sensitive config values. Fine for local dev, a liability in any deployed environment.
-- **Fix:** Remove `debug: true` or gate it behind a profile (`spring.profiles.active=dev`).
+### 🟢 `application.yml` debug mode — RESOLVED
+- `debug: false` is now configured in `application.yml` to prevent sensitive configuration leaks in non-development deployments.
+
+### 🟢 Swagger/OpenAPI public exposure — RESOLVED
+- Swagger UI (`/swagger-ui/**`, `/swagger-ui.html`) and OpenAPI docs (`/api-docs/**`) now require authentication in `SecurityConfig.java`.
 
 ### 🔵 Backend test coverage is concentrated, not broad
 - **Where:** `src/test/java/com/staffdesk/ems/`
