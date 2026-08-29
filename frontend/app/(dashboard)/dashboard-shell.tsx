@@ -10,6 +10,7 @@ import { ToastProvider } from "@/components/ui/toast-notifications";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { EmployeeDrawer, EmployeeDrawerData } from "@/components/ui/employee-drawer";
 import { NotificationPanel } from "@/components/notifications/notification-panel";
+import { OfflineBanner } from "@/components/ui/offline-banner";
 import { StaffDeskLogo } from "@/components/ui/logo-mark";
 import { Employee } from "@/types/employee";
 import { UnreadCountResponse } from "@/types/notification";
@@ -280,6 +281,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   return (
     <ToastProvider>
+      <OfflineBanner />
       <div className="flex min-h-screen bg-[#12121c] text-[#e6e6ef]">
         {/* Desktop Sidebar */}
         <aside className="hidden md:flex sticky top-0 h-screen w-[168px] flex-col shrink-0 z-50 p-4 justify-between">
