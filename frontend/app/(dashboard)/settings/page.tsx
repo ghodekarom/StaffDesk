@@ -124,6 +124,7 @@ function ProfileSection({ employeeId }: { employeeId: number }) {
         dateOfJoining: employee.dateOfJoining,
         departmentId: employee.departmentId,
         managerId: employee.managerId,
+        workState: employee.workState,
       };
       const updated = await api.put<Employee>(`/employees/${employeeId}`, payload);
       setEmployee(updated);
