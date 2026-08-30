@@ -57,7 +57,8 @@ class EmployeeServiceImplTest {
                 null,
                 null,
                 "Software Engineer",
-                LocalDate.of(2024, 1, 15)
+                LocalDate.of(2024, 1, 15),
+                "Maharashtra"
         );
     }
 
