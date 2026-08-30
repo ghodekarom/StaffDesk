@@ -223,27 +223,39 @@ for why.
 
 ## Running with Docker
 
+### Full Stack Local Dev (One Command)
+```bash
+docker-compose up --build
+```
+This orchestrates:
+- `postgres`: PostgreSQL 16 on port 5432 with persistent volume
+- `backend`: Spring Boot API on port 8080 (healthcheck monitored)
+- `frontend`: Next.js 14 standalone PWA on port 3000
+
+### Standalone Backend Container
 ```bash
 cd backend
 docker build -t staffdesk-backend .
 docker run -p 8080:8080 --env-file .env staffdesk-backend
 ```
 
-There's no Dockerfile or `docker-compose.yml` for the frontend/full stack yet
-— see [Roadmap](#roadmap).
-
 ## Testing
 
-Backend (JUnit 5 + Mockito), 9 test classes concentrated in payroll
-calculation logic, employee service, notifications, and the attendance
-reminder scheduler:
+### Backend Test Suite
+JUnit 5 + Mockito across 16 test classes (77 test cases) covering all service modules, payroll calculations, statutory deduction algorithms, and reminder/rollover schedulers:
 
 ```bash
 cd backend
 ./mvnw test
 ```
 
-No frontend test suite exists yet.
+### Frontend Test Suite
+Jest + React Testing Library covering offline status hooks, navigation RBAC matrices, and UI component lifecycle:
+
+```bash
+cd frontend
+npm test
+```
 
 ## Documentation
 
@@ -253,34 +265,26 @@ status/roadmap. Start at [`docs/README.md`](./docs/README.md).
 
 ## Project Status
 
-🚧 **Actively in development.** All core modules are implemented end-to-end
-(frontend + backend): authentication, employee management, department
-management, attendance tracking, leave management, payroll (India-specific:
-PF/ESI/TDS/Professional Tax), internal messaging, and notifications, with a
-functional dashboard UI.
+✅ **All Core Modules & Hardening Complete.** All modules are implemented end-to-end (frontend + backend): authentication, employee management, department management, attendance tracking, leave management, payroll (India-specific: PF, ESI with mid-period raise rules, TDS, Maharashtra Professional Tax via `work_state`), internal messaging, notifications, PWA offline mode, and analytics dashboard.
 
-A few things worth knowing before relying on this beyond local dev or a demo:
+- **Automated CI/CD**: Active on push/PR via `.github/workflows/ci.yml`.
+- **Database Migrations**: 16 Flyway migrations (`V1`–`V16`) with `ddl-auto: validate`.
+- **PWA & Offline Support**: Standalone manifest, Service Worker caching, offline fallback page (`/offline`), reactive offline banner.
 
-- **Payroll statutory figures (PF/ESI/TDS/Professional Tax) are not yet
-  verified** against official government sources or signed off by a
-  compliance consultant — see the seed migration comments.
-- **Professional Tax isn't actually being deducted yet** — `employees.work_state`
-  exists in the schema but isn't populated or wired up, so `PayrollRunService`
-  currently skips it for everyone.
-- **The payroll role model is a stated assumption, not a confirmed
-  decision** (documented directly in `PayrollRunController`).
-
-Full detail in [`docs/STATUS_AND_ROADMAP.md`](./docs/STATUS_AND_ROADMAP.md).
+Full detail in [`docs/STATUS_AND_ROADMAP.md`](./docs/STATUS_AND_ROADMAP.md) and [`docs/PROGRESS.md`](./docs/PROGRESS.md).
 
 ## Roadmap
 
-- [ ] Confirm the payroll role model and verify statutory figures (PF/ESI/TDS/Professional Tax)
-- [ ] Wire `employees.work_state` through so Professional Tax actually applies
-- [ ] Confirm ESI mid-period contribution handling end-to-end
-- [ ] CI/CD pipeline
-- [ ] Expanded test coverage (frontend has none yet; backend has 9 test classes)
-- [ ] `docker-compose.yml` for one-command local dev
-- [ ] `LICENSE` file
+- [x] Confirm and lock down the payroll role model (`PayrollRunController`)
+- [x] Wire `employees.work_state` through so Professional Tax actually applies (V15 migration)
+- [x] Confirm ESI mid-period contribution handling end-to-end
+- [x] CI/CD pipeline (`.github/workflows/ci.yml`)
+- [x] Expanded test coverage (Backend: 16 classes, 77 tests; Frontend: Jest + RTL)
+- [x] `docker-compose.yml` for one-command local dev
+- [x] MIT `LICENSE` file
+- [ ] Verify PF/ESI/TDS/Professional-Tax statutory figures against official gazette notifications; obtain compliance sign-off
+- [ ] Background Sync for offline writes (PWA Phase 2)
+- [ ] Web Push notifications (PWA Phase 2)
 
 See [`docs/STATUS_AND_ROADMAP.md`](./docs/STATUS_AND_ROADMAP.md) for the full list.
 
@@ -299,5 +303,4 @@ checks, etc.) before diving in.
 
 ## License
 
-This project currently has no explicit license file. Add a `LICENSE` file
-(e.g., MIT) if you intend to open-source this project.
+This project is licensed under the [MIT License](./LICENSE) - see the [LICENSE](./LICENSE) file for details.
