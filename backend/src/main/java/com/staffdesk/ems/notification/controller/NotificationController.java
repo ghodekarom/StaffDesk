@@ -17,6 +17,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * In-app notifications and notification preferences.
+ *
+ * <p><strong>Issue #5 Design Policy:</strong> Notifications are self-scoped by design — all queries
+ * (list, unread count, preferences, mark-as-read) strictly filter by the caller's own
+ * {@code principal.getEmployeeId()}. No additional role restrictions are required.
+ */
 @RestController
 @RequestMapping("/api/v1/notifications")
 public class NotificationController {

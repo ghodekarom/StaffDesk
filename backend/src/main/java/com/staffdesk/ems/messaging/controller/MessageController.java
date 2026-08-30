@@ -18,6 +18,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Direct 1-to-1 messaging between employees.
+ *
+ * <p><strong>Issue #5 Design Policy:</strong> Messaging is intentionally open across the
+ * organization — any authenticated employee can send direct messages to any other colleague,
+ * mirroring internal communication tools (Slack/Teams). Scoping is inherent: thread and inbox
+ * queries are strictly filtered to conversations where the caller is either sender or recipient.
+ */
 @RestController
 @RequestMapping("/api/v1/messages")
 public class MessageController {
