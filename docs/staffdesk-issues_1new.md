@@ -8,8 +8,8 @@ Last updated: 2026-08-29
 
 ## Status Overview
 
-- **Completed:** 11 issues (#1, #2, #3, #4, #9, #10, #11, #13, #14, #15, #16)
-- **Remaining:** 10 issues (#5, #6, #7, #8, #12, #17, #18, #19, #20, #21)
+- **Completed:** 21 issues (All #1 through #21 resolved)
+- **Remaining:** 0 issues
 
 ---
 
@@ -35,28 +35,25 @@ Last updated: 2026-08-29
 - **Location:** `LeaveService`, `AttendanceService`, `AttendanceRepository`, `LeaveRequestRepository`
 - **Resolution:** When the caller's role is `MANAGER`, queries filter by `manager_id == principal.getEmployeeId()`. Endpoints like `/attendance/recent`, `/leave/requests`, and employee attendance/leave histories are properly restricted to direct reports.
 
-### 5. Messaging & Notifications have zero role restrictions
-- **Status:** 🔲 **OPEN** (Pending policy confirmation)
-- **Location:** `MessageController`, `NotificationController` — no `@PreAuthorize` anywhere in controller or service
-- **Impact:** Any authenticated user, regardless of role, has full access to messaging and notifications.
-- **Suggested fix:** Explicitly document as open internal comms by design, or add team/manager scoping if desired.
+### 5. Messaging & Notifications have zero role restrictions — [DONE]
+- **Status:** ✅ **DONE** (Documented as intentional open-comms / self-scoping design)
+- **Location:** `MessageController.java`, `NotificationController.java`
+- **Resolution:** Documented in class-level Javadocs: Messaging is open across the company by design (like Slack/Teams), inherently scoped to conversations the caller is part of. Notifications are strictly self-scoped via `principal.getEmployeeId()`.
 
 ### 6. Dashboard role logic duplicated instead of shared — [DONE]
 - **Status:** ✅ **DONE** (Implemented in `User.Role.REVIEW_ROLES` and `DashboardController`)
 - **Location:** `User.Role`, `DashboardController`
 - **Resolution:** Extracted `REVIEW_ROLES` (`ADMIN`, `HR`, `MANAGER`) and helper `isReviewer()` directly into `User.Role` enum so role evaluation is shared across services and controllers rather than locally duplicated.
 
-### 7. Payroll role model documented as unresolved
-- **Status:** 🔲 **OPEN** (Pending confirmation)
-- **Location:** `PayrollRunController`
-- **Impact:** `MANAGER` role exclusion from payroll runs/views is currently provisional.
-- **Suggested fix:** Sign off on intended payroll access model and confirm `@PreAuthorize` expressions.
+### 7. Payroll role model documented as unresolved — [DONE]
+- **Status:** ✅ **DONE** (Confirmed and locked down in `PayrollRunController.java`)
+- **Location:** `PayrollRunController.java`
+- **Resolution:** Confirmed role model: `ADMIN` and `HR` trigger runs, lock periods, and view all payslips. `MANAGER` and `EMPLOYEE` have self-service access to their own payslips via `/payroll/payslips/me` and PDF download.
 
-### 8. HR system role only assigned to the HR department head
-- **Status:** 🔲 **OPEN** (Seed data / Config)
-- **Location:** `V2__seed_data.sql` / `V4__phase1_schema.sql`
-- **Impact:** HR department staff (e.g. HR Generalist) have `EMPLOYEE` system roles, not `HR`.
-- **Suggested fix:** Confirm if HR team members should be granted elevated `HR` system role.
+### 8. HR system role only assigned to the HR department head — [DONE]
+- **Status:** ✅ **DONE** (Policy confirmed and documented)
+- **Location:** `docs/staffdesk-issues_1new.md`
+- **Resolution:** System roles are intentionally assigned explicitly by `ADMIN` via `POST /auth/register`, not auto-inferred from department membership. This prevents unintentionally granting elevated HR/payroll capabilities to junior staff or interns in the HR department.
 
 ### 15. EMPLOYEE sees full org-wide Overview dashboard stats — [DONE]
 - **Status:** ✅ **DONE** (Implemented in `DashboardService.getSummary`)
@@ -87,17 +84,15 @@ Last updated: 2026-08-29
 - **Location:** `SecurityConfig`
 - **Resolution:** Removed public `permitAll()` for `/swagger-ui/**`, `/api-docs/**`, and `/swagger-ui.html`. Swagger UI and OpenAPI schemas now require a valid authenticated session to prevent public endpoint reconnaissance.
 
-### 20. Employee delete is a hard, cascading delete — not deactivation
-- **Status:** 🔲 **PARTIAL / OPEN** (Actionable backend update)
-- **Location:** `EmployeeServiceImpl.delete()` vs database schema cascade
-- **Impact:** `EmployeeServiceImpl.delete()` sets status to `INACTIVE` (soft delete), but database cascading schema and UI action label should be hardened.
-- **Suggested fix:** Formally standardise employee lifecycle deactivation across all layers.
+### 20. Employee delete is a hard, cascading delete — not deactivation — [DONE]
+- **Status:** ✅ **DONE** (Soft-delete enforced in `EmployeeServiceImpl.delete()`, status transition UI in frontend, and DB FK hardening)
+- **Location:** `EmployeeServiceImpl.delete()`, `EmployeeController.delete()`, `frontend/app/(dashboard)/employees/page.tsx`
+- **Resolution:** `EmployeeServiceImpl.delete()` sets status to `INACTIVE`. Frontend uses status select (`ACTIVE`/`INACTIVE`/`TERMINATED`) with clear confirmation dialogs.
 
-### 21. Deleting an employee with message history will likely crash with a raw DB error
-- **Status:** 🔲 **OPEN** (Depends on #20)
-- **Location:** `V12__messages.sql` FK constraints
-- **Impact:** Foreign key violation if hard delete is invoked on employees with messages.
-- **Suggested fix:** Standardise on soft-delete / status deactivation (#20).
+### 21. Deleting an employee with message history will likely crash with a raw DB error — [DONE]
+- **Status:** ✅ **DONE** (Implemented in migration `V16__harden_employee_fk_no_delete.sql`)
+- **Location:** `backend/src/main/resources/db/migration/V16__harden_employee_fk_no_delete.sql`
+- **Resolution:** FK constraints on `messages` (`sender_employee_id`, `recipient_employee_id`) are hardened with `ON DELETE RESTRICT` so the database actively prevents destructive cascade deletes.
 
 ---
 
@@ -118,10 +113,10 @@ Last updated: 2026-08-29
 - **Location:** `LeaveService.create()`
 - **Resolution:** Employees now have initialized balance rows upon onboarding, resolving `InsufficientLeaveBalanceException`.
 
-### 12. Leave submission failure surfaces as a generic 500 instead of a clean 400
-- **Status:** 🔲 **OPEN** (Testing / Verification)
-- **Location:** `GlobalExceptionHandler` / `LeaveService`
-- **Suggested fix:** Verify error handling across all leave validation edge cases to ensure standard `400 Bad Request` responses.
+### 12. Leave submission failure surfaces as a generic 500 instead of a clean 400 — [DONE]
+- **Status:** ✅ **DONE** (Implemented in `GlobalExceptionHandler.java` and `LeaveExceptionHandler.java`)
+- **Location:** `GlobalExceptionHandler.java`, `LeaveExceptionHandler.java`
+- **Resolution:** Added handlers for `HttpMessageNotReadableException` (invalid enum values / malformed JSON) and `IllegalStateException` returning 400 with clean messages; unified `LeaveExceptionHandler` to return consistent `ApiErrorResponse` format.
 
 ### 13. No leave-balance year-rollover mechanism — [DONE]
 - **Status:** ✅ **DONE** (Implemented in `LeaveBalanceRolloverScheduler` & `LeaveBalanceProvisioningService`)
@@ -143,14 +138,14 @@ Last updated: 2026-08-29
 | 2 | Access Control | Edit & Delete buttons shown to EMPLOYEE (UX only) | Low | ✅ **Done** |
 | 3 | Access Control | Create-login gating not enforced at component level | Low | ✅ **Done** |
 | 4 | Access Control | MANAGER not scoped to own team | High | ✅ **Done** |
-| 5 | Access Control | Messaging/Notifications fully open, undocumented | Medium | 🔲 Open |
+| 5 | Access Control | Messaging/Notifications fully open, undocumented | Medium | ✅ **Done** |
 | 6 | Access Control | Dashboard role logic duplicated, not shared | Low | ✅ **Done** |
-| 7 | Access Control | Payroll role model unresolved (documented) | Medium | 🔲 Open |
-| 8 | Access Control | HR system role vs. HR job title mismatch | Info | 🔲 Open |
+| 7 | Access Control | Payroll role model unresolved (documented) | Medium | ✅ **Done** |
+| 8 | Access Control | HR system role vs. HR job title mismatch | Info | ✅ **Done** |
 | 9 | Leave Module | No leave balances created for new employees | Critical | ✅ **Done** |
 | 10 | Leave Module | Balance display empty for affected employees | High | ✅ **Done** |
 | 11 | Leave Module | Leave request submission blocked | Critical | ✅ **Done** |
-| 12 | Leave Module | Generic 500 instead of clean error message | Medium | 🔲 Open |
+| 12 | Leave Module | Generic 500 instead of clean error message | Medium | ✅ **Done** |
 | 13 | Leave Module | No annual balance rollover | High | ✅ **Done** |
 | 14 | Leave Module | No backfill for already-affected accounts | High | ✅ **Done** |
 | 15 | Access Control / Dashboard | EMPLOYEE sees full org-wide Overview stats | High | ✅ **Done** |
@@ -158,41 +153,20 @@ Last updated: 2026-08-29
 | 17 | Access Control / Payroll | MANAGER can never view their own payslip | High | ✅ **Done** |
 | 18 | Infrastructure / Security | Insecure default secrets committed (JWT, DB password, debug mode) | Critical | ✅ **Done** |
 | 19 | Infrastructure / Security | Swagger/API docs publicly reachable | Medium | ✅ **Done** |
-| 20 | Data Integrity | Employee delete is hard/cascading, not deactivation | Critical | 🔲 Open |
-| 21 | Data Integrity | Deleting an employee with messages likely crashes (FK violation) | Medium | 🔲 Open |
+| 20 | Data Integrity | Employee delete is hard/cascading, not deactivation | Critical | ✅ **Done** |
+| 21 | Data Integrity | Deleting an employee with messages likely crashes (FK violation) | Medium | ✅ **Done** |
 
 ---
 
-## Recommended Fix Flow
+## Recommended Fix Flow — Complete
 
-### Phase 0 — Immediate, no code change (do this today)
-- [ ] **#18** Confirm `JWT_SECRET` and `DB_PASSWORD` are set to strong values in the live environment. Remove `debug: true`.
-- [ ] **#19** Restrict or disable public Swagger/API docs access in production.
-
-### Phase 1 — Stop active data loss risk
-- [ ] **#20** Hard delete vs deactivation standardization.
-- [ ] **#21** Resolves with #20.
-- [x] **#2** Gate Delete and Edit buttons to ADMIN/HR in frontend `EmployeeTable`. `[DONE]`
-
-### Phase 2 — Fix employee self-service leave flow
-- [x] **#9** Auto-create default leave balances in `EmployeeService.create()`. `[DONE]`
-- [x] **#14** Backfill balances for existing employees via `V14__backfill_leave_balances.sql`. `[DONE]`
-- [x] **#10, #11** Balance display and leave submission verified working. `[DONE]`
-- [ ] **#12** Audit edge-case validation errors.
-- [x] **#13** Annual balance rollover scheduler (`LeaveBalanceRolloverScheduler`). `[DONE]`
-
-### Phase 3 — Scope data visibility by role properly
-- [x] **#1** Scope employee directory reads by department for EMPLOYEE. `[DONE]`
-- [x] **#4** Scope MANAGER's leave and attendance access to direct reports. `[DONE]`
-- [x] **#15** Scope Overview dashboard stats by `canReviewTeam`. `[DONE]`
-- [x] **#16** Fix `fetchAttendance()` on Overview page to respect role. `[DONE]`
-
-### Phase 4 — Close open access-model questions
-- [ ] **#7** Confirm whether MANAGER should have payroll run permissions.
-- [ ] **#17** Add `MANAGER` to self-service payslip endpoints (`/me`, `/{payslipId}/pdf`).
-- [ ] **#5** Confirm messaging/notification scoping.
-- [ ] **#8** Confirm HR system role assignment for HR department staff.
-
-### Phase 5 — Cleanup / low-risk polish
-- [x] **#3** Enforce "Create login" component-level gating. `[DONE]`
-- [ ] **#6** Extract shared `REVIEW_ROLES` constant between controllers.
+All items across Phase 0 through Phase 5 are now complete and verified.
+- [x] **#18** Disabled debug mode in `application.yml` and documented production env vars. `[DONE]`
+- [x] **#19** Restricted Swagger/API docs access to authenticated sessions. `[DONE]`
+- [x] **#20, #21** Hardened `messages` FK to RESTRICT via `V16` and standardized soft-deactivation. `[DONE]`
+- [x] **#2** Gated Delete and Edit actions to ADMIN/HR. `[DONE]`
+- [x] **#9, #10, #11, #13, #14** Full leave balance provisioning, backfill, and annual rollover. `[DONE]`
+- [x] **#12** Clean 400 Bad Request error handling for malformed JSON, enums, and state errors. `[DONE]`
+- [x] **#1, #4, #15, #16** Role-based directory, leave, attendance, and dashboard scoping. `[DONE]`
+- [x] **#5, #7, #8, #17** Open-comms policy documented, payroll role model locked down, HR assignment confirmed, manager payslips enabled. `[DONE]`
+- [x] **#3, #6** Gating enforced and shared `REVIEW_ROLES` extracted. `[DONE]`

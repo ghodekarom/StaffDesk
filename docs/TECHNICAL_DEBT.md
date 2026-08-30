@@ -19,10 +19,11 @@
 
 ## Payroll
 
-### 🔴 Professional Tax not being deducted for anyone
-- **Where:** `employees.work_state` column (added V5), `PayrollRunService`, `ProfessionalTaxCalculator`
-- **Problem:** The `work_state` column exists in the DB but is never populated or exposed via any API endpoint. `EmployeeDirectoryPort` returns `null` for it. `PayrollRunService` treats `null` as "no PT state → skip PT" and logs a warning. Result: **Professional Tax is silently zero for every employee on every payroll run**, even though the calculator, slab table, and DB column are all in place.
-- **Fix:** Expose `work_state` on the employee create/edit API and frontend form; backfill existing employees; remove the null-skip path in `PayrollRunService`.
+### 🟢 Professional Tax wiring (`employees.work_state`) — RESOLVED
+- `work_state` is now exposed in `EmployeeRequestDto`, `EmployeeResponseDto`, `EmployeeServiceImpl`, the frontend `employee-form.tsx` (Indian state dropdown), and backfilled for all existing employees via `V15__backfill_work_state_maharashtra.sql`. Professional Tax slabs (seeded V9) are now resolved during payroll runs.
+
+### 🟢 Payroll role model — RESOLVED
+- Role model confirmed and documented in `PayrollRunController`: ADMIN/HR have run and aggregate viewing permissions; MANAGER and EMPLOYEE have self-service access to own payslips.
 
 ### 🟠 Statutory figures unverified (PF / ESI / TDS / Professional Tax)
 - **Where:** `V7__seed_payroll_statutory_settings.sql`, `V8__seed_tds_slabs.sql`, `V9__seed_professional_tax_slabs_placeholder.sql`
@@ -34,11 +35,6 @@
 - **Where:** `EsiCalculator.alreadyContributingThisPeriod` flag, `PayrollRunService`
 - **Problem:** Under the ESI Act, an employee enrolled at the start of a contribution period (Apr–Sep or Oct–Mar) remains ESI-applicable for that entire period even if a mid-period raise pushes them above the wage ceiling. `EsiCalculator` exposes a flag for this, but per its own doc comment it "can't know that on its own" — the caller must track state across periods. It is unconfirmed whether `PayrollRunService` actually wires this through.
 - **Fix:** Audit `PayrollRunService` → `EsiCalculator` call site; implement cross-period state tracking if missing; add an integration test covering the mid-period raise scenario.
-
-### 🟡 Payroll role model is an unconfirmed default assumption
-- **Where:** `PayrollRunController` — see code comment
-- **Problem:** The comment reads: "ADMIN/HR can trigger runs and view all payslips, MANAGER has no payroll access, EMPLOYEE is self-service only — adjust the `@PreAuthorize` expressions once the team confirms the real role model." The current `@PreAuthorize` annotations reflect this assumption, not a confirmed business decision.
-- **Fix:** Confirm with stakeholders; update `@PreAuthorize` expressions and the API reference doc accordingly.
 
 ---
 
@@ -53,7 +49,13 @@
 
 ---
 
-## Backend
+## Backend & Data Integrity
+
+### 🟢 Employee delete safety — RESOLVED
+- Soft-delete enforced via `EmployeeServiceImpl.delete()` (`status -> INACTIVE`), and DB-level `messages` FKs hardened with `ON DELETE RESTRICT` via `V16__harden_employee_fk_no_delete.sql` preventing cascading message destruction or FK crashes.
+
+### 🟢 Leave error responses — RESOLVED
+- Added handlers in `GlobalExceptionHandler` for `HttpMessageNotReadableException` (malformed JSON / invalid enum values) and `IllegalStateException`, and migrated `LeaveExceptionHandler` to return consistent `ApiErrorResponse` DTOs.
 
 ### 🟡 No CI/CD pipeline
 - **Where:** Root repo

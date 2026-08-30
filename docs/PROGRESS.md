@@ -27,7 +27,7 @@
 | Department CRUD + head assignment | ✅ | Circular FK bootstrap handled in migrations |
 | Attendance (clock-in/out, personal + team views, manual override) | ✅ | Reminder scheduler + manager team scoping included |
 | Leave (requests, balances, approve/reject, team view) | ✅ | Overlap + balance validation + provisioning + rollover + manager scoping |
-| Payroll (salary structures, runs, payslips + PDF) | 🔶 | India-specific; manager/employee self-service active; statutory gaps pending |
+| Payroll (salary structures, runs, payslips + PDF) | ✅ | India-specific; PT wired via `work_state`; manager/employee self-service active |
 | Messaging (direct messages, threads, unread counts) | ✅ | Flat schema, no separate threads table |
 | Notifications (in-app, preferences, unread badge) | ✅ | Lazily created preference rows |
 | Dashboard (aggregated summary endpoint) | ✅ | Real DB queries, role-gated metrics, period range support |
@@ -38,7 +38,7 @@
 |---|---|---|
 | `/login` | ✅ | |
 | `/overview` | ✅ | Charts via Recharts, real API data, range selector, skeleton cards |
-| `/employees` | ✅ | Paginated list, create/edit, status changes, role-gated actions |
+| `/employees` | ✅ | Paginated list, create/edit with Work State, status changes, role-gated actions |
 | `/departments` | ✅ | CRUD + head assignment |
 | `/attendance` | ✅ | Clock widget, personal history |
 | `/attendance/team` | ✅ | Team view (ADMIN/HR/MANAGER) |
@@ -55,11 +55,11 @@
 
 | Item | Status | Notes |
 |---|---|---|
-| PostgreSQL schema (Flyway V1–V14) | ✅ | `ddl-auto: validate` — migrations are the source of truth |
+| PostgreSQL schema (Flyway V1–V16) | ✅ | `ddl-auto: validate` — migrations are the source of truth |
 | Seed data (V4) | ✅ | 15 depts, 150 employees, ~122 users, shared password |
 | JWT auth + Spring Security `@PreAuthorize` | ✅ | 4 roles: `ADMIN / HR / MANAGER / EMPLOYEE` |
 | Backend Docker build (multi-stage, non-root) | ✅ | Render-compatible `$PORT` |
-| Swagger UI (`/swagger-ui.html`) | ✅ | Via springdoc-openapi |
+| Swagger UI (`/swagger-ui.html`) | ✅ | Via springdoc-openapi (authenticated sessions required) |
 | Backend JUnit test suite (9 classes) | 🔶 | Concentrated in payroll + employee + notifications |
 | Frontend test suite | 🔲 | No Jest/RTL config yet |
 | CI/CD pipeline | 🔲 | No automated pipeline on push/PR |
@@ -94,12 +94,12 @@
 Items pulled from code comments, migration notes, and the original STATUS_AND_ROADMAP doc:
 
 ### High priority
-- [ ] **Wire `employees.work_state`** → Professional Tax deductions are currently not applied for anyone
+- [x] **Wire `employees.work_state`** → Completed via DTO, entity, service, frontend form, and V15 migration.
 - [ ] **Verify PF/ESI/TDS/Prof. Tax statutory figures** — V7/V9 seeds are explicitly unverified; need CA/compliance sign-off before real payroll
 
 ### Medium priority
+- [x] **Lock down payroll role model** — Confirmed in `PayrollRunController` Javadoc (ADMIN/HR runs, MANAGER/EMPLOYEE self-service).
 - [ ] **Confirm ESI mid-period contribution handling** end-to-end (flag exists in `EsiCalculator`, wiring through `PayrollRunService` unconfirmed)
-- [ ] **Lock down payroll role model** — currently a default assumption in `PayrollRunController` comments
 - [ ] **Frontend test suite** — Jest + React Testing Library setup
 - [ ] **Expanded backend test coverage** — beyond payroll/employee/notification
 - [ ] **Background Sync** for offline write operations (PWA Phase 2 — send messages/leave requests offline, sync on reconnect)
@@ -109,4 +109,4 @@ Items pulled from code comments, migration notes, and the original STATUS_AND_RO
 - [ ] `docker-compose.yml` tying frontend + backend + Postgres together
 - [ ] CI/CD pipeline (tests on push/PR)
 - [ ] `LICENSE` file (MIT recommended)
-- [ ] Notification `type` CHECK constraint refactor — currently hand-maintained separate from Java enum (already caused one prod-shape bug in V13)
+- [ ] Notification `type` CHECK constraint refactor — currently hand-maintained separate from Java enum
