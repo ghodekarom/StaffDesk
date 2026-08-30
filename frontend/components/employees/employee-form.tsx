@@ -14,6 +14,31 @@ type FormErrors = Partial<Record<keyof EmployeeRequest, string>> & {
 
 const ROLES: Role[] = ["ADMIN", "HR", "MANAGER", "EMPLOYEE"];
 
+// Indian states relevant for Professional Tax calculation.
+// Only states that currently levy Professional Tax are listed.
+const INDIAN_STATES = [
+  "Maharashtra",
+  "Karnataka",
+  "West Bengal",
+  "Tamil Nadu",
+  "Andhra Pradesh",
+  "Telangana",
+  "Kerala",
+  "Gujarat",
+  "Madhya Pradesh",
+  "Odisha",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Jharkhand",
+  "Meghalaya",
+  "Tripura",
+  "Manipur",
+  "Mizoram",
+  "Nagaland",
+  "Sikkim",
+] as const;
+
 export interface EmployeeFormSubmitData {
   employee: EmployeeRequest;
   // Present only when the ADMIN opted in via the inline "Create login"
@@ -47,6 +72,7 @@ export function EmployeeForm({
     dateOfJoining: initial?.dateOfJoining ?? "",
     departmentId: initial?.departmentId ?? null,
     managerId: initial?.managerId ?? null,
+    workState: initial?.workState ?? null,
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -153,14 +179,31 @@ export function EmployeeForm({
         </Field>
       </div>
 
-      <Field label="Date of joining" htmlFor="dateOfJoining">
-        <Input
-          id="dateOfJoining"
-          type="date"
-          value={form.dateOfJoining ?? ""}
-          onChange={(e) => update("dateOfJoining", e.target.value)}
-        />
-      </Field>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Date of joining" htmlFor="dateOfJoining">
+          <Input
+            id="dateOfJoining"
+            type="date"
+            value={form.dateOfJoining ?? ""}
+            onChange={(e) => update("dateOfJoining", e.target.value)}
+          />
+        </Field>
+        <Field label="Work State" htmlFor="workState">
+          <select
+            id="workState"
+            value={form.workState ?? ""}
+            onChange={(e) => update("workState", e.target.value || null)}
+            className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent"
+          >
+            <option value="">Select state…</option>
+            {INDIAN_STATES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
 
       {/* Was a raw numeric-id input; now a type-ahead search against the
           real Departments/Employees endpoints. */}

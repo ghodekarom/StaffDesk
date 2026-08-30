@@ -17,6 +17,9 @@ public record EmployeeResponseDto(
         String managerName,
         String designation,
         LocalDate dateOfJoining,
+        // Indian state for Professional Tax deduction (e.g. "Maharashtra").
+        // Nullable for employees who haven't been assigned one yet.
+        String workState,
         Employee.EmployeeStatus status,
         // Whether a matching row exists in `users` (i.e. this employee can log
         // in). Employees and their login accounts are created independently --
@@ -39,6 +42,7 @@ public record EmployeeResponseDto(
                 e.getManager() != null ? e.getManager().getFirstName() + " " + e.getManager().getLastName() : null,
                 e.getDesignation(),
                 e.getDateOfJoining(),
+                e.getWorkState(),
                 e.getStatus(),
                 hasLoginAccount
         );

@@ -133,6 +133,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setPhone(request.phone());
         employee.setDesignation(request.designation());
         employee.setDateOfJoining(request.dateOfJoining());
+        employee.setWorkState(request.workState());
 
         if (request.departmentId() != null) {
             Department department = departmentRepository.findById(request.departmentId())

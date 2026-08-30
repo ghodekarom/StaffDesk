@@ -14,6 +14,8 @@ export interface Employee {
   managerName: string | null;
   designation: string | null;
   dateOfJoining: string | null; // ISO date (LocalDate)
+  // Indian state for Professional Tax (e.g. "Maharashtra"). Nullable.
+  workState: string | null;
   status: EmployeeStatus;
   // Whether a matching row exists in `users` -- i.e. whether this employee
   // can actually log in. Employees and login accounts are created via two
@@ -33,6 +35,7 @@ export interface EmployeeRequest {
   dateOfJoining: string | null;
   departmentId: number | null;
   managerId: number | null;
+  workState: string | null;
 }
 
 // Mirrors Spring's Page<T> JSON shape

@@ -32,6 +32,10 @@ public record EmployeeRequestDto(
 
         @NotNull(message = "date of joining is required")
         @PastOrPresent(message = "date of joining cannot be in the future")
-        LocalDate dateOfJoining
+        LocalDate dateOfJoining,
+
+        // Indian state for Professional Tax calculation (e.g. "Maharashtra",
+        // "Karnataka"). Nullable — existing employees may not have one yet.
+        String workState
 ) {
 }
