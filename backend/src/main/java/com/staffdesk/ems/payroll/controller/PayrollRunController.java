@@ -18,10 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * §7.4 assumption (still open, proposed default used here): ADMIN/HR can trigger
- * runs and view all payslips; MANAGER has no payroll access; EMPLOYEE is
- * self-service only (see PayslipController#getMyPayslips). Adjust the
- * @PreAuthorize expressions once the team confirms the real role model.
+ * Payroll run processing and locking.
+ *
+ * <p><strong>Issue #7 Confirmed Role Model:</strong>
+ * <ul>
+ *   <li>{@code ADMIN} and {@code HR}: full access to trigger runs, view run details, lock runs, and access all payslips.</li>
+ *   <li>{@code MANAGER} and {@code EMPLOYEE}: no payroll run administration access. Self-service access to own payslips
+ *       is handled via {@link PayslipController#getMyPayslips} and PDF download.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/v1/payroll/runs")
