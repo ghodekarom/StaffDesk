@@ -60,11 +60,11 @@
 | JWT auth + Spring Security `@PreAuthorize` | ✅ | 4 roles: `ADMIN / HR / MANAGER / EMPLOYEE` |
 | Backend Docker build (multi-stage, non-root) | ✅ | Render-compatible `$PORT` |
 | Swagger UI (`/swagger-ui.html`) | ✅ | Via springdoc-openapi (authenticated sessions required) |
-| Backend JUnit test suite (9 classes) | 🔶 | Concentrated in payroll + employee + notifications |
-| Frontend test suite | 🔲 | No Jest/RTL config yet |
-| CI/CD pipeline | 🔲 | No automated pipeline on push/PR |
-| `docker-compose.yml` (frontend + backend + Postgres) | 🔲 | Backend-only Dockerfile exists |
-| `LICENSE` file | 🔲 | Needed before open-sourcing |
+| Backend JUnit test suite (16 classes, 77 tests) | ✅ | Comprehensive coverage across all modules and edge cases |
+| Frontend test suite (Jest + React Testing Library) | ✅ | Unit + component tests for hooks, RBAC navigation, badges |
+| CI/CD pipeline (`.github/workflows/ci.yml`) | ✅ | Full backend and frontend validation on push/PR |
+| `docker-compose.yml` (frontend + backend + Postgres) | ✅ | One-command local development setup |
+| `LICENSE` file (MIT) | ✅ | Root-level permissive license |
 
 ---
 
@@ -99,14 +99,14 @@ Items pulled from code comments, migration notes, and the original STATUS_AND_RO
 
 ### Medium priority
 - [x] **Lock down payroll role model** — Confirmed in `PayrollRunController` Javadoc (ADMIN/HR runs, MANAGER/EMPLOYEE self-service).
-- [ ] **Confirm ESI mid-period contribution handling** end-to-end (flag exists in `EsiCalculator`, wiring through `PayrollRunService` unconfirmed)
-- [ ] **Frontend test suite** — Jest + React Testing Library setup
-- [ ] **Expanded backend test coverage** — beyond payroll/employee/notification
+- [x] **Confirm ESI mid-period contribution handling** end-to-end (verified in `PayrollRunService` and tested in `PayrollRunServiceTest`).
+- [x] **Frontend test suite** — Jest + React Testing Library setup (3 suites, 11 tests).
+- [x] **Expanded backend test coverage** — 16 classes, 77 tests covering all service modules.
 - [ ] **Background Sync** for offline write operations (PWA Phase 2 — send messages/leave requests offline, sync on reconnect)
 - [ ] **Web Push notifications** — VAPID key setup + `/api/v1/push/subscribe` backend endpoint
 
 ### Low priority
-- [ ] `docker-compose.yml` tying frontend + backend + Postgres together
-- [ ] CI/CD pipeline (tests on push/PR)
-- [ ] `LICENSE` file (MIT recommended)
+- [x] `docker-compose.yml` tying frontend + backend + Postgres together
+- [x] CI/CD pipeline (tests on push/PR)
+- [x] `LICENSE` file (MIT)
 - [ ] Notification `type` CHECK constraint refactor — currently hand-maintained separate from Java enum

@@ -121,6 +121,58 @@ class PayrollRunServiceTest {
         assertEquals(new BigDecimal("29600.00"), saved.getNetPay());
     }
 
+    @Test
+    void processRun_midPeriodRaiseAboveEsiCeiling_alreadyContributing_stillDeductsEsi() throws Exception {
+        // Under ESI Act: if employee enrolled at start of contribution period (Apr-Sep or Oct-Mar),
+        // ESI deductions must continue for remainder of period even if gross wages exceed 21000 ceiling.
+        PayrollRun run = new PayrollRun(7, 2026); // July 2026 -> Apr-Sep contribution period
+        setId(run, 101L);
+        when(payrollRunRepository.findByPeriodMonthAndPeriodYear(7, 2026)).thenReturn(Optional.of(run));
+        when(payrollRunRepository.save(any(PayrollRun.class))).thenReturn(run);
+
+        when(settingsRepository.findApplicableSettings(any(LocalDate.class)))
+                .thenReturn(Optional.of(seededSettings()));
+        when(tdsSlabRepository.findByFinancialYearOrderBySlabOrderAsc("2026-2027"))
+                .thenReturn(fy2026_27Slabs());
+
+        when(employeeDirectoryPort.findActiveEmployeeIds(any(LocalDate.class)))
+                .thenReturn(List.of(EMPLOYEE_ID));
+        when(employeeDirectoryPort.findPayrollProfile(EMPLOYEE_ID))
+                .thenReturn(new EmployeePayrollProfile(EMPLOYEE_ID, "Test Employee", "Maharashtra", false,
+                        LocalDate.of(2020, 1, 1), null));
+
+        // Gross wages = 15000 + 6000 + 2000 + 2000 = 25000 (exceeds 21000 ceiling)
+        when(salaryStructureLookupPort.findApplicable(eq(EMPLOYEE_ID), any(LocalDate.class)))
+                .thenReturn(Optional.of(new SalaryStructureSnapshot(
+                        10L,
+                        new BigDecimal("15000.00"), new BigDecimal("6000.00"),
+                        new BigDecimal("2000.00"), new BigDecimal("2000.00"), BigDecimal.ZERO)));
+
+        when(attendanceLeavePort.summarize(eq(EMPLOYEE_ID), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(new AttendancePeriodSummary(31, new BigDecimal("31")));
+
+        // Employee was contributing earlier in the current contribution period (Apr-Sep 2026)
+        when(payslipRepository.existsEsiApplicablePriorInPeriod(eq(EMPLOYEE_ID), any(), any()))
+                .thenReturn(true);
+        when(payslipRepository.findByPayrollRunIdAndEmployeeId(101L, EMPLOYEE_ID))
+                .thenReturn(Optional.empty());
+        when(professionalTaxSlabRepository.findApplicableSlabs(eq("Maharashtra"), any(LocalDate.class)))
+                .thenReturn(maharashtraSlabs());
+
+        service.processRun(7, 2026, 999L);
+
+        ArgumentCaptor<Payslip> captor = ArgumentCaptor.forClass(Payslip.class);
+        verify(payslipRepository, org.mockito.Mockito.atLeastOnce()).save(captor.capture());
+        Payslip saved = captor.getValue();
+
+        assertEquals(new BigDecimal("25000.00"), saved.getGrossEarnings());
+        // Basic 15000 -> PF = 1800
+        assertEquals(new BigDecimal("1800.00"), saved.getPfEmployee());
+        // Gross 25000 * 0.0075 = 187.50 ESI employee contribution (deducted because already contributing)
+        assertEquals(new BigDecimal("187.50"), saved.getEsiEmployee());
+        assertEquals(new BigDecimal("200.00"), saved.getProfessionalTax());
+    }
+
     private PayrollStatutorySettings seededSettings() throws Exception {
         PayrollStatutorySettings s = newEntity(PayrollStatutorySettings.class);
         set(s, "pfEmployeeRate", new BigDecimal("0.1200"));
