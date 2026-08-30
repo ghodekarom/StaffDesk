@@ -35,12 +35,6 @@ relying on this in anything beyond local dev or a demo:
   official government sources, and not signed off by a CA/compliance
   consultant. Do not run real payroll against this data without verifying it
   first.
-- **`employees.work_state` isn't wired up.** The column exists (V5) but isn't
-  populated or exposed anywhere yet. `EmployeeDirectoryPort` returns `null`
-  for it, and `PayrollRunService` treats a null work state as "no
-  Professional Tax applied" (logs a warning, doesn't fail the run) — so
-  **Professional Tax is effectively not being deducted for anyone yet**,
-  even though the calculator and slab table exist.
 - **ESI mid-period contribution rule isn't implemented.** Under the ESI Act,
   an employee enrolled at the start of a contribution period (Apr–Sep or
   Oct–Mar) stays ESI-applicable for the rest of that period even if a
@@ -50,11 +44,6 @@ relying on this in anything beyond local dev or a demo:
   caller tracking state across periods — worth confirming this is actually
   wired through `PayrollRunService` before trusting ESI numbers near the
   ceiling.
-- **Payroll role model is a default assumption, not confirmed.** A comment in
-  `PayrollRunController` states plainly: ADMIN/HR can trigger runs and view
-  all payslips, MANAGER has no payroll access, EMPLOYEE is self-service
-  only — "adjust the `@PreAuthorize` expressions once the team confirms the
-  real role model."
 - **Notification `type` CHECK constraint is hand-maintained, separate from
   the Java enum.** This has already caused one production-shaped bug (V13):
   adding `MESSAGE` as a notification type in code without a matching Flyway
@@ -65,8 +54,8 @@ relying on this in anything beyond local dev or a demo:
   accurate here; tests exist (`./mvnw test`) but nothing runs them
   automatically on push/PR yet.
 - **No frontend test suite** — Jest + React Testing Library are mentioned as
-  the target stack but no config or test files exist yet. Backend has 9 JUnit
-  test classes, concentrated in payroll calculation logic.
+  the target stack but no config or test files exist yet. Backend has 11 JUnit
+  test classes, concentrated in payroll calculation, employee service, and notifications.
 - **No `LICENSE` file** — flagged in the root README; add one (e.g. MIT) if
   open-sourcing.
 - **No `docker-compose.yml`** tying frontend + backend + Postgres together for
@@ -74,10 +63,9 @@ relying on this in anything beyond local dev or a demo:
 
 ## Roadmap (as reflected in code, not just aspiration)
 
-- [ ] Confirm and lock down the payroll role model (`PayrollRunController`)
-- [ ] Wire `employees.work_state` through so Professional Tax actually applies
-- [ ] Verify PF/ESI/TDS/Professional-Tax figures against official sources;
-      get compliance sign-off
+- [x] Confirm and lock down the payroll role model (`PayrollRunController`)
+- [x] Wire `employees.work_state` through so Professional Tax actually applies (V15 backfill + DTO + form)
+- [ ] Verify PF/ESI/TDS/Professional-Tax figures against official sources; get compliance sign-off
 - [ ] Confirm ESI mid-period contribution handling end-to-end
 - [ ] CI/CD pipeline
 - [ ] Frontend test coverage

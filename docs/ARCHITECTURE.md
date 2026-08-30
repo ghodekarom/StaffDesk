@@ -41,12 +41,11 @@ through the Spring Boot REST API at `/api/v1/**`.
 - Java 21, Spring Boot 4.1
 - Spring Web, Spring Data JPA, Spring Security (method-level `@PreAuthorize`)
 - PostgreSQL, schema versioned entirely through Flyway (`src/main/resources/db/migration`,
-  currently at `V13`) — Hibernate's `ddl-auto` is set to `validate`, never `update`
+  currently at `V16`) — Hibernate's `ddl-auto` is set to `validate`, never `update`
 - JWT auth via `jjwt`
-- springdoc-openapi → Swagger UI at `/swagger-ui.html`
-- JUnit 5 + Mockito for backend tests (9 test classes today, concentrated in
-  payroll calculation logic, employee service, notifications, and the
-  attendance reminder scheduler)
+- springdoc-openapi → Swagger UI at `/swagger-ui.html` (authenticated session required)
+- JUnit 5 + Mockito for backend tests (11 test classes, covering payroll calculations,
+  employee service, leave provisioning & rollover, and notifications)
 
 **Deployment**
 - Frontend: Vercel (live at the URL in the root `README.md`)

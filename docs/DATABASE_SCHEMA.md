@@ -1,7 +1,7 @@
 # Database Schema
 
 PostgreSQL, schema owned entirely by Flyway (`backend/src/main/resources/db/migration`,
-`V1`–`V13` today). Hibernate's `ddl-auto` is `validate` — the JPA entities must
+`V1`–`V16` today). Hibernate's `ddl-auto` is `validate` — the JPA entities must
 match the migrations, never the other way around. A root-level
 `db/migrations/V1__phase1_schema.sql` also exists outside `backend/`; it's an
 earlier/duplicate copy of the same phase-1 schema — the live source of truth is
@@ -21,7 +21,7 @@ departments ──┬──< employees >──┬──< users (1:1, auth login)
                                  │        └──< payslip_earnings
                                  ├──< notifications
                                  ├──< notification_preferences (1:1)
-                                 └──< messages (sender + recipient, both → employees)
+                                 └──< messages (sender + recipient, both → employees, ON DELETE RESTRICT)
 
 payroll_statutory_settings, tds_slabs, professional_tax_slabs — versioned
 reference/config tables, not tied to a specific employee.
@@ -36,7 +36,8 @@ added after `employees` exists to avoid a circular bootstrap problem),
 **`employees`** — `id`, `employee_code` (unique, e.g. `EMP0001`), `first_name`,
 `last_name`, `email` (unique), `phone`, `department_id` (FK, `SET NULL` on
 delete), `manager_id` (self-referencing FK, nullable), `designation`,
-`date_of_joining`, `status` (`ACTIVE` / `INACTIVE` / `TERMINATED`),
+`date_of_joining`, `work_state` (added V5, backfilled to `'Maharashtra'` in V15),
+`status` (`ACTIVE` / `INACTIVE` / `TERMINATED`),
 `created_at`, `updated_at`, `created_by`, `updated_by`. Indexed on
 `department_id`, `manager_id`, `status`.
 
@@ -60,6 +61,8 @@ aggregation without a full table scan.
 **`leave_balances`** — `employee_id`, `leave_type`, `year`, `total`, `used`,
 `remaining` (a `GENERATED ALWAYS AS (total - used) STORED` column — the DB
 computes it, not the application). `UNIQUE (employee_id, leave_type, year)`.
+Backfilled for existing employees in V14; automatically provisioned on onboarding
+and rolled over annually on Dec 1.
 
 ## Notifications (V3, extended V10 & V13)
 
@@ -82,11 +85,12 @@ and the paginated "latest first" list.
 `attendance_reminder_enabled`, all defaulting to `true`. Rows are created
 lazily on first read/write — a missing row means "everything on."
 
-## Payroll (V5–V9, India-specific)
+## Payroll (V5–V9, V15, India-specific)
 
-**`employees.work_state`** (V5) — nullable column added for Professional Tax
-(which is state-specific). **Not yet backfilled or wired into
-`PayrollRunService`** — see [`STATUS_AND_ROADMAP.md`](./STATUS_AND_ROADMAP.md).
+**`employees.work_state`** (V5, backfilled V15) — Indian state for Professional Tax
+calculation. Wired end-to-end through `EmployeeRequestDto`, `EmployeeResponseDto`,
+and the frontend employee form. Existing rows backfilled with `'Maharashtra'` to
+activate PT deductions against V9 slabs.
 
 **`salary_structures`** — versioned per employee: `basic`, `hra`,
 `conveyance_allowance`, `special_allowance`, `other_allowance`, `ctc_annual`,
@@ -114,10 +118,7 @@ not a code change. Seeded for FY2026-27 in V8.
 
 **`professional_tax_slabs`** — state-specific bands
 (`state`, `from_amount`/`to_amount`, `monthly_amount`, effective range).
-**V9's seed data is a placeholder** (Maharashtra bands, chosen only because
-they match what `ProfessionalTaxCalculatorTest` already exercised) — not
-verified against the current Profession Tax Act notification, and the state
-to actually operate from is still an open decision.
+Seeded in V9 with Maharashtra slabs.
 
 **`payslips`** — frozen computed output per `(payroll_run_id, employee_id)`:
 `working_days`, `paid_days`, `gross_earnings`, PF/ESI (employee + employer),
@@ -126,24 +127,33 @@ recalculated in place — a correction means re-running the payroll run, which
 produces fresh rows. **`payslip_earnings`** holds the per-component breakdown
 (`component_name`, `amount`) for each payslip.
 
-## Messaging (V12)
+## Messaging (V12, hardened V16)
 
-**`messages`** — deliberately flat: `sender_employee_id`, `recipient_employee_id`,
-`body`, `is_read`, `created_at`, `CHECK (sender_employee_id <> recipient_employee_id)`.
+**`messages`** — deliberately flat: `sender_employee_id`, `recipient_employee_id`
+(both `REFERENCES employees(id) ON DELETE RESTRICT` via V16 to prevent destructive
+cascade deletes), `body`, `is_read`, `created_at`, `CHECK (sender_employee_id <> recipient_employee_id)`.
 No separate "threads" table — a thread is derived as "all messages between
 these two employee IDs," avoiding a join to render a conversation. Composite
 indexes cover both directions of the sender/recipient pair (newest first) plus
 a partial index on unread messages for the badge count.
 
-## Seed data
+## Migration history summary (V1–V16)
 
-`V4__phase1_schema.sql` is a large, idempotent (truncate-and-reinsert) seed:
-15 departments, 150 employees (1 CEO + 15 department heads + 134 staff, Indian
-names, realistic designations per department), ~122 user logins (all seeded
-with the same password — see migration comment for the credential), ~195
-attendance rows (last 5 weekdays for a slice of staff), 150 leave requests
-spanning past and future dates, 180 leave balance rows, and 160 notifications.
-Useful for local dev and demos; not meant to represent real data.
-
-`V2__seed_data.sql` is an earlier, smaller seed superseded by V4 (V4's header
-comment notes it does not depend on V2 and replaces it with a larger set).
+| Version | Description |
+|---|---|
+| `V1` | Core Phase 1 schema (employees, departments, users, attendance, leave) |
+| `V2` | Initial seed data (superseded by V4) |
+| `V3` | In-app notifications table |
+| `V4` | Large idempotent seed data (15 depts, 150 employees, ~122 users, attendance, leave) |
+| `V5` | Payroll schema (salary structures, payroll runs, statutory settings, payslips) + `work_state` column |
+| `V6` | Statutory settings alter: EPS, EDLI, admin charge, TDS Section 87A rebate fields |
+| `V7` | Seed payroll statutory settings |
+| `V8` | Seed TDS slabs for FY2026-27 |
+| `V9` | Seed Professional Tax placeholder slabs (Maharashtra) |
+| `V10` | Notification preferences table + extend notification type CHECK for `ATTENDANCE_REMINDER` |
+| `V11` | Composite index on `attendance (attendance_date, status)` for dashboard queries |
+| `V12` | Direct messaging schema |
+| `V13` | Extend notification type CHECK for `MESSAGE` |
+| `V14` | Backfill leave balance rows for existing employees |
+| `V15` | Backfill `work_state = 'Maharashtra'` for existing employees |
+| `V16` | Harden `messages` FKs with `ON DELETE RESTRICT` |

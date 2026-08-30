@@ -25,11 +25,11 @@ no `@PreAuthorize` role restriction beyond having a valid token.
 
 | Method | Path | Role | Notes |
 |---|---|---|---|
-| POST | `/` | ADMIN, HR | Create employee |
-| GET | `/{id}` | Any authenticated user | Get one employee |
-| GET | `/` | Any authenticated user | Paginated list (`?page=&size=&sort=`) |
-| PUT | `/{id}` | ADMIN, HR | Full update |
-| DELETE | `/{id}` | ADMIN | Delete |
+| POST | `/` | ADMIN, HR | Create employee (includes `workState` for PT) |
+| GET | `/{id}` | Any authenticated user | Get one employee (scoped to department for EMPLOYEE) |
+| GET | `/` | Any authenticated user | Paginated list (`?page=&size=&sort=`, scoped for EMPLOYEE) |
+| PUT | `/{id}` | ADMIN, HR | Full update (includes `workState`) |
+| DELETE | `/{id}` | ADMIN | Deactivates employee (`status -> INACTIVE`, preserves history) |
 | PATCH | `/{id}/status` | ADMIN, HR | Transition `ACTIVE` / `INACTIVE` / `TERMINATED` |
 
 ## Departments — `/api/v1/departments`
@@ -49,8 +49,8 @@ no `@PreAuthorize` role restriction beyond having a valid token.
 | POST | `/clock-in` | Any authenticated user | Clocks in the caller for today |
 | POST | `/clock-out` | Any authenticated user | Clocks out the caller for today |
 | GET | `/me` | Any authenticated user | Caller's own paginated history |
-| GET | `/recent` | ADMIN, HR, MANAGER | Recent records across all employees |
-| GET | `/employees/{employeeId}` | ADMIN, HR | One employee's paginated history |
+| GET | `/recent` | ADMIN, HR, MANAGER | Recent records (scoped to direct reports for MANAGER) |
+| GET | `/employees/{employeeId}` | ADMIN, HR, MANAGER | One employee's paginated history (scoped for MANAGER) |
 | GET | `/employees/{employeeId}/{date}` | ADMIN, HR | One employee's record for a specific date |
 | PUT | `/employees/{employeeId}/{date}` | ADMIN, HR | Manual override (correct a clock-in/out or status) |
 
@@ -66,19 +66,20 @@ clocked in yet on weekday mornings, respecting each employee's own
 | GET | `/requests/me` | Any authenticated user | Caller's own requests (paginated) |
 | GET | `/balances/me` | Any authenticated user | Caller's leave balances by type |
 | POST | `/requests/{id}/cancel` | Any authenticated user | Cancel own pending request |
-| GET | `/requests` | ADMIN, HR, MANAGER | All requests (paginated) |
-| GET | `/requests/employees/{employeeId}` | ADMIN, HR, MANAGER | One employee's requests |
-| POST | `/requests/{id}/approve` | ADMIN, HR, MANAGER | Approve |
-| POST | `/requests/{id}/reject` | ADMIN, HR, MANAGER | Reject |
+| GET | `/requests` | ADMIN, HR, MANAGER | All requests (scoped to direct reports for MANAGER) |
+| GET | `/requests/employees/{employeeId}` | ADMIN, HR, MANAGER | One employee's requests (scoped for MANAGER) |
+| POST | `/requests/{id}/approve` | ADMIN, HR, MANAGER | Approve (scoped to direct reports for MANAGER) |
+| POST | `/requests/{id}/reject` | ADMIN, HR, MANAGER | Reject (scoped to direct reports for MANAGER) |
+| POST | `/balances/rollover` | ADMIN | Manual on-demand balance rollover for a target year |
 
 Leave types: `SICK`, `CASUAL`, `EARNED`. Requests overlapping an existing
-approved/pending request for the same employee are rejected at the service
-layer, as is a balance-exceeding request.
+approved/pending request for the same employee are rejected with 400 Bad Request,
+as is a balance-exceeding request.
 
 ## Payroll — `/api/v1/payroll/**`
 
 Payroll is India-specific: PF (Provident Fund), ESI (Employee State Insurance),
-Professional Tax (state-specific), and TDS (new-regime income tax slabs) are
+Professional Tax (state-specific via `work_state`), and TDS (new-regime income tax slabs) are
 all calculated server-side from versioned statutory settings — see
 [`DATABASE_SCHEMA.md`](./DATABASE_SCHEMA.md).
 
@@ -99,11 +100,6 @@ all calculated server-side from versioned statutory settings — see
 | POST | `/{year}/{month}/process` | ADMIN, HR | Process payroll for a period (generates payslips) |
 | PATCH | `/{id}/lock` | ADMIN, HR | Lock a processed run (no further changes) |
 | GET | `/{runId}/payslips` | ADMIN, HR | List payslips for a run |
-
-> The role model on this controller is explicitly flagged as a **default
-> assumption, not confirmed**, in a code comment (MANAGER has no payroll
-> access; EMPLOYEE is self-service only via the payslips endpoints below).
-> Revisit before this goes further than internal use.
 
 **Payslips** — `/api/v1/payroll/payslips`
 
@@ -137,7 +133,7 @@ messages between these two employee IDs."
 | POST | `/read-all` | Any authenticated user | Mark all as read |
 
 Notification types: `LEAVE_REQUEST_SUBMITTED`, `LEAVE_REQUEST_APPROVED`,
-`LEAVE_REQUEST_REJECTED`, `ATTENDANCE_REMINDER`, `GENERAL`. A missing
+`LEAVE_REQUEST_REJECTED`, `ATTENDANCE_REMINDER`, `MESSAGE`, `GENERAL`. A missing
 preferences row means "everything on" — rows are created lazily on first
 read/write rather than at user creation.
 
