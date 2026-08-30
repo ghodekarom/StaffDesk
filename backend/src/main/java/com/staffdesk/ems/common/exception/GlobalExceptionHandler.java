@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -34,6 +35,24 @@ public class GlobalExceptionHandler {
     // reporting as a 500. Bad input deserves a 400, not "unexpected error."
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), req);
+    }
+
+    // Issue #12: covers invalid enum values (e.g. "leaveType": "INVALID"),
+    // malformed JSON, and other deserialization failures. Without this,
+    // Jackson throws HttpMessageNotReadableException which falls through
+    // to handleGeneric() and surfaces as a 500 to the client.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleNotReadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "Malformed request body", req);
+    }
+
+    // Issue #12: covers state-transition violations (e.g. approving an
+    // already-decided leave request via a path that throws IllegalStateException
+    // instead of a module-specific exception). These are client errors (400),
+    // not server errors (500).
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalState(IllegalStateException ex, HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), req);
     }
 
